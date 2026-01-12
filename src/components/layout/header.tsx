@@ -59,29 +59,10 @@ const mockNotifications = [
 
 export function Header({ isAdmin = false }: HeaderProps) {
     const [notificationsOpen, setNotificationsOpen] = useState(false)
-    const [timeLeft, setTimeLeft] = useState<number | null>(null)
     const unreadCount = mockNotifications.filter((n) => !n.read).length
-
-    useEffect(() => {
-        if (!isAdmin) return
-
-        const handleTick = (e: any) => {
-            setTimeLeft(e.detail.remaining)
-        }
-
-        window.addEventListener('admin_session_tick', handleTick)
-        return () => window.removeEventListener('admin_session_tick', handleTick)
-    }, [isAdmin])
-
-    const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60)
-        const secs = seconds % 60
-        return `${mins}:${secs.toString().padStart(2, '0')}`
-    }
 
     const handleLogout = () => {
         document.cookie = "admin_access=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
-        document.cookie = "admin_last_active=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
         window.location.reload()
     }
 
@@ -103,18 +84,6 @@ export function Header({ isAdmin = false }: HeaderProps) {
             </div>
 
             <div className="flex items-center gap-2 md:gap-4">
-                {isAdmin && timeLeft !== null && (
-                    <div className={cn(
-                        "hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black tracking-widest uppercase transition-all duration-500",
-                        timeLeft < 120
-                            ? "bg-rose-500/10 border-rose-500/30 text-rose-500 animate-pulse"
-                            : "bg-zinc-800/50 border-zinc-800 text-zinc-400"
-                    )}>
-                        <Lock className={cn("h-3 w-3", timeLeft < 120 ? "text-rose-500" : "text-zinc-500")} />
-                        <span>Auto-Lock: {formatTime(timeLeft)}</span>
-                    </div>
-                )}
-
                 <Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
                     <PopoverTrigger asChild>
                         <Button variant="ghost" size="icon" className="relative">
