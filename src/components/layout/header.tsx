@@ -144,13 +144,17 @@ export function Header({ isAdmin = false }: HeaderProps) {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator className="bg-zinc-800" />
-                        <DropdownMenuItem className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 cursor-pointer">
-                            <User className="mr-2 h-4 w-4" />
-                            <span>System Profile</span>
+                        <DropdownMenuItem asChild className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 cursor-pointer">
+                            <Link href="/admin/team" className="flex items-center w-full">
+                                <User className="mr-2 h-4 w-4" />
+                                <span>System Profile</span>
+                            </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 cursor-pointer">
-                            <Settings className="mr-2 h-4 w-4" />
-                            <span>Preferences</span>
+                        <DropdownMenuItem asChild className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 cursor-pointer">
+                            <Link href="/admin/settings" className="flex items-center w-full">
+                                <Settings className="mr-2 h-4 w-4" />
+                                <span>Preferences</span>
+                            </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator className="bg-zinc-800" />
                         <DropdownMenuItem
