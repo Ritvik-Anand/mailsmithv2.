@@ -34,9 +34,12 @@ import {
     Search,
     Lock,
     Eye,
+    EyeOff,
     Settings,
     UserPlus,
-    Mail
+    Mail,
+    RefreshCw,
+    Key
 } from 'lucide-react'
 import { AdminRole, AdminPermission, SystemAdmin } from '@/types'
 
@@ -49,6 +52,7 @@ const mockTeam: SystemAdmin[] = [
         full_name: 'Ritvik',
         role: 'master',
         permissions: ['manage_admins', 'manage_customers', 'manage_support', 'manage_system', 'view_financials', 'view_logs', 'send_broadcasts'],
+        access_key: 'Rv@129',
         created_at: '2026-01-01',
         updated_at: '2026-01-12'
     },
@@ -59,6 +63,7 @@ const mockTeam: SystemAdmin[] = [
         full_name: 'Sarah Chen',
         role: 'admin',
         permissions: ['manage_customers', 'manage_support', 'send_broadcasts', 'view_logs'],
+        access_key: 'MS-A82J-92',
         created_at: '2026-01-05',
         updated_at: '2026-01-10'
     },
@@ -69,6 +74,7 @@ const mockTeam: SystemAdmin[] = [
         full_name: 'Mike Ross',
         role: 'support',
         permissions: ['manage_support', 'view_logs'],
+        access_key: 'MS-K91L-10',
         created_at: '2026-01-08',
         updated_at: '2026-01-08'
     }
@@ -86,9 +92,14 @@ const PERMISSIONS: { id: AdminPermission; label: string; description: string }[]
 
 export default function AdminTeamPage() {
     const [searchQuery, setSearchQuery] = useState('')
+    const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({})
 
     // In a real app, this would be determined by the logged-in user's role
     const isMasterAdmin = true
+
+    const toggleKeyVisibility = (id: string) => {
+        setVisibleKeys(prev => ({ ...prev, [id]: !prev[id] }))
+    }
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -96,7 +107,7 @@ export default function AdminTeamPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-zinc-100 italic">Internal Command Team</h1>
                     <p className="text-zinc-500">
-                        Manage administrative roles and granular system permissions
+                        Manage administrative roles and system-locked access keys
                     </p>
                 </div>
                 {isMasterAdmin && (
@@ -125,6 +136,27 @@ export default function AdminTeamPage() {
                                         <Label htmlFor="email" className="text-zinc-400">Email Address</Label>
                                         <Input id="email" type="email" placeholder="john@acquifix.com" className="bg-zinc-800 border-zinc-700" />
                                     </div>
+                                </div>
+
+                                <div className="rounded-xl bg-zinc-950 p-4 border border-zinc-800/50 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Key className="h-4 w-4 text-emerald-500" />
+                                            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Auto-Generated Access Key</span>
+                                        </div>
+                                        <Badge className="bg-emerald-500/10 text-emerald-500 border-none">SECURE</Badge>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <code className="flex-1 bg-zinc-900 px-4 py-2 rounded-lg border border-zinc-800 text-emerald-400 font-mono text-sm tracking-widest">
+                                            MS-{Math.random().toString(36).substring(2, 6).toUpperCase()}-{Math.random().toString(10).substring(2, 4)}
+                                        </code>
+                                        <Button variant="outline" size="icon" className="border-zinc-800 h-9 w-9">
+                                            <RefreshCw className="h-4 w-4 text-zinc-500" />
+                                        </Button>
+                                    </div>
+                                    <p className="text-[10px] text-zinc-600">
+                                        Note: This key will only be shown once. Please provide it securely to the team member.
+                                    </p>
                                 </div>
 
                                 <div className="space-y-4">
@@ -220,8 +252,9 @@ export default function AdminTeamPage() {
                         <TableHeader className="border-zinc-800">
                             <TableRow className="hover:bg-zinc-800/50 border-zinc-800">
                                 <TableHead className="text-zinc-400">Team Member</TableHead>
-                                <TableHead className="text-zinc-400">Authority Level</TableHead>
-                                <TableHead className="text-zinc-400">Permissions Granted</TableHead>
+                                <TableHead className="text-zinc-400">Authority</TableHead>
+                                <TableHead className="text-zinc-400">Access Key (Master Only)</TableHead>
+                                <TableHead className="text-zinc-400">Permissions</TableHead>
                                 <TableHead className="text-zinc-400">Last Active</TableHead>
                                 <TableHead className="text-right text-zinc-400">Actions</TableHead>
                             </TableRow>
@@ -256,15 +289,49 @@ export default function AdminTeamPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex flex-wrap gap-1.5 max-w-[400px]">
+                                        {isMasterAdmin ? (
+                                            <div className="flex items-center gap-2">
+                                                <code className="text-[10px] font-mono bg-zinc-950 px-2 py-1 rounded border border-zinc-800/50 text-emerald-500/80">
+                                                    {visibleKeys[admin.id] ? admin.access_key : '••••••••••••'}
+                                                </code>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-zinc-600 hover:text-zinc-300"
+                                                    onClick={() => toggleKeyVisibility(admin.id)}
+                                                >
+                                                    {visibleKeys[admin.id] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                                                </Button>
+                                                {admin.role !== 'master' && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 text-zinc-600 hover:text-primary"
+                                                        title="Regenerate Key"
+                                                    >
+                                                        <RefreshCw className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-zinc-700 italic">Access Restricted</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-wrap gap-1.5 max-w-[250px]">
                                             {admin.role === 'master' ? (
-                                                <span className="text-xs text-primary font-bold tracking-tight">FULL UNRESTRICTED ACCESS</span>
+                                                <span className="text-[10px] text-primary font-bold tracking-tight">FULL ACCESS</span>
                                             ) : (
-                                                admin.permissions.map(p => (
+                                                admin.permissions.slice(0, 3).map(p => (
                                                     <Badge key={p} variant="outline" className="bg-zinc-800/50 border-zinc-800 text-[9px] px-1.5 font-medium text-zinc-400">
                                                         {p.replace('_', ' ')}
                                                     </Badge>
                                                 ))
+                                            )}
+                                            {admin.permissions.length > 3 && (
+                                                <Badge variant="outline" className="bg-zinc-800/50 border-zinc-800 text-[9px] px-1.5 text-zinc-500">
+                                                    +{admin.permissions.length - 3}
+                                                </Badge>
                                             )}
                                         </div>
                                     </TableCell>

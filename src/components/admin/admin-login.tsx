@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Zap, Loader2, ShieldCheck, Lock } from 'lucide-react'
+import { Zap, Loader2, ShieldCheck, Lock, Mail } from 'lucide-react'
 
 export function AdminLogin() {
     const router = useRouter()
@@ -19,21 +19,29 @@ export function AdminLogin() {
         setError('')
 
         const formData = new FormData(event.currentTarget)
+        const email = formData.get('email') as string
         const password = formData.get('password') as string
 
-        // Secure Admin Login with Key
-        if (password === 'Rv@129') {
-            // Set simple cookie for frontend-only auth demo
+        // Secure Admin Login with Email + System Key
+        // Master Check: Ritvik
+        if (email.toLowerCase() === 'master.admin@acquifix.com' && password === 'Rv@129') {
             document.cookie = "admin_access=true; path=/; max-age=3600; samesite=lax"
-
             await new Promise((resolve) => setTimeout(resolve, 800))
-            // Refresh the page to trigger the layout's auth check
             window.location.reload()
-        } else {
-            await new Promise((resolve) => setTimeout(resolve, 500))
-            setError('Invalid access key')
-            setIsLoading(false)
+            return
         }
+
+        // Operational Check (Mock for demo)
+        if (email.toLowerCase() === 'sarah.ops@acquifix.com' && password === 'MS-A82J-92') {
+            document.cookie = "admin_access=true; path=/; max-age=3600; samesite=lax"
+            await new Promise((resolve) => setTimeout(resolve, 800))
+            window.location.reload()
+            return
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        setError('Invalid credentials or unauthorized access')
+        setIsLoading(false)
     }
 
     return (
@@ -52,20 +60,37 @@ export function AdminLogin() {
                         </div>
                     </div>
                     <CardTitle className="text-2xl font-bold tracking-tight text-zinc-100">Command Center</CardTitle>
-                    <CardDescription className="text-zinc-500 text-base">
-                        System Administrator Authentication
+                    <CardDescription className="text-zinc-500 text-sm">
+                        Enterprise Access Protocol
                     </CardDescription>
                 </CardHeader>
                 <form onSubmit={onSubmit}>
-                    <CardContent className="space-y-6 py-6">
+                    <CardContent className="space-y-5 py-6">
                         {error && (
                             <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 p-4 text-sm text-rose-400 font-medium animate-in fade-in slide-in-from-top-2 duration-300">
                                 {error}
                             </div>
                         )}
 
-                        <div className="space-y-3">
-                            <Label htmlFor="password" className="text-zinc-400 ml-1 text-xs uppercase tracking-widest font-bold">Access Key</Label>
+                        <div className="space-y-2">
+                            <Label htmlFor="email" className="text-zinc-500 ml-1 text-[10px] uppercase tracking-widest font-bold">Admin Email</Label>
+                            <div className="relative">
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
+                                <Input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    placeholder="admin@acquifix.com"
+                                    className="pl-11 h-12 bg-zinc-800/20 border-zinc-700/50 text-zinc-100 placeholder:text-zinc-800 focus:border-zinc-500 focus:ring-zinc-500/20 rounded-xl transition-all"
+                                    required
+                                    autoFocus
+                                    disabled={isLoading}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="password" className="text-zinc-500 ml-1 text-[10px] uppercase tracking-widest font-bold">System Access Key</Label>
                             <div className="relative">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
                                 <Input
@@ -73,9 +98,8 @@ export function AdminLogin() {
                                     name="password"
                                     type="password"
                                     placeholder="••••••••••••"
-                                    className="pl-11 h-12 bg-zinc-800/30 border-zinc-700/50 text-zinc-100 placeholder:text-zinc-800 focus:border-zinc-500 focus:ring-zinc-500/20 rounded-xl transition-all"
+                                    className="pl-11 h-12 bg-zinc-800/20 border-zinc-700/50 text-zinc-100 placeholder:text-zinc-800 focus:border-zinc-500 focus:ring-zinc-500/20 rounded-xl transition-all"
                                     required
-                                    autoFocus
                                     disabled={isLoading}
                                 />
                             </div>

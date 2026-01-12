@@ -60,6 +60,7 @@ export interface SystemAdmin {
     full_name: string;
     role: AdminRole;
     permissions: AdminPermission[];
+    access_key: string;
     created_at: string;
     updated_at: string;
 }
