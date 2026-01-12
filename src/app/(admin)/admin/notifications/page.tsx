@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { deployBroadcast } from '@/server/actions/admin'
 
 // Mock System Notifications
 const INITIAL_NOTIFICATIONS = [
@@ -67,16 +68,21 @@ export default function AdminNotificationsPage() {
     const [broadcastMessage, setBroadcastMessage] = useState('')
     const [isBroadcasting, setIsBroadcasting] = useState(false)
 
-    const handleBroadcast = () => {
+    const handleBroadcast = async () => {
         if (!broadcastTitle || !broadcastMessage) return
 
         setIsBroadcasting(true)
-        setTimeout(() => {
-            setIsBroadcasting(false)
+        try {
+            await deployBroadcast(broadcastTitle, broadcastMessage)
             setBroadcastTitle('')
             setBroadcastMessage('')
-            toast.success('System broadcast sent to all active customers')
-        }, 1500)
+            toast.success('System broadcast deployed to all active customer dashboards')
+        } catch (error) {
+            toast.error('Deployment Failed: Access denied or system timeout')
+            console.error(error)
+        } finally {
+            setIsBroadcasting(false)
+        }
     }
 
     const markAsRead = (id: string) => {

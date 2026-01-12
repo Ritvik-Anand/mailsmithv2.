@@ -24,10 +24,30 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { getSystemHealth } from '@/server/actions/admin'
+import { useEffect } from 'react'
 
 export default function AdminSettingsPage() {
     const [maintenanceMode, setMaintenanceMode] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [isRefreshing, setIsRefreshing] = useState(false)
+    const [health, setHealth] = useState<any>(null)
+
+    const fetchHealth = async () => {
+        setIsRefreshing(true)
+        try {
+            const data = await getSystemHealth()
+            setHealth(data)
+        } catch (error) {
+            toast.error('Failed to fetch infrastructure health metrics')
+        } finally {
+            setIsRefreshing(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchHealth()
+    }, [])
 
     const handleSave = () => {
         setIsLoading(true)
@@ -131,18 +151,24 @@ export default function AdminSettingsPage() {
                                 <CardTitle className="text-zinc-100">Live Health Systems</CardTitle>
                                 <CardDescription className="text-zinc-500">Real-time status of critical internal services</CardDescription>
                             </div>
-                            <Button variant="outline" size="sm" className="border-zinc-800 hover:bg-zinc-800">
-                                <RefreshCw className="mr-2 h-4 w-4" />
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-zinc-800 hover:bg-zinc-800"
+                                onClick={fetchHealth}
+                                disabled={isRefreshing}
+                            >
+                                <RefreshCw className={cn("mr-2 h-4 w-4", isRefreshing && "animate-spin")} />
                                 Refresh Status
                             </Button>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
                                 {[
-                                    { name: 'Primary Database Cluster', status: 'operational', delay: '12ms', icon: Database },
-                                    { name: 'ElasticSearch Engine', status: 'operational', delay: '45ms', icon: Activity },
-                                    { name: 'Lead Scraper Node-Alpha', status: 'operational', delay: '1.2s', icon: Zap },
-                                    { name: 'SMTP Relay Gateway', status: 'warning', delay: '200ms', icon: Globe },
+                                    { name: 'Primary Database Cluster', status: health?.database.status || 'loading', delay: health?.database.latency || '...', icon: Database },
+                                    { name: 'ElasticSearch Engine', status: health?.search.status || 'loading', delay: health?.search.latency || '...', icon: Activity },
+                                    { name: 'Lead Scraper Node-Alpha', status: health?.scraper.status || 'loading', delay: health?.scraper.latency || '...', icon: Zap },
+                                    { name: 'SMTP Relay Gateway', status: health?.smtp.status || 'loading', delay: health?.smtp.latency || '...', icon: Globe },
                                     { name: 'Authentication Layer', status: 'operational', delay: '8ms', icon: Lock },
                                 ].map((service) => (
                                     <div key={service.name} className="flex items-center justify-between p-4 rounded-xl bg-zinc-950 border border-zinc-800/50 group hover:border-zinc-700 transition-all">
@@ -158,7 +184,9 @@ export default function AdminSettingsPage() {
                                         <Badge
                                             className={cn(
                                                 "px-2 py-0.5 rounded-md border-none uppercase text-[10px] font-black",
-                                                service.status === 'operational' ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500"
+                                                service.status === 'operational' ? "bg-emerald-500/10 text-emerald-500" :
+                                                    service.status === 'loading' ? "bg-zinc-500/10 text-zinc-500 animate-pulse" :
+                                                        "bg-amber-500/10 text-amber-500"
                                             )}
                                         >
                                             {service.status}
