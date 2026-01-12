@@ -23,15 +23,26 @@ import {
     ChevronLeft,
     Building2,
     Shield,
-    ArrowRight
+    ArrowRight,
+    Search
 } from 'lucide-react'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+
+import { createClient } from '@/lib/supabase/client'
 
 type Step = 1 | 2 | 3 | 4 | 5
 
 export default function SignupPage() {
     const router = useRouter()
+    const supabase = createClient()
     const [step, setStep] = useState<Step>(1)
     const [isLoading, setIsLoading] = useState(false)
 
@@ -68,12 +79,28 @@ export default function SignupPage() {
     const onSubmit = async () => {
         setIsLoading(true)
         try {
-            // Simulate account provisioning
-            await new Promise(resolve => setTimeout(resolve, 2000))
+            const { error: signUpError } = await supabase.auth.signUp({
+                email: formData.email,
+                password: formData.password,
+                options: {
+                    data: {
+                        full_name: formData.fullName,
+                        company_name: formData.companyName,
+                        website: formData.website,
+                        industry: formData.industry,
+                        team_size: formData.teamSize,
+                        monthly_volume: formData.monthlyVolume,
+                        primary_goal: formData.primaryGoal,
+                    }
+                }
+            })
+
+            if (signUpError) throw signUpError
+
             toast.success('System Provisioned. Welcome to MailSmith.')
             router.push('/dashboard')
-        } catch (error) {
-            toast.error('Provisioning failed. Please check network.')
+        } catch (error: any) {
+            toast.error(error.message || 'Provisioning failed. Please check network.')
         } finally {
             setIsLoading(false)
         }
@@ -149,12 +176,12 @@ export default function SignupPage() {
                             <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
                                 <div className="grid grid-cols-1 gap-4">
                                     <div className="space-y-2">
-                                        <Label className="text-zinc-400 text-xs uppercase tracking-widest font-bold">Full Combatant Name</Label>
+                                        <Label className="text-zinc-400 text-xs uppercase tracking-widest font-bold">Full Name</Label>
                                         <div className="relative">
                                             <User className="absolute left-3 top-3 h-4 w-4 text-zinc-600" />
                                             <Input
                                                 className="bg-zinc-950 border-zinc-800 pl-10 h-11 focus:ring-primary/20"
-                                                placeholder="Ritvik Anand"
+                                                placeholder="e.g. Alexander Pierce"
                                                 value={formData.fullName}
                                                 onChange={(e) => updateField('fullName', e.target.value)}
                                             />
@@ -166,7 +193,7 @@ export default function SignupPage() {
                                             <Mail className="absolute left-3 top-3 h-4 w-4 text-zinc-600" />
                                             <Input
                                                 className="bg-zinc-950 border-zinc-800 pl-10 h-11 focus:ring-primary/20"
-                                                placeholder="ritvik@acquifix.com"
+                                                placeholder="e.g. precision@node-alpha.io"
                                                 type="email"
                                                 value={formData.email}
                                                 onChange={(e) => updateField('email', e.target.value)}
@@ -180,7 +207,7 @@ export default function SignupPage() {
                                             <Input
                                                 className="bg-zinc-950 border-zinc-800 pl-10 h-11 focus:ring-primary/20"
                                                 type="password"
-                                                placeholder="••••••••"
+                                                placeholder="••••••••••••"
                                                 value={formData.password}
                                                 onChange={(e) => updateField('password', e.target.value)}
                                             />
@@ -219,15 +246,21 @@ export default function SignupPage() {
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="text-zinc-400 text-xs uppercase tracking-widest font-bold">Industry Sector</Label>
-                                        <div className="relative">
-                                            <Briefcase className="absolute left-3 top-3 h-4 w-4 text-zinc-600" />
-                                            <Input
-                                                className="bg-zinc-950 border-zinc-800 pl-10 h-11 focus:ring-primary/20"
-                                                placeholder="SaaS / Fintech / Marketing"
-                                                value={formData.industry}
-                                                onChange={(e) => updateField('industry', e.target.value)}
-                                            />
-                                        </div>
+                                        <Select value={formData.industry} onValueChange={(val) => updateField('industry', val)}>
+                                            <SelectTrigger className="bg-zinc-950 border-zinc-800 h-11 focus:ring-primary/20">
+                                                <SelectValue placeholder="Select Sector" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-300">
+                                                <SelectItem value="tech">Technology & SaaS</SelectItem>
+                                                <SelectItem value="finance">Finance & Fintech</SelectItem>
+                                                <SelectItem value="healthcare">Healthcare & Life Sciences</SelectItem>
+                                                <SelectItem value="pro-services">Professional Services</SelectItem>
+                                                <SelectItem value="ecommerce">E-commerce & Retail</SelectItem>
+                                                <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                                                <SelectItem value="media">Media & Entertainment</SelectItem>
+                                                <SelectItem value="real-estate">Real Estate</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
                             </div>
@@ -235,39 +268,55 @@ export default function SignupPage() {
 
                         {step === 3 && (
                             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                                <div className="space-y-3">
+                                <div className="space-y-4">
                                     <Label className="text-zinc-400 text-xs uppercase tracking-widest font-bold">Unit size (Team size)</Label>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                        {['1-10', '11-50', '51-200', '200+'].map(size => (
-                                            <Button
-                                                key={size}
-                                                variant="outline"
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {[
+                                            { id: '1-10', label: 'Solo / Small', desc: '1-10 operatives' },
+                                            { id: '11-50', label: 'Scaling', desc: '11-50 operatives' },
+                                            { id: '51-200', label: 'Enterprise', desc: '51-200 operatives' },
+                                            { id: '200+', label: 'Global', desc: '200+ operatives' },
+                                        ].map(size => (
+                                            <div
+                                                key={size.id}
                                                 className={cn(
-                                                    "border-zinc-800 hover:bg-zinc-800 text-xs h-10 transition-all font-bold tracking-tighter",
-                                                    formData.teamSize === size && "bg-primary/20 border-primary text-primary"
+                                                    "p-3 rounded-xl border transition-all cursor-pointer text-left group",
+                                                    formData.teamSize === size.id ? "bg-primary/10 border-primary shadow-lg shadow-primary/5" : "bg-zinc-950 border-zinc-800 hover:border-zinc-700"
                                                 )}
-                                                onClick={() => updateField('teamSize', size)}
+                                                onClick={() => updateField('teamSize', size.id)}
                                             >
-                                                {size}
-                                            </Button>
+                                                <p className={cn(
+                                                    "text-sm font-black uppercase italic tracking-tighter",
+                                                    formData.teamSize === size.id ? "text-primary" : "text-zinc-300"
+                                                )}>{size.label}</p>
+                                                <p className="text-[10px] text-zinc-600 uppercase tracking-widest">{size.desc}</p>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
-                                <div className="space-y-3">
-                                    <Label className="text-zinc-400 text-xs uppercase tracking-widest font-bold">Target Engagement Volume (Monthly)</Label>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                        {['< 500', '500-2k', '2k-5k', '10k+'].map(vol => (
-                                            <Button
-                                                key={vol}
-                                                variant="outline"
+                                <div className="space-y-4">
+                                    <Label className="text-zinc-400 text-xs uppercase tracking-widest font-bold">Target Engagement Volume</Label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {[
+                                            { id: '< 500', label: 'Precision', desc: '< 500 leads/mo' },
+                                            { id: '500-2k', label: 'Growth', desc: '500-2,000/mo' },
+                                            { id: '2k-5k', label: 'Scale', desc: '2,000-5,000/mo' },
+                                            { id: '10k+', label: 'Dominance', desc: '10k+ leads/mo' },
+                                        ].map(vol => (
+                                            <div
+                                                key={vol.id}
                                                 className={cn(
-                                                    "border-zinc-800 hover:bg-zinc-800 text-xs h-10 transition-all font-bold tracking-tighter",
-                                                    formData.monthlyVolume === vol && "bg-primary/20 border-primary text-primary"
+                                                    "p-3 rounded-xl border transition-all cursor-pointer text-left group",
+                                                    formData.monthlyVolume === vol.id ? "bg-emerald-500/10 border-emerald-500 shadow-lg shadow-emerald-500/5" : "bg-zinc-950 border-zinc-800 hover:border-zinc-700"
                                                 )}
-                                                onClick={() => updateField('monthlyVolume', vol)}
+                                                onClick={() => updateField('monthlyVolume', vol.id)}
                                             >
-                                                {vol} Leads
-                                            </Button>
+                                                <p className={cn(
+                                                    "text-sm font-black uppercase italic tracking-tighter",
+                                                    formData.monthlyVolume === vol.id ? "text-emerald-500" : "text-zinc-300"
+                                                )}>{vol.label}</p>
+                                                <p className="text-[10px] text-zinc-600 uppercase tracking-widest">{vol.desc}</p>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>

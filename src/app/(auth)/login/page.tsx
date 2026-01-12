@@ -9,8 +9,11 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Zap, Loader2, Mail, Lock } from 'lucide-react'
 
+import { createClient } from '@/lib/supabase/client'
+
 export default function LoginPage() {
     const router = useRouter()
+    const supabase = createClient()
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
 
@@ -24,14 +27,17 @@ export default function LoginPage() {
         const password = formData.get('password') as string
 
         try {
-            // TODO: Implement Supabase auth
-            // For now, simulate login
-            await new Promise((resolve) => setTimeout(resolve, 1000))
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            })
+
+            if (signInError) throw signInError
 
             // Redirect to dashboard
             router.push('/dashboard')
-        } catch (err) {
-            setError('Invalid email or password')
+        } catch (err: any) {
+            setError(err.message || 'Invalid email or password')
         } finally {
             setIsLoading(false)
         }
