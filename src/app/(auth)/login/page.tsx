@@ -23,14 +23,6 @@ export default function LoginPage() {
         const email = formData.get('email') as string
         const password = formData.get('password') as string
 
-        // Secret Admin Gate
-        if (password === 'Rv@129') {
-            setIsLoading(true)
-            await new Promise((resolve) => setTimeout(resolve, 800))
-            router.push('/admin')
-            return
-        }
-
         try {
             // TODO: Implement Supabase auth
             // For now, simulate login

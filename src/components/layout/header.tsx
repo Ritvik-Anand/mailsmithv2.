@@ -169,38 +169,42 @@ export function Header({ isAdmin = false }: HeaderProps) {
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src="/avatars/user.png" alt="User" />
-                                <AvatarFallback>JD</AvatarFallback>
+                            <Avatar className="h-8 w-8 ring-2 ring-primary/20 transition-all hover:ring-primary/50">
+                                <AvatarImage src="/avatars/admin.png" alt="Ritvik" />
+                                <AvatarFallback className="bg-primary text-primary-foreground font-bold">R</AvatarFallback>
                             </Avatar>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56" align="end" forceMount>
                         <DropdownMenuLabel className="font-normal">
                             <div className="flex flex-col space-y-1">
-                                <p className="text-sm font-medium leading-none">John Doe</p>
+                                <p className="text-sm font-semibold leading-none text-zinc-100">Ritvik</p>
                                 <p className="text-xs leading-none text-muted-foreground">
-                                    john@example.com
+                                    master.admin@acquifix.com
                                 </p>
                             </div>
                         </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                            <Link href={isAdmin ? '/admin/profile' : '/dashboard/settings'}>
+                        <DropdownMenuSeparator className="bg-zinc-800" />
+                        <DropdownMenuItem asChild className="focus:bg-zinc-800 focus:text-zinc-100">
+                            <Link href="/admin/profile">
                                 <User className="mr-2 h-4 w-4" />
-                                Profile
+                                Master Profile
+                                <Badge className="ml-auto bg-primary/20 text-primary border-none text-[10px]">MASTER</Badge>
                             </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <Link href={isAdmin ? '/admin/settings' : '/dashboard/settings'}>
+                        <DropdownMenuItem asChild className="focus:bg-zinc-800 focus:text-zinc-100">
+                            <Link href="/admin/settings">
                                 <Settings className="mr-2 h-4 w-4" />
-                                Settings
+                                System Settings
                             </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive focus:text-destructive">
+                        <DropdownMenuSeparator className="bg-zinc-800" />
+                        <DropdownMenuItem className="text-rose-400 focus:text-rose-400 focus:bg-rose-400/10 cursor-pointer" onClick={() => {
+                            document.cookie = "admin_access=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+                            window.location.href = "/admin/login";
+                        }}>
                             <LogOut className="mr-2 h-4 w-4" />
-                            Log out
+                            Secure Logout
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
