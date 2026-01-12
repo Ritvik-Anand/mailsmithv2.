@@ -48,6 +48,7 @@ import {
     Camera
 } from 'lucide-react'
 import { AdminRole, AdminPermission, SystemAdmin } from '@/types'
+import { toast } from 'sonner'
 
 // Mock Admins
 const mockTeam: SystemAdmin[] = [
@@ -102,12 +103,27 @@ const PERMISSIONS: { id: AdminPermission; label: string; description: string }[]
 export default function AdminTeamPage() {
     const [searchQuery, setSearchQuery] = useState('')
     const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({})
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [isDeploying, setIsDeploying] = useState(false)
 
     // In a real app, this would be determined by the logged-in user's role
     const isMasterAdmin = true
 
     const toggleKeyVisibility = (id: string) => {
         setVisibleKeys(prev => ({ ...prev, [id]: !prev[id] }))
+    }
+
+    const handleDeploy = () => {
+        setIsDeploying(true)
+        setTimeout(() => {
+            setIsDeploying(false)
+            setIsDialogOpen(false)
+            toast.success('New system administrator deployed successfully')
+        }, 1500)
+    }
+
+    const handleCancel = () => {
+        setIsDialogOpen(false)
     }
 
     return (
@@ -120,7 +136,7 @@ export default function AdminTeamPage() {
                     </p>
                 </div>
                 {isMasterAdmin && (
-                    <Dialog>
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
                             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/10">
                                 <UserPlus className="mr-2 h-4 w-4" />
@@ -201,8 +217,26 @@ export default function AdminTeamPage() {
                             </div>
 
                             <DialogFooter>
-                                <Button variant="outline" className="border-zinc-800 hover:bg-zinc-800">Cancel</Button>
-                                <Button className="bg-zinc-100 text-zinc-950 hover:bg-white font-bold">Deploy Access</Button>
+                                <Button
+                                    variant="outline"
+                                    className="border-zinc-800 hover:bg-zinc-800"
+                                    onClick={handleCancel}
+                                    disabled={isDeploying}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    className="bg-zinc-100 text-zinc-950 hover:bg-white font-bold"
+                                    onClick={handleDeploy}
+                                    disabled={isDeploying}
+                                >
+                                    {isDeploying ? (
+                                        <>
+                                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                                            Deploying...
+                                        </>
+                                    ) : 'Deploy Access'}
+                                </Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
