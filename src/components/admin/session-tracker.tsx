@@ -26,8 +26,13 @@ export function SessionTracker() {
             if (lastActiveCookie) {
                 const lastActiveTime = parseInt(lastActiveCookie.split('=')[1])
                 const currentTime = Date.now()
+                const elapsed = currentTime - lastActiveTime
+                const remaining = Math.max(0, Math.floor((TIMEOUT_DURATION - elapsed) / 1000))
 
-                if (currentTime - lastActiveTime > TIMEOUT_DURATION) {
+                // Dispatch event for UI components (like Header) to listen to
+                window.dispatchEvent(new CustomEvent('admin_session_tick', { detail: { remaining } }))
+
+                if (elapsed > TIMEOUT_DURATION) {
                     handleLogout()
                 }
             }
@@ -44,8 +49,8 @@ export function SessionTracker() {
             window.addEventListener(event, resetTimer)
         })
 
-        // Check for timeout every 30 seconds
-        const intervalId = setInterval(checkSession, 30000)
+        // Check for timeout every second for smooth countdown
+        const intervalId = setInterval(checkSession, 1000)
 
         return () => {
             events.forEach(event => {
