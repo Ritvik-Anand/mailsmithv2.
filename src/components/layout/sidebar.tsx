@@ -115,7 +115,9 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             <ScrollArea className="flex-1 py-4">
                 <nav className="space-y-1 px-2">
                     {navItems.map((item) => {
-                        const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+                        const isActive = item.href === '/admin' || item.href === '/dashboard'
+                            ? pathname === item.href
+                            : pathname.startsWith(item.href)
                         return (
                             <Link
                                 key={item.href}

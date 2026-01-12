@@ -61,6 +61,7 @@ export interface SystemAdmin {
     role: AdminRole;
     permissions: AdminPermission[];
     access_key: string;
+    avatar_url: string | null;
     created_at: string;
     updated_at: string;
 }

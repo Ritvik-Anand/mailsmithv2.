@@ -33,15 +33,25 @@ import {
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
+    Avatar,
+    AvatarImage,
+    AvatarFallback
+} from '@/components/ui/avatar'
+import {
     Search,
+    Filter,
+    ArrowUpRight,
     MessageSquare,
     AlertCircle,
     CheckCircle,
     Clock,
+    MoreHorizontal,
     Send,
     Eye,
-    ExternalLink,
     UserCog,
+    Mail,
+    Phone,
+    Globe
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -376,23 +386,29 @@ export default function AdminSupportPage() {
                         </div>
 
                         {/* Messages */}
-                        <div className="flex-1 overflow-y-auto space-y-4 py-4">
+                        <div className="flex-1 overflow-y-auto space-y-6 py-6 px-1">
                             {selectedTicket.messages.map((msg) => (
                                 <div
                                     key={msg.id}
-                                    className={`flex ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'}`}
+                                    className={`flex items-start gap-3 ${msg.sender === 'admin' ? 'flex-row-reverse' : 'flex-row'}`}
                                 >
+                                    <Avatar className="h-8 w-8 border border-zinc-800 shrink-0 mt-1">
+                                        <AvatarImage src={msg.sender === 'admin' ? "https://github.com/ritvikanand.png" : ""} />
+                                        <AvatarFallback className="text-[10px] bg-zinc-800 text-zinc-400">
+                                            {msg.senderName.substring(0, 2).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
                                     <div
-                                        className={`max-w-[80%] rounded-lg p-4 ${msg.sender === 'admin'
-                                                ? 'bg-primary text-primary-foreground'
-                                                : 'bg-muted'
+                                        className={`max-w-[75%] rounded-2xl p-4 shadow-sm ${msg.sender === 'admin'
+                                            ? 'bg-primary text-primary-foreground rounded-tr-none'
+                                            : 'bg-zinc-800 text-zinc-100 rounded-tl-none border border-zinc-700'
                                             }`}
                                     >
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-sm font-medium">{msg.senderName}</span>
-                                            <span className="text-xs opacity-70">{msg.timestamp}</span>
+                                        <div className="flex items-center justify-between gap-4 mb-2">
+                                            <span className="text-xs font-black uppercase tracking-tighter opacity-90">{msg.senderName}</span>
+                                            <span className="text-[10px] opacity-60 font-mono">{msg.timestamp}</span>
                                         </div>
-                                        <p className="text-sm">{msg.message}</p>
+                                        <p className="text-sm leading-relaxed">{msg.message}</p>
                                     </div>
                                 </div>
                             ))}

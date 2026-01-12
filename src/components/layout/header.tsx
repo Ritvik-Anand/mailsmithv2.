@@ -46,6 +46,7 @@ const mockNotifications = [
         message: 'Thanks for reaching out! I would love to...',
         read: false,
         createdAt: '2 min ago',
+        href: '/admin/support'
     },
     {
         id: '2',
@@ -54,6 +55,7 @@ const mockNotifications = [
         message: 'Q1 Outreach campaign has finished sending',
         read: false,
         createdAt: '1 hour ago',
+        href: '/admin/notifications'
     },
 ]
 
@@ -102,9 +104,11 @@ export function Header({ isAdmin = false }: HeaderProps) {
                         </div>
                         <ScrollArea className="h-80">
                             {mockNotifications.map((notification) => (
-                                <div
+                                <Link
                                     key={notification.id}
-                                    className="flex flex-col gap-1 border-b px-4 py-3 last:border-0 hover:bg-muted/50"
+                                    href={notification.href}
+                                    onClick={() => setNotificationsOpen(false)}
+                                    className="flex flex-col gap-1 border-b px-4 py-3 last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
                                 >
                                     <div className="flex items-center justify-between">
                                         <span className="text-sm font-medium">{notification.title}</span>
@@ -113,14 +117,25 @@ export function Header({ isAdmin = false }: HeaderProps) {
                                     <p className="text-xs text-muted-foreground line-clamp-2">
                                         {notification.message}
                                     </p>
-                                </div>
+                                </Link>
                             ))}
                         </ScrollArea>
+                        <div className="p-2 border-t text-center">
+                            <Link
+                                href="/admin/notifications"
+                                className="text-[10px] text-zinc-500 hover:text-primary uppercase tracking-widest font-bold"
+                                onClick={() => setNotificationsOpen(false)}
+                            >
+                                View All Intelligence
+                            </Link>
+                        </div>
                     </PopoverContent>
                 </Popover>
 
-                <Button variant="ghost" size="icon" className="hidden md:flex">
-                    <HelpCircle className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
+                    <Link href={isAdmin ? "/admin/support" : "/dashboard/support"}>
+                        <HelpCircle className="h-5 w-5" />
+                    </Link>
                 </Button>
 
                 <DropdownMenu>

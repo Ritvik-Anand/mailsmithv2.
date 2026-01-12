@@ -25,6 +25,11 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import {
+    Avatar,
+    AvatarImage,
+    AvatarFallback
+} from '@/components/ui/avatar'
+import {
     Users,
     Shield,
     ShieldCheck,
@@ -39,7 +44,8 @@ import {
     UserPlus,
     Mail,
     RefreshCw,
-    Key
+    Key,
+    Camera
 } from 'lucide-react'
 import { AdminRole, AdminPermission, SystemAdmin } from '@/types'
 
@@ -53,6 +59,7 @@ const mockTeam: SystemAdmin[] = [
         role: 'master',
         permissions: ['manage_admins', 'manage_customers', 'manage_support', 'manage_system', 'view_financials', 'view_logs', 'send_broadcasts'],
         access_key: 'Rv@129',
+        avatar_url: 'https://github.com/ritvikanand.png',
         created_at: '2026-01-01',
         updated_at: '2026-01-12'
     },
@@ -64,6 +71,7 @@ const mockTeam: SystemAdmin[] = [
         role: 'admin',
         permissions: ['manage_customers', 'manage_support', 'send_broadcasts', 'view_logs'],
         access_key: 'MS-A82J-92',
+        avatar_url: null,
         created_at: '2026-01-05',
         updated_at: '2026-01-10'
     },
@@ -75,6 +83,7 @@ const mockTeam: SystemAdmin[] = [
         role: 'support',
         permissions: ['manage_support', 'view_logs'],
         access_key: 'MS-K91L-10',
+        avatar_url: null,
         created_at: '2026-01-08',
         updated_at: '2026-01-08'
     }
@@ -135,6 +144,15 @@ export default function AdminTeamPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="email" className="text-zinc-400">Email Address</Label>
                                         <Input id="email" type="email" placeholder="john@acquifix.com" className="bg-zinc-800 border-zinc-700" />
+                                    </div>
+                                    <div className="space-y-2 col-span-2">
+                                        <Label htmlFor="avatar" className="text-zinc-400">Avatar URL (Optional)</Label>
+                                        <div className="flex gap-2">
+                                            <Input id="avatar" placeholder="https://..." className="bg-zinc-800 border-zinc-700" />
+                                            <Button variant="outline" size="icon" className="border-zinc-800 shrink-0">
+                                                <Camera className="h-4 w-4 text-zinc-500" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -263,9 +281,17 @@ export default function AdminTeamPage() {
                             {mockTeam.map((admin) => (
                                 <TableRow key={admin.id} className="hover:bg-zinc-800/30 border-zinc-800 group transition-all">
                                     <TableCell>
-                                        <div className="flex flex-col">
-                                            <span className="font-bold text-zinc-100">{admin.full_name}</span>
-                                            <span className="text-xs text-zinc-500">{admin.email}</span>
+                                        <div className="flex items-center gap-3">
+                                            <Avatar className="h-9 w-9 border border-zinc-800">
+                                                <AvatarImage src={admin.avatar_url || ''} />
+                                                <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
+                                                    {admin.full_name.substring(0, 2).toUpperCase()}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-zinc-100">{admin.full_name}</span>
+                                                <span className="text-xs text-zinc-500">{admin.email}</span>
+                                            </div>
                                         </div>
                                     </TableCell>
                                     <TableCell>
