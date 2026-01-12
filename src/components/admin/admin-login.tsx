@@ -25,7 +25,10 @@ export function AdminLogin() {
         // Secure Admin Login with Email + System Key
         // Master Check: Ritvik
         if (email.toLowerCase() === 'ritvik@acquifix.com' && password === 'Rv@129') {
-            document.cookie = "admin_access=true; path=/; max-age=3600; samesite=lax"
+            const now = Date.now()
+            document.cookie = `admin_access=true; path=/; max-age=3600; samesite=lax`
+            document.cookie = `admin_last_active=${now}; path=/; max-age=3600; samesite=lax`
+
             await new Promise((resolve) => setTimeout(resolve, 800))
             window.location.reload()
             return
@@ -33,7 +36,10 @@ export function AdminLogin() {
 
         // Operational Check (Mock for demo)
         if (email.toLowerCase() === 'sarah.ops@acquifix.com' && password === 'MS-A82J-92') {
-            document.cookie = "admin_access=true; path=/; max-age=3600; samesite=lax"
+            const now = Date.now()
+            document.cookie = `admin_access=true; path=/; max-age=3600; samesite=lax`
+            document.cookie = `admin_last_active=${now}; path=/; max-age=3600; samesite=lax`
+
             await new Promise((resolve) => setTimeout(resolve, 800))
             window.location.reload()
             return

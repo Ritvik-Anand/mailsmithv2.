@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 import { AdminLogin } from '@/components/admin/admin-login'
+import { SessionTracker } from '@/components/admin/session-tracker'
 
 export default async function AdminLayout({
     children,
@@ -10,13 +11,18 @@ export default async function AdminLayout({
 }) {
     const cookieStore = await cookies()
     const isAdminAuthenticated = cookieStore.has('admin_access')
+    const lastActive = cookieStore.get('admin_last_active')?.value
 
-    if (!isAdminAuthenticated) {
+    const TIMEOUT_DURATION = 15 * 60 * 1000 // 15 minutes
+    const isSessionExpired = lastActive ? (Date.now() - parseInt(lastActive) > TIMEOUT_DURATION) : true
+
+    if (!isAdminAuthenticated || isSessionExpired) {
         return <AdminLogin />
     }
 
     return (
         <div className="flex h-screen overflow-hidden bg-background">
+            <SessionTracker />
             {/* Admin Sidebar */}
             <Sidebar isAdmin />
 
