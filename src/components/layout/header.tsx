@@ -180,7 +180,7 @@ export function Header({ isAdmin = false }: HeaderProps) {
                             <div className="flex flex-col space-y-1">
                                 <p className="text-sm font-semibold leading-none text-zinc-100">Ritvik</p>
                                 <p className="text-xs leading-none text-muted-foreground">
-                                    master.admin@acquifix.com
+                                    ritvik@acquifix.com
                                 </p>
                             </div>
                         </DropdownMenuLabel>

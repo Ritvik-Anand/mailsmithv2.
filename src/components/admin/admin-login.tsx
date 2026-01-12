@@ -24,7 +24,7 @@ export function AdminLogin() {
 
         // Secure Admin Login with Email + System Key
         // Master Check: Ritvik
-        if (email.toLowerCase() === 'master.admin@acquifix.com' && password === 'Rv@129') {
+        if (email.toLowerCase() === 'ritvik@acquifix.com' && password === 'Rv@129') {
             document.cookie = "admin_access=true; path=/; max-age=3600; samesite=lax"
             await new Promise((resolve) => setTimeout(resolve, 800))
             window.location.reload()

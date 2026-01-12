@@ -48,7 +48,7 @@ const mockTeam: SystemAdmin[] = [
     {
         id: '1',
         user_id: 'u1',
-        email: 'master.admin@acquifix.com',
+        email: 'ritvik@acquifix.com',
         full_name: 'Ritvik',
         role: 'master',
         permissions: ['manage_admins', 'manage_customers', 'manage_support', 'manage_system', 'view_financials', 'view_logs', 'send_broadcasts'],
