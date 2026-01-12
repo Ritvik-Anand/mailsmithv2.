@@ -22,7 +22,8 @@ import {
     ChevronRight,
     ChevronLeft,
     Building2,
-    Shield
+    Shield,
+    ArrowRight
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
