@@ -29,43 +29,74 @@ import {
     Command,
     ShieldCheck,
     Lock,
-    Clock
+    Clock,
+    Megaphone,
+    ArrowRight
 } from 'lucide-react'
 import { MobileSidebar } from './sidebar'
 import { cn } from '@/lib/utils'
+import { getNotifications, markNotificationAsRead } from '@/server/actions/notifications'
+import { Notification } from '@/types'
 
 interface HeaderProps {
     isAdmin?: boolean
 }
 
-const mockNotifications = [
-    {
-        id: '1',
-        type: 'reply',
-        title: 'New reply from John Doe',
-        message: 'Thanks for reaching out! I would love to...',
-        read: false,
-        createdAt: '2 min ago',
-        href: '/admin/support'
-    },
-    {
-        id: '2',
-        type: 'campaign',
-        title: 'Campaign completed',
-        message: 'Q1 Outreach campaign has finished sending',
-        read: false,
-        createdAt: '1 hour ago',
-        href: '/admin/notifications'
-    },
-]
+function timeAgo(date: string) {
+    const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000)
+    let interval = seconds / 31536000
+    if (interval > 1) return Math.floor(interval) + " years ago"
+    interval = seconds / 2592000
+    if (interval > 1) return Math.floor(interval) + " months ago"
+    interval = seconds / 86400
+    if (interval > 1) return Math.floor(interval) + " days ago"
+    interval = seconds / 3600
+    if (interval > 1) return Math.floor(interval) + " hours ago"
+    interval = seconds / 60
+    if (interval > 1) return Math.floor(interval) + " mins ago"
+    return "just now"
+}
 
 export function Header({ isAdmin = false }: HeaderProps) {
     const [notificationsOpen, setNotificationsOpen] = useState(false)
-    const unreadCount = mockNotifications.filter((n) => !n.read).length
+    const [notifications, setNotifications] = useState<Notification[]>([])
+
+    const fetchNotifications = async () => {
+        const data = await getNotifications()
+        setNotifications(data)
+    }
+
+    useEffect(() => {
+        fetchNotifications()
+        // In a real app, you'd set up a Supabase Realtime subscription here
+    }, [])
+
+    const unreadCount = notifications.filter((n) => !n.read).length
+
+    const handleMarkAsRead = async (id: string) => {
+        try {
+            await markNotificationAsRead(id)
+            setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+        } catch (error) {
+            console.error(error)
+        }
+    }
 
     const handleLogout = () => {
         document.cookie = "admin_access=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
         window.location.reload()
+    }
+
+    const handleMarkAllAsRead = async () => {
+        const unreadIds = notifications.filter(n => !n.read).map(n => n.id)
+        if (unreadIds.length === 0) return
+
+        try {
+            await Promise.all(unreadIds.map(id => markNotificationAsRead(id)))
+            setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+        } catch (error) {
+            console.error(error)
+        }
     }
 
     return (
@@ -98,35 +129,71 @@ export function Header({ isAdmin = false }: HeaderProps) {
                     <PopoverContent className="w-80 p-0" align="end">
                         <div className="flex items-center justify-between border-b px-4 py-2">
                             <h4 className="text-sm font-semibold">Notifications</h4>
-                            <Button variant="ghost" size="sm" className="text-xs">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs"
+                                onClick={handleMarkAllAsRead}
+                                disabled={unreadCount === 0}
+                            >
                                 Mark all as read
                             </Button>
                         </div>
                         <ScrollArea className="h-80">
-                            {mockNotifications.map((notification) => (
-                                <Link
-                                    key={notification.id}
-                                    href={notification.href}
-                                    onClick={() => setNotificationsOpen(false)}
-                                    className="flex flex-col gap-1 border-b px-4 py-3 last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium">{notification.title}</span>
-                                        <span className="text-xs text-muted-foreground">{notification.createdAt}</span>
+                            {notifications.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-40 text-center p-6">
+                                    <Bell className="h-8 w-8 text-zinc-800 mb-2" />
+                                    <p className="text-xs text-zinc-500 italic">No intelligence reports currently available.</p>
+                                </div>
+                            ) : (
+                                notifications.map((notification) => (
+                                    <div
+                                        key={notification.id}
+                                        onClick={() => {
+                                            if (!notification.read) handleMarkAsRead(notification.id)
+                                        }}
+                                        className={cn(
+                                            "flex flex-col gap-1 border-b px-4 py-3 last:border-0 hover:bg-muted/50 transition-all cursor-pointer relative",
+                                            !notification.read && "bg-primary/5 border-l-2 border-l-primary"
+                                        )}
+                                    >
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2">
+                                                {!!notification.metadata?.broadcast && (
+                                                    <Megaphone className="h-3 w-3 text-primary animate-pulse" />
+                                                )}
+                                                <span className={cn(
+                                                    "text-sm",
+                                                    !notification.read ? "font-bold text-zinc-100 italic" : "font-medium text-zinc-400"
+                                                )}>
+                                                    {notification.title}
+                                                </span>
+                                            </div>
+                                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                {timeAgo(notification.created_at)}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                                            {notification.message}
+                                        </p>
+
+                                        {!notification.read && (
+                                            <div className="absolute right-2 bottom-2">
+                                                <div className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]" />
+                                            </div>
+                                        )}
                                     </div>
-                                    <p className="text-xs text-muted-foreground line-clamp-2">
-                                        {notification.message}
-                                    </p>
-                                </Link>
-                            ))}
+                                ))
+                            )}
                         </ScrollArea>
                         <div className="p-2 border-t text-center">
                             <Link
-                                href="/admin/notifications"
-                                className="text-[10px] text-zinc-500 hover:text-primary uppercase tracking-widest font-bold"
+                                href={isAdmin ? "/admin/notifications" : "/dashboard/notifications"}
+                                className="text-[10px] text-zinc-500 hover:text-primary uppercase tracking-widest font-black flex items-center justify-center gap-1 group"
                                 onClick={() => setNotificationsOpen(false)}
                             >
-                                View All Intelligence
+                                View Global Intelligence
+                                <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </div>
                     </PopoverContent>

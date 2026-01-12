@@ -45,7 +45,6 @@ export async function deployBroadcast(title: string, message: string) {
     const supabase = await createClient()
 
     // Create the notification record
-    // Note: We assume a 'notifications' table exists matching our Type definition
     const { data, error } = await supabase
         .from('notifications')
         .insert([
@@ -69,5 +68,6 @@ export async function deployBroadcast(title: string, message: string) {
     }
 
     revalidatePath('/admin/notifications')
+    revalidatePath('/dashboard/notifications') // Also revalidate the customer feed
     return { success: true, data }
 }

@@ -41,6 +41,11 @@ const customerNavItems = [
         icon: Users,
     },
     {
+        title: 'Intelligence',
+        href: '/dashboard/notifications',
+        icon: Bell,
+    },
+    {
         title: 'Support',
         href: '/dashboard/support',
         icon: MessageSquare,
