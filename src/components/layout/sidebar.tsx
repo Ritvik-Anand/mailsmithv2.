@@ -17,6 +17,7 @@ import {
     Menu,
     ChevronLeft,
     Zap,
+    Shield,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -61,6 +62,11 @@ const adminNavItems = [
         title: 'Customers',
         href: '/admin/customers',
         icon: Users,
+    },
+    {
+        title: 'Internal Team',
+        href: '/admin/team',
+        icon: Shield,
     },
     {
         title: 'Support Queue',

@@ -42,11 +42,26 @@ export interface User {
     updated_at: string;
 }
 
+export type AdminRole = 'master' | 'admin' | 'support' | 'success' | 'analyst';
+
+export type AdminPermission =
+    | 'manage_admins'
+    | 'manage_customers'
+    | 'manage_support'
+    | 'manage_system'
+    | 'view_financials'
+    | 'view_logs'
+    | 'send_broadcasts';
+
 export interface SystemAdmin {
     id: string;
     user_id: string;
-    role: 'super_admin' | 'admin' | 'support';
+    email: string;
+    full_name: string;
+    role: AdminRole;
+    permissions: AdminPermission[];
     created_at: string;
+    updated_at: string;
 }
 
 // -----------------------------------------------------------------------------

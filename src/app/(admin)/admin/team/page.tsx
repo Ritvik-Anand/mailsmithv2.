@@ -1,0 +1,312 @@
+'use client'
+
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
+import {
+    Users,
+    Shield,
+    ShieldCheck,
+    ShieldAlert,
+    MoreHorizontal,
+    Plus,
+    Search,
+    Lock,
+    Eye,
+    Settings,
+    UserPlus,
+    Mail
+} from 'lucide-react'
+import { AdminRole, AdminPermission, SystemAdmin } from '@/types'
+
+// Mock Admins
+const mockTeam: SystemAdmin[] = [
+    {
+        id: '1',
+        user_id: 'u1',
+        email: 'master.admin@acquifix.com',
+        full_name: 'Ritvik',
+        role: 'master',
+        permissions: ['manage_admins', 'manage_customers', 'manage_support', 'manage_system', 'view_financials', 'view_logs', 'send_broadcasts'],
+        created_at: '2026-01-01',
+        updated_at: '2026-01-12'
+    },
+    {
+        id: '2',
+        user_id: 'u2',
+        email: 'sarah.ops@acquifix.com',
+        full_name: 'Sarah Chen',
+        role: 'admin',
+        permissions: ['manage_customers', 'manage_support', 'send_broadcasts', 'view_logs'],
+        created_at: '2026-01-05',
+        updated_at: '2026-01-10'
+    },
+    {
+        id: '3',
+        user_id: 'u3',
+        email: 'mike.support@acquifix.com',
+        full_name: 'Mike Ross',
+        role: 'support',
+        permissions: ['manage_support', 'view_logs'],
+        created_at: '2026-01-08',
+        updated_at: '2026-01-08'
+    }
+]
+
+const PERMISSIONS: { id: AdminPermission; label: string; description: string }[] = [
+    { id: 'manage_admins', label: 'Manage Admins', description: 'Can add/remove other admins and change roles' },
+    { id: 'manage_customers', label: 'Manage Customers', description: 'Edit customer plans, features, and settings' },
+    { id: 'manage_support', label: 'Handle Support', description: 'Access to support queue and live chat' },
+    { id: 'manage_system', label: 'System Configuration', description: 'Change platform-wide settings and integrations' },
+    { id: 'view_financials', label: 'View Financials', description: 'Access billing data and revenue reports' },
+    { id: 'view_logs', label: 'Audit Logs', description: 'View system activity and security logs' },
+    { id: 'send_broadcasts', label: 'Send Announcements', description: 'Broadcast notifications to all customers' },
+]
+
+export default function AdminTeamPage() {
+    const [searchQuery, setSearchQuery] = useState('')
+
+    // In a real app, this would be determined by the logged-in user's role
+    const isMasterAdmin = true
+
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-zinc-100 italic">Internal Command Team</h1>
+                    <p className="text-zinc-500">
+                        Manage administrative roles and granular system permissions
+                    </p>
+                </div>
+                {isMasterAdmin && (
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/10">
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Onboard New Admin
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100 sm:max-w-2xl">
+                            <DialogHeader>
+                                <DialogTitle className="text-xl">Onboard New System Admin</DialogTitle>
+                                <DialogDescription className="text-zinc-500">
+                                    Assign a starting role and define specific access permissions.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="grid gap-6 py-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="name" className="text-zinc-400">Full Name</Label>
+                                        <Input id="name" placeholder="John Doe" className="bg-zinc-800 border-zinc-700" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email" className="text-zinc-400">Email Address</Label>
+                                        <Input id="email" type="email" placeholder="john@acquifix.com" className="bg-zinc-800 border-zinc-700" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <Label className="text-zinc-400">Permission Set</Label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {PERMISSIONS.map((permission) => (
+                                            <div key={permission.id} className="flex items-start space-x-3 space-y-0 rounded-lg border border-zinc-800 p-3 hover:bg-zinc-800/50 transition-colors">
+                                                <Checkbox id={permission.id} className="mt-1 border-zinc-600 data-[state=checked]:bg-primary" />
+                                                <div className="grid gap-1.5 leading-none">
+                                                    <label
+                                                        htmlFor={permission.id}
+                                                        className="text-sm font-bold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                                    >
+                                                        {permission.label}
+                                                    </label>
+                                                    <p className="text-xs text-zinc-500">
+                                                        {permission.description}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <DialogFooter>
+                                <Button variant="outline" className="border-zinc-800 hover:bg-zinc-800">Cancel</Button>
+                                <Button className="bg-zinc-100 text-zinc-950 hover:bg-white font-bold">Deploy Access</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                )}
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-4">
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-zinc-500">Master Admins</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold flex items-center gap-2">
+                            <ShieldCheck className="h-5 w-5 text-primary" />
+                            1
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-zinc-500">Operational Admins</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">1</div>
+                    </CardContent>
+                </Card>
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-zinc-500">Support Staff</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">1</div>
+                    </CardContent>
+                </Card>
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-zinc-500">Active Sessions</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-emerald-500">3</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <Card className="bg-zinc-900/50 border-zinc-800">
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle>Team Hierarchy</CardTitle>
+                            <CardDescription>Review and adjust internal permissions per user</CardDescription>
+                        </div>
+                        <div className="relative w-64">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500" />
+                            <Input
+                                placeholder="Search team members..."
+                                className="pl-9 bg-zinc-800/50 border-zinc-700"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader className="border-zinc-800">
+                            <TableRow className="hover:bg-zinc-800/50 border-zinc-800">
+                                <TableHead className="text-zinc-400">Team Member</TableHead>
+                                <TableHead className="text-zinc-400">Authority Level</TableHead>
+                                <TableHead className="text-zinc-400">Permissions Granted</TableHead>
+                                <TableHead className="text-zinc-400">Last Active</TableHead>
+                                <TableHead className="text-right text-zinc-400">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {mockTeam.map((admin) => (
+                                <TableRow key={admin.id} className="hover:bg-zinc-800/30 border-zinc-800 group transition-all">
+                                    <TableCell>
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-zinc-100">{admin.full_name}</span>
+                                            <span className="text-xs text-zinc-500">{admin.email}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            {admin.role === 'master' ? (
+                                                <Badge className="bg-primary/20 text-primary border-primary/30 hover:bg-primary/30 px-2 py-1 uppercase text-[10px] font-black tracking-widest ring-1 ring-primary/50">
+                                                    <ShieldCheck className="mr-1 h-3 w-3" />
+                                                    Master Root
+                                                </Badge>
+                                            ) : admin.role === 'admin' ? (
+                                                <Badge variant="secondary" className="bg-zinc-800 text-zinc-300 uppercase text-[10px] tracking-wider">
+                                                    <Shield className="mr-1 h-3 w-3" />
+                                                    Operational
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="outline" className="border-zinc-800 text-zinc-500 uppercase text-[10px] tracking-wider">
+                                                    <Users className="mr-1 h-3 w-3" />
+                                                    Support
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-wrap gap-1.5 max-w-[400px]">
+                                            {admin.role === 'master' ? (
+                                                <span className="text-xs text-primary font-bold tracking-tight">FULL UNRESTRICTED ACCESS</span>
+                                            ) : (
+                                                admin.permissions.map(p => (
+                                                    <Badge key={p} variant="outline" className="bg-zinc-800/50 border-zinc-800 text-[9px] px-1.5 font-medium text-zinc-400">
+                                                        {p.replace('_', ' ')}
+                                                    </Badge>
+                                                ))
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm text-zinc-300">Today</span>
+                                            <span className="text-[10px] text-zinc-500">14:32 PM</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        {isMasterAdmin && admin.role !== 'master' && (
+                                            <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800">
+                                                <Settings className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                        {admin.role === 'master' && (
+                                            <Lock className="h-4 w-4 text-zinc-700 ml-auto" />
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
+            {isMasterAdmin && (
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                        <ShieldAlert className="h-6 w-6 text-primary" />
+                        <h2 className="text-lg font-bold text-zinc-100">Master Admin Security Control</h2>
+                    </div>
+                    <p className="text-sm text-zinc-400 max-w-2xl">
+                        As the Master Admin, any internal permissions you grant can be revoked instantly.
+                        You are the only user with the authority to create others at the "Operational" level.
+                    </p>
+                    <div className="flex gap-4">
+                        <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">View Security Logs</Button>
+                        <Button className="bg-primary text-primary-foreground">Lock All Sub-Accounts</Button>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
