@@ -1,11 +1,20 @@
+import { cookies } from 'next/headers'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
+import { AdminLogin } from '@/components/admin/admin-login'
 
-export default function AdminLayout({
+export default async function AdminLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
+    const cookieStore = await cookies()
+    const isAdminAuthenticated = cookieStore.has('admin_access')
+
+    if (!isAdminAuthenticated) {
+        return <AdminLogin />
+    }
+
     return (
         <div className="flex h-screen overflow-hidden bg-background">
             {/* Admin Sidebar */}
