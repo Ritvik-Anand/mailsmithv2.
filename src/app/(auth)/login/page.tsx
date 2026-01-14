@@ -44,6 +44,12 @@ export default function LoginPage() {
             // Redirect to dashboard
             router.push('/dashboard')
         } catch (err: any) {
+            console.error('AUTHENTICATION FAILURE:', err);
+            if (err instanceof Error) {
+                console.error('Error Message:', err.message);
+                console.error('Error Stack:', err.stack);
+            }
+            console.error('Error Object Details:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
             setError(err.message || 'Invalid email or password')
         } finally {
             setIsLoading(false)
