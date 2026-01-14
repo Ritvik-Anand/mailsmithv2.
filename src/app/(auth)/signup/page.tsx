@@ -75,8 +75,9 @@ export default function SignupPage() {
                 toast.error('Identity required: Full Name and Email must be provided.')
                 return
             }
-            if (!formData.email.includes('@')) {
-                toast.error('Invalid transmission address: Please check your email format.')
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(formData.email)) {
+                toast.error('Invalid transmission address: Please check your email format (e.g. name@domain.com).')
                 return
             }
             if (formData.password.length < 6) {
@@ -132,6 +133,10 @@ export default function SignupPage() {
 
         setIsLoading(true)
         try {
+            console.log('DEBUG: Supabase Client Config:', {
+                url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+                key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'EXISTS' : 'MISSING'
+            })
             console.log('Initiating Secure Signup Protocol...', {
                 email: formData.email,
                 hasPassword: !!formData.password
@@ -169,12 +174,12 @@ export default function SignupPage() {
             router.push('/dashboard')
         } catch (error: any) {
             // Maximum Detail Logging for Debugging "Load Error"
-            console.error('CRITICAL SIGNUP FAILURE:', {
-                message: error.message,
-                status: error.status,
-                code: error.code,
-                error
-            })
+            console.error('CRITICAL SIGNUP FAILURE:', error);
+            if (error instanceof Error) {
+                console.error('Error Message:', error.message);
+                console.error('Error Stack:', error.stack);
+            }
+            console.error('Error Object Details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
 
             // If the error message is generic, provide a more helpful context
             const userMessage = error.message && error.message !== 'Load Error'
