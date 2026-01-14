@@ -69,7 +69,7 @@ export default function SignupPage() {
     }
 
     const nextStep = () => {
-        // Validation for Step 1
+        // Validation for Step 1: Identity
         if (step === 1) {
             if (!formData.fullName.trim() || !formData.email.trim()) {
                 toast.error('Identity required: Full Name and Email must be provided.')
@@ -84,6 +84,35 @@ export default function SignupPage() {
                 return
             }
         }
+
+        // Validation for Step 2: Organization & Industry
+        if (step === 2) {
+            if (!formData.companyName.trim()) {
+                toast.error('Organization required: Company Designation must be provided.')
+                return
+            }
+            if (!formData.industry) {
+                toast.error('Sector required: Please select your Industry Sector.')
+                return
+            }
+        }
+
+        // Validation for Step 3: Scale
+        if (step === 3) {
+            if (!formData.teamSize || !formData.monthlyVolume) {
+                toast.error('Operational scale details required.')
+                return
+            }
+        }
+
+        // Validation for Step 4: Mission
+        if (step === 4) {
+            if (!formData.primaryGoal) {
+                toast.error('Mission Directive required: Select a primary target.')
+                return
+            }
+        }
+
         if (step < 5) setStep(prev => (prev + 1) as Step)
     }
 
@@ -94,15 +123,20 @@ export default function SignupPage() {
     const [isEmailSent, setIsEmailSent] = useState(false)
 
     const onSubmit = async () => {
-        // Final sanity check
-        if (!formData.fullName.trim() || !formData.email.trim() || !formData.password.trim()) {
-            toast.error('Authentication payload incomplete.')
+        // Final broad validation
+        if (!formData.fullName.trim() || !formData.email.trim() || !formData.industry) {
+            toast.error('Authentication payload incomplete. Please verify identity and industry.')
             setStep(1)
             return
         }
 
         setIsLoading(true)
         try {
+            console.log('Initiating Secure Signup Protocol...', {
+                email: formData.email,
+                hasPassword: !!formData.password
+            })
+
             const { data, error: signUpError } = await supabase.auth.signUp({
                 email: formData.email,
                 password: formData.password,
@@ -119,7 +153,10 @@ export default function SignupPage() {
                 }
             })
 
-            if (signUpError) throw signUpError
+            if (signUpError) {
+                console.error('Supabase Auth Error Signal:', signUpError)
+                throw signUpError
+            }
 
             if (data.user && !data.session) {
                 // Email confirmation is required
@@ -131,9 +168,20 @@ export default function SignupPage() {
             toast.success('System Provisioned. Welcome to MailSmith.')
             router.push('/dashboard')
         } catch (error: any) {
-            // Enhanced error reporting for "load error" issues
-            console.error('Signup Error:', error)
-            toast.error(error.message || 'Transmission failed: A load error occurred during provisioning.')
+            // Maximum Detail Logging for Debugging "Load Error"
+            console.error('CRITICAL SIGNUP FAILURE:', {
+                message: error.message,
+                status: error.status,
+                code: error.code,
+                error
+            })
+
+            // If the error message is generic, provide a more helpful context
+            const userMessage = error.message && error.message !== 'Load Error'
+                ? error.message
+                : 'Transmission failed: The authentication server is unreachable or returned a load error. Please check your connection.';
+
+            toast.error(userMessage)
         } finally {
             setIsLoading(false)
         }
