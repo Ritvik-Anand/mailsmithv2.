@@ -36,7 +36,9 @@ import {
 import { MobileSidebar } from './sidebar'
 import { cn } from '@/lib/utils'
 import { getNotifications, markNotificationAsRead } from '@/server/actions/notifications'
+import { createClient } from '@/lib/supabase/client'
 import { Notification } from '@/types'
+import { toast } from 'sonner'
 
 interface HeaderProps {
     isAdmin?: boolean
@@ -60,6 +62,7 @@ function timeAgo(date: string) {
 export function Header({ isAdmin = false }: HeaderProps) {
     const [notificationsOpen, setNotificationsOpen] = useState(false)
     const [notifications, setNotifications] = useState<Notification[]>([])
+    const [isLoading, setIsLoading] = useState(false)
 
     const fetchNotifications = async () => {
         const data = await getNotifications()
@@ -82,9 +85,27 @@ export function Header({ isAdmin = false }: HeaderProps) {
         }
     }
 
-    const handleLogout = () => {
-        document.cookie = "admin_access=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
-        window.location.reload()
+    const handleLogout = async () => {
+        setIsLoading(true)
+        try {
+            // 1. Handle Supabase Logout
+            const supabase = createClient()
+            await supabase.auth.signOut()
+
+            // 2. Clear Admin Cookie (if present)
+            document.cookie = "admin_access=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
+
+            // 3. Clear all potential Supabase cookies by refreshing
+            toast.success('Secure session terminated.')
+
+            // 4. Force hard redirect to home
+            window.location.href = '/'
+        } catch (error) {
+            console.error('Logout failed:', error)
+            window.location.reload()
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     const handleMarkAllAsRead = async () => {
