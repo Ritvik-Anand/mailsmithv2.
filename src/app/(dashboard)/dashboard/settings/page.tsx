@@ -115,7 +115,7 @@ export default function SettingsPage() {
 
             {/* Tabs */}
             <Tabs defaultValue="profile" className="space-y-6">
-                <TabsList className="grid w-full max-w-2xl grid-cols-5">
+                <TabsList className="grid w-full max-w-2xl grid-cols-4">
                     <TabsTrigger value="profile">
                         <User className="mr-2 h-4 w-4" />
                         Profile
@@ -127,10 +127,6 @@ export default function SettingsPage() {
                     <TabsTrigger value="notifications">
                         <Bell className="mr-2 h-4 w-4" />
                         Notifications
-                    </TabsTrigger>
-                    <TabsTrigger value="integrations">
-                        <LinkIcon className="mr-2 h-4 w-4" />
-                        Integrations
                     </TabsTrigger>
                     <TabsTrigger value="billing">
                         <CreditCard className="mr-2 h-4 w-4" />
@@ -411,40 +407,7 @@ export default function SettingsPage() {
                     </Card>
                 </TabsContent>
 
-                {/* Integrations Tab */}
-                <TabsContent value="integrations">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Instantly</CardTitle>
-                            <CardDescription>Connect your Instantly account for email campaigns</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex items-center gap-4 p-4 rounded-lg border bg-muted/50">
-                                <Mail className="h-10 w-10 text-blue-500" />
-                                <div className="flex-1">
-                                    <h4 className="font-medium">Instantly.ai</h4>
-                                    <p className="text-sm text-muted-foreground">
-                                        Email campaign automation
-                                    </p>
-                                </div>
-                                <Badge variant="outline" className="text-amber-500 border-amber-500">
-                                    Not Connected
-                                </Badge>
-                            </div>
-                            <div className="space-y-2 max-w-md">
-                                <Label htmlFor="instantly-key">API Key</Label>
-                                <Input id="instantly-key" type="password" placeholder="Enter your Instantly API key" />
-                                <p className="text-xs text-muted-foreground">
-                                    Find your API key in Instantly Settings → API
-                                </p>
-                            </div>
-                            <Button>
-                                <Key className="mr-2 h-4 w-4" />
-                                Connect Instantly
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+
 
                 {/* Billing Tab */}
                 <TabsContent value="billing">

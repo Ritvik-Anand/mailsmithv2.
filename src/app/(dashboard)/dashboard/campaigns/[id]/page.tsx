@@ -205,9 +205,8 @@ export default function CampaignDetailPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="text-lg font-semibold">Email Sequences</h3>
-                            <p className="text-sm text-muted-foreground">
-                                Edit your email sequence. Changes will sync to Instantly.
-                            </p>
+                            Edit your email sequence.
+
                         </div>
                         <Button variant="outline" size="sm">
                             <Plus className="mr-2 h-4 w-4" />

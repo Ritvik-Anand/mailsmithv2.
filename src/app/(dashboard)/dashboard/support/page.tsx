@@ -52,12 +52,7 @@ const mockFaqs = [
         answer: 'Icebreakers are AI-generated personalized opening lines for each lead. We analyze their LinkedIn profile and recent activity to craft a relevant, engaging first line. Use the {{icebreaker}} variable in your email templates.',
         category: 'features',
     },
-    {
-        id: '4',
-        question: 'How do I connect my Instantly account?',
-        answer: 'Go to Settings > Integrations > Instantly. Enter your Instantly API key and click "Connect". Your campaigns will sync automatically.',
-        category: 'integrations',
-    },
+
     {
         id: '5',
         question: 'What counts towards my plan limits?',

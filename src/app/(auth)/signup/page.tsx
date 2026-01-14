@@ -495,13 +495,13 @@ export default function SignupPage() {
                                             <div className="grid grid-cols-2 gap-6">
                                                 <div className="space-y-1">
                                                     <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-black">Lead Administrator</p>
-                                                    <p className="text-sm font-bold text-zinc-200">{formData.fullName || 'Ritvik Anand'}</p>
-                                                    <p className="text-[10px] text-zinc-500 font-mono italic">{formData.email || 'ritvik@acquifix.com'}</p>
+                                                    <p className="text-sm font-bold text-zinc-200">{formData.fullName || 'User Name'}</p>
+                                                    <p className="text-[10px] text-zinc-500 font-mono italic">{formData.email || 'user@company.com'}</p>
                                                 </div>
                                                 <div className="space-y-1 text-right">
                                                     <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-black">Organization</p>
-                                                    <p className="text-sm font-bold text-zinc-200 uppercase italic tracking-tighter">{formData.companyName || 'ACQUIFIX SYSTEMS'}</p>
-                                                    <p className="text-[10px] text-zinc-500 font-mono tracking-widest capitalize">{formData.industry || 'Tech / Infrastructure'}</p>
+                                                    <p className="text-sm font-bold text-zinc-200 uppercase italic tracking-tighter">{formData.companyName || 'ORGANIZATION'}</p>
+                                                    <p className="text-[10px] text-zinc-500 font-mono tracking-widest capitalize">{formData.industry || 'Industry Sector'}</p>
                                                 </div>
                                             </div>
 
