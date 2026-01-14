@@ -63,15 +63,27 @@ export function Header({ isAdmin = false }: HeaderProps) {
     const [notificationsOpen, setNotificationsOpen] = useState(false)
     const [notifications, setNotifications] = useState<Notification[]>([])
     const [isLoading, setIsLoading] = useState(false)
+    const [user, setUser] = useState<{ email?: string; name?: string } | null>(null)
 
     const fetchNotifications = async () => {
         const data = await getNotifications()
         setNotifications(data)
     }
 
+    const fetchUser = async () => {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+            setUser({
+                email: user.email,
+                name: user.user_metadata?.full_name || user.email?.split('@')[0]
+            })
+        }
+    }
+
     useEffect(() => {
         fetchNotifications()
-        // In a real app, you'd set up a Supabase Realtime subscription here
+        fetchUser()
     }, [])
 
     const unreadCount = notifications.filter((n) => !n.read).length
@@ -230,8 +242,9 @@ export function Header({ isAdmin = false }: HeaderProps) {
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                             <Avatar className="h-8 w-8 border border-zinc-800">
-                                <AvatarImage src="https://github.com/ritvikanand.png" alt="Ritvik" />
-                                <AvatarFallback className="bg-zinc-800 text-zinc-400">RA</AvatarFallback>
+                                <AvatarFallback className="bg-zinc-800 text-zinc-400 uppercase">
+                                    {user?.name?.substring(0, 2) || (isAdmin ? 'RA' : 'U')}
+                                </AvatarFallback>
                             </Avatar>
                         </Button>
                     </DropdownMenuTrigger>
@@ -239,22 +252,22 @@ export function Header({ isAdmin = false }: HeaderProps) {
                         <DropdownMenuLabel className="font-normal">
                             <div className="flex flex-col space-y-1">
                                 <p className="text-sm font-semibold leading-none text-zinc-100 italic">
-                                    {isAdmin ? 'Ritvik (Master Root)' : 'Ritvik'}
+                                    {isAdmin ? `${user?.name || 'Ritvik'} (Master Root)` : (user?.name || 'Authenticated User')}
                                 </p>
                                 <p className="text-[10px] leading-none text-zinc-500 font-mono">
-                                    ritvik@acquifix.com
+                                    {user?.email || 'session@node.alpha'}
                                 </p>
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator className="bg-zinc-800" />
                         <DropdownMenuItem asChild className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 cursor-pointer">
-                            <Link href="/admin/team" className="flex items-center w-full">
+                            <Link href={isAdmin ? "/admin/team" : "/dashboard/settings"} className="flex items-center w-full">
                                 <User className="mr-2 h-4 w-4" />
-                                <span>System Profile</span>
+                                <span>{isAdmin ? 'System Profile' : 'Project Profile'}</span>
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 cursor-pointer">
-                            <Link href="/admin/settings" className="flex items-center w-full">
+                            <Link href={isAdmin ? "/admin/settings" : "/dashboard/settings"} className="flex items-center w-full">
                                 <Settings className="mr-2 h-4 w-4" />
                                 <span>Preferences</span>
                             </Link>
@@ -273,3 +286,4 @@ export function Header({ isAdmin = false }: HeaderProps) {
         </header>
     )
 }
+
