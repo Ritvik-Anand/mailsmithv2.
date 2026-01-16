@@ -160,12 +160,12 @@ export default function AdminTeamPage() {
         startTransition(async () => {
             try {
                 await createAdmin({
-                    full_name: formData.name,
-                    email: formData.email,
+                    full_name: formData.name.trim(),
+                    email: formData.email.trim().toLowerCase(),
                     role: formData.role,
                     permissions: formData.permissions,
-                    access_key: accessKey,
-                    avatar_url: formData.avatar_url || null
+                    access_key: accessKey.trim(),
+                    avatar_url: formData.avatar_url?.trim() || null
                 })
 
                 toast.success('New system administrator deployed successfully')

@@ -21,8 +21,8 @@ export function AdminLogin() {
         setError('')
 
         const formData = new FormData(event.currentTarget)
-        const email = formData.get('email') as string
-        const password = formData.get('password') as string
+        const email = (formData.get('email') as string).trim()
+        const password = (formData.get('password') as string).trim()
 
         try {
             const result = await validateAdminCredentials(email, password)

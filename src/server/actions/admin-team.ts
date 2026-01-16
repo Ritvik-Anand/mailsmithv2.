@@ -43,6 +43,8 @@ export async function createAdmin(adminData: {
         .insert([
             {
                 ...adminData,
+                email: adminData.email.trim().toLowerCase(),
+                access_key: adminData.access_key.trim(),
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             }
@@ -88,11 +90,16 @@ export async function validateAdminCredentials(email: string, accessKey: string)
     const { data, error } = await supabase
         .from('system_admins')
         .select('*')
-        .eq('email', email.toLowerCase())
-        .eq('access_key', accessKey)
+        .eq('email', email.trim().toLowerCase())
+        .eq('access_key', accessKey.trim())
         .single()
 
     if (error || !data) {
+        console.error('Admin authentication failed:', {
+            error: error?.message,
+            email: email.trim().toLowerCase(),
+            code: error?.code
+        })
         return { success: false, error: 'Invalid credentials or unauthorized access' }
     }
 
