@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { validateAdminCredentials } from '@/server/actions/admin-team'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,28 +24,31 @@ export function AdminLogin() {
         const email = formData.get('email') as string
         const password = formData.get('password') as string
 
-        // Secure Admin Login with Email + System Key
-        // Master Check: Ritvik
-        if (email.toLowerCase() === 'ritvik@acquifix.com' && password === 'Rv@129') {
-            document.cookie = `admin_access=true; path=/; max-age=259200; samesite=lax`
+        try {
+            const result = await validateAdminCredentials(email, password)
 
-            await new Promise((resolve) => setTimeout(resolve, 800))
-            window.location.reload()
-            return
+            if (result.success) {
+                // Set the admin access cookie
+                document.cookie = `admin_access=true; path=/; max-age=259200; samesite=lax`
+
+                // Also store specific admin info if needed
+                if (result.admin) {
+                    document.cookie = `admin_role=${result.admin.role}; path=/; max-age=259200; samesite=lax`
+                    document.cookie = `admin_name=${encodeURIComponent(result.admin.full_name)}; path=/; max-age=259200; samesite=lax`
+                    document.cookie = `admin_email=${encodeURIComponent(result.admin.email)}; path=/; max-age=259200; samesite=lax`
+                }
+
+                await new Promise((resolve) => setTimeout(resolve, 800))
+                window.location.reload()
+            } else {
+                setError(result.error || 'Invalid credentials or unauthorized access')
+            }
+        } catch (err: any) {
+            setError('System authentication failure. Please try again later.')
+            console.error(err)
+        } finally {
+            setIsLoading(false)
         }
-
-        // Operational Check (Mock for demo)
-        if (email.toLowerCase() === 'sarah.ops@acquifix.com' && password === 'MS-A82J-92') {
-            document.cookie = `admin_access=true; path=/; max-age=259200; samesite=lax`
-
-            await new Promise((resolve) => setTimeout(resolve, 800))
-            window.location.reload()
-            return
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        setError('Invalid credentials or unauthorized access')
-        setIsLoading(false)
     }
 
     return (

@@ -71,6 +71,23 @@ export function Header({ isAdmin = false }: HeaderProps) {
     }
 
     const fetchUser = async () => {
+        // If we are in admin mode, check for admin session cookies first
+        if (isAdmin) {
+            const cookies = document.cookie.split('; ')
+            const adminName = cookies.find(c => c.startsWith('admin_name='))?.split('=')[1]
+            const adminRole = cookies.find(c => c.startsWith('admin_role='))?.split('=')[1]
+            const adminEmail = cookies.find(c => c.startsWith('admin_email='))?.split('=')[1] // We should add this too
+
+            if (adminName) {
+                setUser({
+                    name: decodeURIComponent(adminName),
+                    role: adminRole as any,
+                    email: adminEmail ? decodeURIComponent(adminEmail) : 'admin@acquifix.com'
+                } as any)
+                return
+            }
+        }
+
         const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {

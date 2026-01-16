@@ -48,6 +48,8 @@ import {
     Camera
 } from 'lucide-react'
 import { AdminRole, AdminPermission, SystemAdmin } from '@/types'
+import { getAdminTeam, createAdmin, revokeAdminAccess } from '@/server/actions/admin-team'
+import { useEffect, useTransition } from 'react'
 import { toast } from 'sonner'
 
 // Mock Admins
@@ -101,10 +103,46 @@ const PERMISSIONS: { id: AdminPermission; label: string; description: string }[]
 ]
 
 export default function AdminTeamPage() {
+    const [team, setTeam] = useState<SystemAdmin[]>([])
+    const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
     const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({})
     const [isDialogOpen, setIsDialogOpen] = useState(false)
-    const [isDeploying, setIsDeploying] = useState(false)
+    const [isPending, startTransition] = useTransition()
+
+    // Form states
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        role: 'admin' as AdminRole,
+        avatar_url: '',
+        permissions: [] as AdminPermission[]
+    })
+    const [accessKey, setAccessKey] = useState('')
+
+    const fetchTeam = async () => {
+        setIsLoading(true)
+        try {
+            const data = await getAdminTeam()
+            setTeam(data)
+        } catch (error) {
+            console.error(error)
+            toast.error('Failed to load team data')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchTeam()
+    }, [])
+
+    useEffect(() => {
+        if (isDialogOpen) {
+            const newKey = `MS-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(10).substring(2, 4)}`
+            setAccessKey(newKey)
+        }
+    }, [isDialogOpen])
 
     // In a real app, this would be determined by the logged-in user's role
     const isMasterAdmin = true
@@ -114,17 +152,69 @@ export default function AdminTeamPage() {
     }
 
     const handleDeploy = () => {
-        setIsDeploying(true)
-        setTimeout(() => {
-            setIsDeploying(false)
-            setIsDialogOpen(false)
-            toast.success('New system administrator deployed successfully')
-        }, 1500)
+        if (!formData.name || !formData.email) {
+            toast.error('Please fill in all required fields')
+            return
+        }
+
+        startTransition(async () => {
+            try {
+                await createAdmin({
+                    full_name: formData.name,
+                    email: formData.email,
+                    role: formData.role,
+                    permissions: formData.permissions,
+                    access_key: accessKey,
+                    avatar_url: formData.avatar_url || null
+                })
+
+                toast.success('New system administrator deployed successfully')
+                setIsDialogOpen(false)
+                fetchTeam()
+
+                // Reset form
+                setFormData({
+                    name: '',
+                    email: '',
+                    role: 'admin',
+                    avatar_url: '',
+                    permissions: []
+                })
+            } catch (error: any) {
+                toast.error(error.message || 'Deployment failed')
+            }
+        })
+    }
+
+    const handleRevoke = async (id: string) => {
+        if (!confirm('Are you sure you want to revoke this administrator\'s access?')) return
+
+        try {
+            await revokeAdminAccess(id)
+            toast.success('Administrator access revoked')
+            fetchTeam()
+        } catch (error: any) {
+            toast.error(error.message || 'Recall failed')
+        }
+    }
+
+    const togglePermission = (perm: AdminPermission) => {
+        setFormData(prev => ({
+            ...prev,
+            permissions: prev.permissions.includes(perm)
+                ? prev.permissions.filter(p => p !== perm)
+                : [...prev.permissions, perm]
+        }))
     }
 
     const handleCancel = () => {
         setIsDialogOpen(false)
     }
+
+    const filteredTeam = team.filter(admin =>
+        admin.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        admin.email.toLowerCase().includes(searchQuery.toLowerCase())
+    )
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -155,16 +245,35 @@ export default function AdminTeamPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="name" className="text-zinc-400">Full Name</Label>
-                                        <Input id="name" placeholder="John Doe" className="bg-zinc-800 border-zinc-700" />
+                                        <Input
+                                            id="name"
+                                            placeholder="John Doe"
+                                            className="bg-zinc-800 border-zinc-700"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="email" className="text-zinc-400">Email Address</Label>
-                                        <Input id="email" type="email" placeholder="john@acquifix.com" className="bg-zinc-800 border-zinc-700" />
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            placeholder="john@acquifix.com"
+                                            className="bg-zinc-800 border-zinc-700"
+                                            value={formData.email}
+                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                        />
                                     </div>
                                     <div className="space-y-2 col-span-2">
                                         <Label htmlFor="avatar" className="text-zinc-400">Avatar URL (Optional)</Label>
                                         <div className="flex gap-2">
-                                            <Input id="avatar" placeholder="https://..." className="bg-zinc-800 border-zinc-700" />
+                                            <Input
+                                                id="avatar"
+                                                placeholder="https://..."
+                                                className="bg-zinc-800 border-zinc-700"
+                                                value={formData.avatar_url}
+                                                onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
+                                            />
                                             <Button variant="outline" size="icon" className="border-zinc-800 shrink-0">
                                                 <Camera className="h-4 w-4 text-zinc-500" />
                                             </Button>
@@ -182,7 +291,7 @@ export default function AdminTeamPage() {
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <code className="flex-1 bg-zinc-900 px-4 py-2 rounded-lg border border-zinc-800 text-emerald-400 font-mono text-sm tracking-widest">
-                                            MS-{Math.random().toString(36).substring(2, 6).toUpperCase()}-{Math.random().toString(10).substring(2, 4)}
+                                            {accessKey}
                                         </code>
                                         <Button variant="outline" size="icon" className="border-zinc-800 h-9 w-9">
                                             <RefreshCw className="h-4 w-4 text-zinc-500" />
@@ -198,7 +307,12 @@ export default function AdminTeamPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {PERMISSIONS.map((permission) => (
                                             <div key={permission.id} className="flex items-start space-x-3 space-y-0 rounded-lg border border-zinc-800 p-3 hover:bg-zinc-800/50 transition-colors">
-                                                <Checkbox id={permission.id} className="mt-1 border-zinc-600 data-[state=checked]:bg-primary" />
+                                                <Checkbox
+                                                    id={permission.id}
+                                                    className="mt-1 border-zinc-600 data-[state=checked]:bg-primary"
+                                                    checked={formData.permissions.includes(permission.id)}
+                                                    onCheckedChange={() => togglePermission(permission.id)}
+                                                />
                                                 <div className="grid gap-1.5 leading-none">
                                                     <label
                                                         htmlFor={permission.id}
@@ -221,16 +335,16 @@ export default function AdminTeamPage() {
                                     variant="outline"
                                     className="border-zinc-800 hover:bg-zinc-800"
                                     onClick={handleCancel}
-                                    disabled={isDeploying}
+                                    disabled={isPending}
                                 >
                                     Cancel
                                 </Button>
                                 <Button
                                     className="bg-zinc-100 text-zinc-950 hover:bg-white font-bold"
                                     onClick={handleDeploy}
-                                    disabled={isDeploying}
+                                    disabled={isPending}
                                 >
-                                    {isDeploying ? (
+                                    {isPending ? (
                                         <>
                                             <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                                             Deploying...
@@ -251,7 +365,7 @@ export default function AdminTeamPage() {
                     <CardContent>
                         <div className="text-2xl font-bold flex items-center gap-2">
                             <ShieldCheck className="h-5 w-5 text-primary" />
-                            1
+                            {team.filter(a => a.role === 'master').length}
                         </div>
                     </CardContent>
                 </Card>
@@ -260,7 +374,9 @@ export default function AdminTeamPage() {
                         <CardTitle className="text-sm font-medium text-zinc-500">Operational Admins</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">1</div>
+                        <div className="text-2xl font-bold">
+                            {team.filter(a => a.role === 'admin').length}
+                        </div>
                     </CardContent>
                 </Card>
                 <Card className="bg-zinc-900/50 border-zinc-800">
@@ -268,15 +384,19 @@ export default function AdminTeamPage() {
                         <CardTitle className="text-sm font-medium text-zinc-500">Support Staff</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">1</div>
+                        <div className="text-2xl font-bold">
+                            {team.filter(a => a.role === 'support').length}
+                        </div>
                     </CardContent>
                 </Card>
                 <Card className="bg-zinc-900/50 border-zinc-800">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-zinc-500">Active Sessions</CardTitle>
+                        <CardTitle className="text-sm font-medium text-zinc-500">Total Force</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-emerald-500">3</div>
+                        <div className="text-2xl font-bold text-emerald-500">
+                            {team.length}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -312,107 +432,117 @@ export default function AdminTeamPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {mockTeam.map((admin) => (
-                                <TableRow key={admin.id} className="hover:bg-zinc-800/30 border-zinc-800 group transition-all">
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="h-9 w-9 border border-zinc-800">
-                                                <AvatarImage src={admin.avatar_url || ''} />
-                                                <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
-                                                    {admin.full_name.substring(0, 2).toUpperCase()}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-zinc-100">{admin.full_name}</span>
-                                                <span className="text-xs text-zinc-500">{admin.email}</span>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            {admin.role === 'master' ? (
-                                                <Badge className="bg-primary/20 text-primary border-primary/30 hover:bg-primary/30 px-2 py-1 uppercase text-[10px] font-black tracking-widest ring-1 ring-primary/50">
-                                                    <ShieldCheck className="mr-1 h-3 w-3" />
-                                                    Master Root
-                                                </Badge>
-                                            ) : admin.role === 'admin' ? (
-                                                <Badge variant="secondary" className="bg-zinc-800 text-zinc-300 uppercase text-[10px] tracking-wider">
-                                                    <Shield className="mr-1 h-3 w-3" />
-                                                    Operational
-                                                </Badge>
-                                            ) : (
-                                                <Badge variant="outline" className="border-zinc-800 text-zinc-500 uppercase text-[10px] tracking-wider">
-                                                    <Users className="mr-1 h-3 w-3" />
-                                                    Support
-                                                </Badge>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        {isMasterAdmin ? (
-                                            <div className="flex items-center gap-2">
-                                                <code className="text-[10px] font-mono bg-zinc-950 px-2 py-1 rounded border border-zinc-800/50 text-emerald-500/80">
-                                                    {visibleKeys[admin.id] ? admin.access_key : '••••••••••••'}
-                                                </code>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 text-zinc-600 hover:text-zinc-300"
-                                                    onClick={() => toggleKeyVisibility(admin.id)}
-                                                >
-                                                    {visibleKeys[admin.id] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                                                </Button>
-                                                {admin.role !== 'master' && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 text-zinc-600 hover:text-primary"
-                                                        title="Regenerate Key"
-                                                    >
-                                                        <RefreshCw className="h-3.5 w-3.5" />
-                                                    </Button>
-                                                )}
+                            {filteredTeam.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-24 text-center text-zinc-500">
+                                        {isLoading ? (
+                                            <div className="flex items-center justify-center gap-2">
+                                                <RefreshCw className="h-4 w-4 animate-spin" />
+                                                Scanning sector...
                                             </div>
                                         ) : (
-                                            <span className="text-xs text-zinc-700 italic">Access Restricted</span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-wrap gap-1.5 max-w-[250px]">
-                                            {admin.role === 'master' ? (
-                                                <span className="text-[10px] text-primary font-bold tracking-tight">FULL ACCESS</span>
-                                            ) : (
-                                                admin.permissions.slice(0, 3).map(p => (
-                                                    <Badge key={p} variant="outline" className="bg-zinc-800/50 border-zinc-800 text-[9px] px-1.5 font-medium text-zinc-400">
-                                                        {p.replace('_', ' ')}
-                                                    </Badge>
-                                                ))
-                                            )}
-                                            {admin.permissions.length > 3 && (
-                                                <Badge variant="outline" className="bg-zinc-800/50 border-zinc-800 text-[9px] px-1.5 text-zinc-500">
-                                                    +{admin.permissions.length - 3}
-                                                </Badge>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col">
-                                            <span className="text-sm text-zinc-300">Today</span>
-                                            <span className="text-[10px] text-zinc-500">14:32 PM</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {isMasterAdmin && admin.role !== 'master' && (
-                                            <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800">
-                                                <Settings className="h-4 w-4" />
-                                            </Button>
-                                        )}
-                                        {admin.role === 'master' && (
-                                            <Lock className="h-4 w-4 text-zinc-700 ml-auto" />
+                                            'No team members found in this sector.'
                                         )}
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            ) : (
+                                filteredTeam.map((admin) => (
+                                    <TableRow key={admin.id} className="hover:bg-zinc-800/30 border-zinc-800 group transition-all">
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-9 w-9 border border-zinc-800">
+                                                    <AvatarImage src={admin.avatar_url || ''} />
+                                                    <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs text-center leading-9">
+                                                        {admin.full_name?.substring(0, 2).toUpperCase() || '??'}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-zinc-100">{admin.full_name}</span>
+                                                    <span className="text-xs text-zinc-500">{admin.email}</span>
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                {admin.role === 'master' ? (
+                                                    <Badge className="bg-primary/20 text-primary border-primary/30 hover:bg-primary/30 px-2 py-1 uppercase text-[10px] font-black tracking-widest ring-1 ring-primary/50">
+                                                        <ShieldCheck className="mr-1 h-3 w-3" />
+                                                        Master Root
+                                                    </Badge>
+                                                ) : admin.role === 'admin' ? (
+                                                    <Badge variant="secondary" className="bg-zinc-800 text-zinc-300 uppercase text-[10px] tracking-wider">
+                                                        <Shield className="mr-1 h-3 w-3" />
+                                                        Operational
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="border-zinc-800 text-zinc-500 uppercase text-[10px] tracking-wider">
+                                                        <Users className="mr-1 h-3 w-3" />
+                                                        {admin.role}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            {isMasterAdmin ? (
+                                                <div className="flex items-center gap-2">
+                                                    <code className="text-[10px] font-mono bg-zinc-950 px-2 py-1 rounded border border-zinc-800/50 text-emerald-500/80">
+                                                        {visibleKeys[admin.id] ? admin.access_key : '••••••••••••'}
+                                                    </code>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 text-zinc-600 hover:text-zinc-300"
+                                                        onClick={() => toggleKeyVisibility(admin.id)}
+                                                    >
+                                                        {visibleKeys[admin.id] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-zinc-700 italic">Access Restricted</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-wrap gap-1.5 max-w-[250px]">
+                                                {admin.role === 'master' ? (
+                                                    <span className="text-[10px] text-primary font-bold tracking-tight">FULL ACCESS</span>
+                                                ) : (
+                                                    admin.permissions?.slice(0, 3).map(p => (
+                                                        <Badge key={p} variant="outline" className="bg-zinc-800/50 border-zinc-800 text-[9px] px-1.5 font-medium text-zinc-400">
+                                                            {p.replace('_', ' ')}
+                                                        </Badge>
+                                                    ))
+                                                )}
+                                                {admin.permissions?.length > 3 && (
+                                                    <Badge variant="outline" className="bg-zinc-800/50 border-zinc-800 text-[9px] px-1.5 text-zinc-500">
+                                                        +{admin.permissions.length - 3}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm text-zinc-300">{new Date(admin.created_at).toLocaleDateString()}</span>
+                                                <span className="text-[10px] text-zinc-500">{new Date(admin.created_at).toLocaleTimeString()}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            {isMasterAdmin && admin.role !== 'master' && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-zinc-500 hover:text-rose-500 hover:bg-rose-500/10"
+                                                    onClick={() => handleRevoke(admin.id)}
+                                                >
+                                                    <ShieldAlert className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                            {admin.role === 'master' && (
+                                                <Lock className="h-4 w-4 text-zinc-700 ml-auto" />
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>
