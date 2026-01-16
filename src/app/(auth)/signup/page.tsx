@@ -195,12 +195,11 @@ export default function SignupPage() {
     const progressValue = (step / 5) * 100
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-4 relative overflow-hidden">
-            {/* Command Center Ambient Effects */}
+        <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+            {/* Minimal Ambient Effects */}
             <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] animate-pulse" />
-                <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px]" />
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-50" />
+                <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]" />
+                <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]" />
             </div>
 
             <div className="w-full max-w-2xl relative">
@@ -208,17 +207,17 @@ export default function SignupPage() {
                 <div className="mb-8 space-y-4">
                     <div className="flex items-center justify-between px-2">
                         <div className="flex items-center gap-2">
-                            <div className="bg-primary p-1.5 rounded-lg shadow-lg shadow-primary/20">
+                            <div className="bg-primary p-1.5 rounded-lg">
                                 <Zap className="h-4 w-4 text-primary-foreground" />
                             </div>
-                            <span className="font-black tracking-tighter text-zinc-100 uppercase italic">Onboarding Sequence</span>
+                            <span className="font-bold text-foreground">Get Started</span>
                         </div>
-                        <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Step {step} of 5</span>
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Step {step} of 5</span>
                     </div>
-                    <Progress value={progressValue} className="h-1 bg-zinc-900" />
+                    <Progress value={progressValue} className="h-1" />
                 </div>
 
-                <Card className="bg-zinc-900/50 border-zinc-800/50 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+                <Card className="bg-card/50 backdrop-blur-xl border-border shadow-2xl relative overflow-hidden">
                     {/* Visual Flairs */}
                     <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
                         <Shield className="h-24 w-24 text-primary" />
@@ -234,32 +233,32 @@ export default function SignupPage() {
                             <>
                                 {step === 1 && (
                                     <>
-                                        <CardTitle className="text-2xl font-black text-zinc-100 italic uppercase tracking-tight">Identity Authentication</CardTitle>
-                                        <CardDescription className="text-zinc-500">Initialize your administrative access to the platform.</CardDescription>
+                                        <CardTitle className="text-2xl font-bold text-foreground">Account Details</CardTitle>
+                                        <CardDescription>Initialize your access to the platform.</CardDescription>
                                     </>
                                 )}
                                 {step === 2 && (
                                     <>
-                                        <CardTitle className="text-2xl font-black text-zinc-100 italic uppercase tracking-tight">Organization Profile</CardTitle>
-                                        <CardDescription className="text-zinc-500">Connect your company infrastructure to the MailSmith network.</CardDescription>
+                                        <CardTitle className="text-2xl font-bold text-foreground">Organization Profile</CardTitle>
+                                        <CardDescription>Connect your company to the MailSmith network.</CardDescription>
                                     </>
                                 )}
                                 {step === 3 && (
                                     <>
-                                        <CardTitle className="text-2xl font-black text-zinc-100 italic uppercase tracking-tight">Operational Scale</CardTitle>
-                                        <CardDescription className="text-zinc-500">Define your resource requirements and engagement throughput.</CardDescription>
+                                        <CardTitle className="text-2xl font-bold text-foreground">Operational Scale</CardTitle>
+                                        <CardDescription>Define your resource requirements and engagement volume.</CardDescription>
                                     </>
                                 )}
                                 {step === 4 && (
                                     <>
-                                        <CardTitle className="text-2xl font-black text-zinc-100 italic uppercase tracking-tight">Mission Objectives</CardTitle>
-                                        <CardDescription className="text-zinc-500">What are the primary targets for your outreach campaigns?</CardDescription>
+                                        <CardTitle className="text-2xl font-bold text-foreground">Campaign Goals</CardTitle>
+                                        <CardDescription>What are the primary targets for your outreach?</CardDescription>
                                     </>
                                 )}
                                 {step === 5 && (
                                     <>
-                                        <CardTitle className="text-2xl font-black text-zinc-100 italic uppercase tracking-tight">Deployment Ready</CardTitle>
-                                        <CardDescription className="text-zinc-500">Review your configuration before initializing the dashboard.</CardDescription>
+                                        <CardTitle className="text-2xl font-bold text-foreground">Review & Confirm</CardTitle>
+                                        <CardDescription>Verify your configuration before starting.</CardDescription>
                                     </>
                                 )}
                             </>
@@ -282,10 +281,10 @@ export default function SignupPage() {
                                         Please click the link in the email to activate your account and initialize your administrative dashboard.
                                     </p>
                                     <div className="flex flex-col gap-2 max-w-xs mx-auto pt-4">
-                                        <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground font-black italic uppercase tracking-tighter">
-                                            <Link href="/login">Return to Command Center</Link>
+                                        <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
+                                            <Link href="/login">Return to Login</Link>
                                         </Button>
-                                        <Button variant="ghost" className="text-zinc-500 text-xs uppercase tracking-widest font-bold" onClick={() => setIsEmailSent(false)}>
+                                        <Button variant="ghost" className="text-muted-foreground text-xs uppercase tracking-wider" onClick={() => setIsEmailSent(false)}>
                                             Incorrect email? Try again
                                         </Button>
                                     </div>
@@ -297,11 +296,11 @@ export default function SignupPage() {
                                     <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
                                         <div className="grid grid-cols-1 gap-4">
                                             <div className="space-y-2">
-                                                <Label className="text-zinc-400 text-xs uppercase tracking-widest font-bold">Full Name</Label>
+                                                <Label className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Full Name</Label>
                                                 <div className="relative">
-                                                    <User className="absolute left-3 top-3 h-4 w-4 text-zinc-600" />
+                                                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                                     <Input
-                                                        className="bg-zinc-950 border-zinc-800 pl-10 h-11 focus:ring-primary/20"
+                                                        className="bg-background border-border pl-10 h-11"
                                                         placeholder="e.g. Alexander Pierce"
                                                         value={formData.fullName}
                                                         onChange={(e) => updateField('fullName', e.target.value)}
@@ -309,11 +308,11 @@ export default function SignupPage() {
                                                 </div>
                                             </div>
                                             <div className="space-y-2">
-                                                <Label className="text-zinc-400 text-xs uppercase tracking-widest font-bold">Secure Email Address</Label>
+                                                <Label className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Email Address</Label>
                                                 <div className="relative">
-                                                    <Mail className="absolute left-3 top-3 h-4 w-4 text-zinc-600" />
+                                                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                                     <Input
-                                                        className="bg-zinc-950 border-zinc-800 pl-10 h-11 focus:ring-primary/20"
+                                                        className="bg-background border-border pl-10 h-11"
                                                         placeholder="e.g. precision@node-alpha.io"
                                                         type="email"
                                                         value={formData.email}
@@ -407,10 +406,10 @@ export default function SignupPage() {
                                                         onClick={() => updateField('teamSize', size.id)}
                                                     >
                                                         <p className={cn(
-                                                            "text-sm font-black uppercase italic tracking-tighter",
-                                                            formData.teamSize === size.id ? "text-primary" : "text-zinc-300"
+                                                            "text-sm font-bold uppercase",
+                                                            formData.teamSize === size.id ? "text-primary" : "text-foreground"
                                                         )}>{size.label}</p>
-                                                        <p className="text-[10px] text-zinc-600 uppercase tracking-widest">{size.desc}</p>
+                                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{size.desc}</p>
                                                     </div>
                                                 ))}
                                             </div>
@@ -433,10 +432,10 @@ export default function SignupPage() {
                                                         onClick={() => updateField('monthlyVolume', vol.id)}
                                                     >
                                                         <p className={cn(
-                                                            "text-sm font-black uppercase italic tracking-tighter",
-                                                            formData.monthlyVolume === vol.id ? "text-emerald-500" : "text-zinc-300"
+                                                            "text-sm font-bold uppercase",
+                                                            formData.monthlyVolume === vol.id ? "text-primary" : "text-foreground"
                                                         )}>{vol.label}</p>
-                                                        <p className="text-[10px] text-zinc-600 uppercase tracking-widest">{vol.desc}</p>
+                                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{vol.desc}</p>
                                                     </div>
                                                 ))}
                                             </div>
@@ -579,10 +578,10 @@ export default function SignupPage() {
                     )}
                 </Card>
 
-                <div className="mt-8 flex items-center justify-center gap-8 text-[10px] text-zinc-600 font-mono tracking-widest uppercase italic">
-                    <span className="flex items-center gap-1.5"><Shield className="h-3 w-3" /> End-to-End Encryption</span>
-                    <span className="flex items-center gap-1.5"><Zap className="h-3 w-3" /> Global Node Proxy</span>
-                    <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3 w-3" /> SOC2 Compliant</span>
+                <div className="mt-8 flex items-center justify-center gap-8 text-[10px] text-muted-foreground font-medium tracking-wider uppercase">
+                    <span className="flex items-center gap-1.5"><Shield className="h-3 w-3" /> Secure Access</span>
+                    <span className="flex items-center gap-1.5"><Zap className="h-3 w-3" /> AI Powered</span>
+                    <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3 w-3" /> Reliable</span>
                 </div>
             </div>
         </div>

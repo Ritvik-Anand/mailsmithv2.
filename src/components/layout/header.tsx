@@ -174,9 +174,9 @@ export function Header({ isAdmin = false }: HeaderProps) {
                         </div>
                         <ScrollArea className="h-80">
                             {notifications.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-40 text-center p-6">
-                                    <Bell className="h-8 w-8 text-zinc-800 mb-2" />
-                                    <p className="text-xs text-zinc-500 italic">No intelligence reports currently available.</p>
+                                <div className="flex flex-col items-center justify-center h-40 text-center p-6 text-muted-foreground">
+                                    <Bell className="h-8 w-8 mb-2 opacity-20" />
+                                    <p className="text-xs">No notifications at this time.</p>
                                 </div>
                             ) : (
                                 notifications.map((notification) => (
@@ -197,7 +197,7 @@ export function Header({ isAdmin = false }: HeaderProps) {
                                                 )}
                                                 <span className={cn(
                                                     "text-sm",
-                                                    !notification.read ? "font-bold text-zinc-100 italic" : "font-medium text-zinc-400"
+                                                    !notification.read ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
                                                 )}>
                                                     {notification.title}
                                                 </span>
@@ -222,10 +222,10 @@ export function Header({ isAdmin = false }: HeaderProps) {
                         <div className="p-2 border-t text-center">
                             <Link
                                 href={isAdmin ? "/admin/notifications" : "/dashboard/notifications"}
-                                className="text-[10px] text-zinc-500 hover:text-primary uppercase tracking-widest font-black flex items-center justify-center gap-1 group"
+                                className="text-[10px] text-muted-foreground hover:text-primary uppercase tracking-wider font-semibold flex items-center justify-center gap-1 group"
                                 onClick={() => setNotificationsOpen(false)}
                             >
-                                View Global Intelligence
+                                View All Notifications
                                 <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </div>
@@ -248,31 +248,31 @@ export function Header({ isAdmin = false }: HeaderProps) {
                             </Avatar>
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56 bg-zinc-900 border-zinc-800" align="end" forceMount>
+                    <DropdownMenuContent className="w-56" align="end" forceMount>
                         <DropdownMenuLabel className="font-normal">
                             <div className="flex flex-col space-y-1">
-                                <p className="text-sm font-semibold leading-none text-zinc-100 italic">
-                                    {isAdmin ? `${user?.name || 'Ritvik'} (Master Root)` : (user?.name || 'Authenticated User')}
+                                <p className="text-sm font-semibold leading-none">
+                                    {isAdmin ? `${user?.name || 'Ritvik'} (Admin)` : (user?.name || 'User')}
                                 </p>
-                                <p className="text-[10px] leading-none text-zinc-500 font-mono">
-                                    {user?.email || 'session@node.alpha'}
+                                <p className="text-[10px] leading-none text-muted-foreground">
+                                    {user?.email || 'user@example.com'}
                                 </p>
                             </div>
                         </DropdownMenuLabel>
-                        <DropdownMenuSeparator className="bg-zinc-800" />
-                        <DropdownMenuItem asChild className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 cursor-pointer">
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild className="cursor-pointer">
                             <Link href={isAdmin ? "/admin/team" : "/dashboard/settings"} className="flex items-center w-full">
                                 <User className="mr-2 h-4 w-4" />
-                                <span>{isAdmin ? 'System Profile' : 'Project Profile'}</span>
+                                <span>{isAdmin ? 'Team Profile' : 'Profile'}</span>
                             </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 cursor-pointer">
+                        <DropdownMenuItem asChild className="cursor-pointer">
                             <Link href={isAdmin ? "/admin/settings" : "/dashboard/settings"} className="flex items-center w-full">
                                 <Settings className="mr-2 h-4 w-4" />
-                                <span>Preferences</span>
+                                <span>Settings</span>
                             </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator className="bg-zinc-800" />
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                             onClick={handleLogout}
                             className="text-rose-400 hover:text-rose-100 hover:bg-rose-500/20 cursor-pointer font-bold"
