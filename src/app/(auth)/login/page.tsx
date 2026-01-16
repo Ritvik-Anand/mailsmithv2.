@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -67,8 +68,14 @@ export default function LoginPage() {
             <Card className="w-full max-w-md relative backdrop-blur-sm bg-card/80 border-border/50">
                 <CardHeader className="space-y-1 text-center">
                     <div className="flex justify-center mb-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/25">
-                            <Zap className="h-6 w-6 text-primary-foreground" />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/25 overflow-hidden">
+                            <Image
+                                src="/logo.png"
+                                alt="MailSmith Logo"
+                                width={48}
+                                height={48}
+                                className="object-contain p-2"
+                            />
                         </div>
                     </div>
                     <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Zap, ArrowRight, Mail, Users, TrendingUp, Sparkles } from 'lucide-react'
 
@@ -14,8 +15,14 @@ export default function HomePage() {
       <header className="relative border-b bg-background/80 backdrop-blur-sm">
         <div className="container flex h-16 items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Zap className="h-4 w-4 text-primary-foreground" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary overflow-hidden">
+              <Image
+                src="/logo.png"
+                alt="MailSmith Logo"
+                width={32}
+                height={32}
+                className="object-contain p-1"
+              />
             </div>
             <span className="font-bold text-xl">MailSmith</span>
           </Link>
@@ -151,8 +158,14 @@ export default function HomePage() {
         <div className="container px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded bg-primary">
-                <Zap className="h-3 w-3 text-primary-foreground" />
+              <div className="flex h-6 w-6 items-center justify-center rounded bg-primary overflow-hidden">
+                <Image
+                  src="/logo.png"
+                  alt="MailSmith Logo"
+                  width={24}
+                  height={24}
+                  className="object-contain p-0.5"
+                />
               </div>
               <span className="font-semibold">MailSmith</span>
             </div>

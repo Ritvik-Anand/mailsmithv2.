@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -122,7 +123,13 @@ export function AdminLogin() {
                         </Button>
 
                         <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-zinc-700 uppercase tracking-[0.2em] pt-2">
-                            <Zap className="h-3 w-3" />
+                            <Image
+                                src="/logo.png"
+                                alt="MailSmith"
+                                width={12}
+                                height={12}
+                                className="object-contain opacity-50 grayscale"
+                            />
                             MailSmith Security Protocol
                         </div>
                     </CardFooter>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -207,8 +208,14 @@ export default function SignupPage() {
                 <div className="mb-8 space-y-4">
                     <div className="flex items-center justify-between px-2">
                         <div className="flex items-center gap-2">
-                            <div className="bg-primary p-1.5 rounded-lg">
-                                <Zap className="h-4 w-4 text-primary-foreground" />
+                            <div className="bg-primary rounded-lg overflow-hidden flex items-center justify-center p-1 font-bold">
+                                <Image
+                                    src="/logo.png"
+                                    alt="MailSmith Logo"
+                                    width={24}
+                                    height={24}
+                                    className="object-contain"
+                                />
                             </div>
                             <span className="font-bold text-foreground">Get Started</span>
                         </div>

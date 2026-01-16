@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -105,8 +106,14 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             {/* Logo */}
             <div className="flex h-16 items-center border-b px-4">
                 <Link href={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                        <Zap className="h-4 w-4 text-primary-foreground" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary overflow-hidden">
+                        <Image
+                            src="/logo.png"
+                            alt="MailSmith Logo"
+                            width={32}
+                            height={32}
+                            className="object-contain p-1"
+                        />
                     </div>
                     {!collapsed && (
                         <span className="font-semibold text-lg">
@@ -175,8 +182,14 @@ export function MobileSidebar({ isAdmin = false }: SidebarProps) {
             <SheetContent side="left" className="w-64 p-0">
                 <div className="flex h-16 items-center border-b px-4">
                     <Link href={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                            <Zap className="h-4 w-4 text-primary-foreground" />
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary overflow-hidden">
+                            <Image
+                                src="/logo.png"
+                                alt="MailSmith Logo"
+                                width={32}
+                                height={32}
+                                className="object-contain p-1"
+                            />
                         </div>
                         <span className="font-semibold text-lg">MailSmith</span>
                     </Link>
