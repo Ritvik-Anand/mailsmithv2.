@@ -10,6 +10,7 @@ export interface Organization {
     name: string;
     slug: string;
     plan: 'free' | 'starter' | 'pro' | 'enterprise';
+    status: 'active' | 'trial' | 'suspended' | 'churned';
     features: OrganizationFeatures;
     settings: Record<string, unknown>;
     created_at: string;
