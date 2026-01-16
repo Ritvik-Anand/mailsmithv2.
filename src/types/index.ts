@@ -29,6 +29,14 @@ export interface OrganizationFeatures {
     betaFeatures: string[];
 }
 
+export interface OrganizationWithStats extends Organization {
+    _count: {
+        leads: number;
+        users: number;
+        campaigns: number;
+    };
+}
+
 // -----------------------------------------------------------------------------
 // Users
 // -----------------------------------------------------------------------------
