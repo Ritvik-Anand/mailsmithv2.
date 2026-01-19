@@ -243,9 +243,9 @@ export type CompanySize =
     | '2001-5000' | '10000+';
 
 export type FundingStage =
-    | 'Seed' | 'Angel' | 'Series A' | 'Series B' | 'Series C'
-    | 'Series D' | 'Series E' | 'Series F' | 'Venture'
-    | 'Debt' | 'Convertible' | 'PE' | 'Other';
+    | 'seed' | 'angel' | 'series_a' | 'series_b' | 'series_c'
+    | 'series_d' | 'series_e' | 'series_f' | 'venture'
+    | 'debt' | 'convertible' | 'pe' | 'other';
 
 export type EmailQuality = 'validated' | 'not_validated' | 'unknown';
 

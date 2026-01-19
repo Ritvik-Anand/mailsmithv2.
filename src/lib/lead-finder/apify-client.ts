@@ -62,28 +62,45 @@ export async function startLeadSearch(
     // Normalization: Apify actor is extremely strict about lowercase for enum-like fields
     const normalizedFilters = { ...filters };
 
-    // Fields that MUST be lowercase
-    const lowercaseFields: (keyof LeadSearchFilters)[] = [
+    // Fields that MUST be lowercase for this specific Apify Actor
+    const fieldsToNormalize: (keyof LeadSearchFilters)[] = [
         'contact_location',
         'contact_city',
+        'contact_not_location',
+        'contact_not_city',
         'company_industry',
-        'company_location',
+        'company_not_industry',
+        'company_keywords',
+        'company_not_keywords',
         'functional_level' as any,
         'funding' as any,
-        'size' as any
+        'size' as any,
+        'seniority_level' as any
     ];
 
-    lowercaseFields.forEach(field => {
+    fieldsToNormalize.forEach(field => {
         const val = normalizedFilters[field];
         if (Array.isArray(val)) {
-            (normalizedFilters[field] as any) = val.map(v => typeof v === 'string' ? v.toLowerCase() : v);
+            (normalizedFilters[field] as any) = val.map(v => {
+                if (typeof v === 'string') {
+                    let normalized = v.toLowerCase().trim();
+                    // Custom mapping for common variations
+                    if (normalized === 'c-level' || normalized === 'c-suite' || normalized === 'executive') {
+                        return 'c_suite';
+                    }
+                    return normalized;
+                }
+                return v;
+            });
         }
     });
 
     const input: ApifyActorInput = {
         ...normalizedFilters,
-        // Ensure validated emails by default
-        email_status: filters.email_status || ['validated'],
+        // Ensure email_status is correctly formatted
+        email_status: filters.email_status ?
+            filters.email_status.map(s => s.toLowerCase() as any) :
+            ['validated'],
     };
 
     const url = `${APIFY_BASE_URL}/acts/${APIFY_ACTOR_ID}/runs?token=${APIFY_API_TOKEN}`;
