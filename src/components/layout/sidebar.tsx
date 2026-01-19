@@ -43,11 +43,6 @@ const customerNavItems = [
         icon: Users,
     },
     {
-        title: 'Lead Finder',
-        href: '/dashboard/lead-finder',
-        icon: Target,
-    },
-    {
         title: 'Intelligence',
         href: '/dashboard/notifications',
         icon: Bell,
