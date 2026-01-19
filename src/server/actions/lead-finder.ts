@@ -408,9 +408,11 @@ export async function processJobResults(
 
         // Fetch results from API
         const { items, total } = await fetchLeadSearchResults(datasetId)
+        console.log(`[Lead Finder] Fetched ${items.length} items from Apify dataset ${datasetId}`);
 
         // Transform to leads
         const leads = transformToLeads(items, job.organization_id, jobId)
+        console.log(`[Lead Finder] Successfully extracted emails from ${leads.length} out of ${items.length} items`);
 
         // Deduplicate by email within this batch
         const uniqueLeads = leads.reduce((acc, lead) => {
@@ -440,12 +442,17 @@ export async function processJobResults(
 
             if (insertError) {
                 console.error('[Lead Finder] Lead insert error:', insertError)
+                return { success: false, error: `Database error: ${insertError.message}` }
             } else {
                 imported = insertedLeads?.length || 0
                 console.log(`[Lead Finder] Successfully imported ${imported} leads`);
             }
-        } else {
-            console.warn('[Lead Finder] No leads were suitable for import (missing emails?)');
+        } else if (items.length > 0) {
+            console.warn('[Lead Finder] No leads were suitable for import (missing emails?) among ' + items.length + ' items');
+            // Check if items actually have data
+            if (items[0]) {
+                console.log('[Lead Finder] Sample item keys:', Object.keys(items[0]));
+            }
         }
 
         // Update job

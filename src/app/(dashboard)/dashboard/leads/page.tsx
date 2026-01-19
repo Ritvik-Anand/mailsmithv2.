@@ -698,13 +698,32 @@ export default function LeadsPage() {
                                 onViewJob={async (jobId) => {
                                     setSelectedJobId(jobId)
                                     setActiveTab('all-leads')
-                                    toast.success('Filtering leads from this search')
+                                    const loadingToast = toast.loading('Syncing leads from search...')
 
-                                    // Trigger a re-check and wait for it to complete
-                                    const result = await getSearchJobStatus(jobId)
-                                    if (result.success && result.job && result.job.leads_imported > 0) {
-                                        toast.success(`Successfully imported ${result.job.leads_imported} leads!`)
-                                        loadLeads() // Refresh the list to show new leads
+                                    try {
+                                        // Trigger a re-check and wait for it to complete
+                                        const result = await getSearchJobStatus(jobId)
+
+                                        if (result.success && result.job) {
+                                            const imported = result.job.leads_imported || 0
+                                            const found = result.job.leads_found || 0
+
+                                            if (imported > 0) {
+                                                toast.success(`Successfully imported ${imported} leads!`, { id: loadingToast })
+                                                loadLeads()
+                                            } else if (found > 0) {
+                                                toast.error(`Found ${found} profiles, but couldn't find valid emails for any of them.`, {
+                                                    id: loadingToast,
+                                                    description: "Apify might not have found emails for these specific people yet."
+                                                })
+                                            } else {
+                                                toast.info("Search finished but no results were found on Apify.", { id: loadingToast })
+                                            }
+                                        } else {
+                                            toast.error(result.error || 'Failed to sync leads', { id: loadingToast })
+                                        }
+                                    } catch (err) {
+                                        toast.error('An unexpected error occurred during sync', { id: loadingToast })
                                     }
                                 }}
                             />

@@ -12,7 +12,7 @@ import { ApifyLeadResult, Lead } from '@/types'
 export function findEmail(r: any): string | null {
     if (!r) return null;
 
-    // 1. Direct key search (standard names)
+    // 1. Check known standard keys first for speed/accuracy
     const standardKeys = [
         'email', 'personal_email', 'work_email', 'contact_email',
         'email_address', 'primary_email', 'business_email', 'emails',
@@ -23,20 +23,23 @@ export function findEmail(r: any): string | null {
         const val = r[key];
         if (!val) continue;
 
-        // String format
+        // String format - use regex to find email anywhere in the string
         if (typeof val === 'string' && val.includes('@')) {
+            const match = val.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+            if (match) return match[0];
+            // Fallback: if it has @ but doesn't perfectly match standard email regex, just trim it
             const trimmed = val.trim();
-            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return trimmed;
+            if (trimmed.includes('@') && !trimmed.includes(' ')) return trimmed;
         }
 
-        // Array format (strings or objects)
-        if (Array.isArray(val) && val.length > 0) {
+        // Array format
+        if (Array.isArray(val)) {
             for (const item of val) {
                 if (typeof item === 'string' && item.includes('@')) {
-                    const trimmed = item.trim();
-                    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return trimmed;
+                    const match = item.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+                    if (match) return match[0];
                 }
-                if (typeof item === 'object' && item !== null) {
+                if (typeof item === 'object') {
                     const found = findEmail(item);
                     if (found) return found;
                 }
@@ -44,16 +47,14 @@ export function findEmail(r: any): string | null {
         }
     }
 
-    // 2. Scan all keys for strings or nested structures
+    // 2. Comprehensive crawl of all keys
     for (const key in r) {
-        if (standardKeys.includes(key)) continue; // Already checked
-
         const val = r[key];
         if (!val) continue;
 
-        if (typeof val === 'string' && val.length > 5 && val.includes('@')) {
-            const trimmed = val.trim();
-            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return trimmed;
+        if (typeof val === 'string' && val.includes('@') && val.length > 5) {
+            const match = val.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+            if (match) return match[0];
         }
 
         if (typeof val === 'object') {
