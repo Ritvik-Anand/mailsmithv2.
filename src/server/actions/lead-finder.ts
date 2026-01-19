@@ -61,6 +61,40 @@ async function getCurrentOrganizationId(): Promise<{ organizationId: string | nu
 }
 
 /**
+ * Robustly find an email address in an Apify result.
+ * Handles variations like 'email', 'personal_email', 'work_email', 'emails' array, etc.
+ */
+function findEmail(r: any): string | null {
+    if (!r) return null;
+
+    // 1. Standard keys
+    const standardKeys = ['email', 'personal_email', 'work_email', 'contact_email', 'email_address', 'primary_email'];
+    for (const key of standardKeys) {
+        if (typeof r[key] === 'string' && r[key].includes('@')) return r[key];
+    }
+
+    // 2. Array formats
+    if (Array.isArray(r.emails) && r.emails.length > 0 && typeof r.emails[0] === 'string') return r.emails[0];
+    if (Array.isArray(r.email) && r.email.length > 0 && typeof r.email[0] === 'string') return r.email[0];
+
+    // 3. Nested/Enrichment fields
+    if (r.enrichment?.email) return r.enrichment.email;
+    if (r.contact?.email) return r.contact.email;
+
+    // 4. Broad search over all string keys
+    for (const key in r) {
+        if (typeof r[key] === 'string' && r[key].length > 5 && r[key].includes('@')) {
+            // Basic regex to verify it looks like an email
+            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r[key])) {
+                return r[key];
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
  * Transform Apify results to Lead format
  */
 function transformToLeads(
@@ -68,42 +102,46 @@ function transformToLeads(
     organizationId: string,
     scrapeJobId: string
 ): Partial<Lead>[] {
-    return results
-        .filter(r => r.email || r.personal_email) // Must have at least one email
-        .map(r => {
-            const email = r.email || r.personal_email;
-            return {
-                organization_id: organizationId,
-                first_name: r.first_name || null,
-                last_name: r.last_name || null,
-                email: email!,
-                phone: r.mobile_number || null,
-                linkedin_url: r.linkedin || null,
-                company_name: r.company_name || null,
-                company_domain: r.company_domain || null,
-                job_title: r.job_title || null,
-                industry: r.industry || null,
-                company_size: r.company_size || null,
-                location: [r.city, r.state, r.country].filter(Boolean).join(', ') || null,
-                raw_scraped_data: r as Record<string, unknown>,
-                enrichment_data: {
-                    headline: r.headline,
-                    functional_level: r.functional_level,
-                    seniority_level: r.seniority_level,
-                    personal_email: r.personal_email,
-                    company_linkedin: r.company_linkedin,
-                    company_description: r.company_description,
-                    company_funding: r.company_total_funding,
-                    company_revenue: r.company_annual_revenue,
-                    company_founded: r.company_founded_year,
-                    technologies: r.company_technologies,
-                },
-                source: 'apify_leads_finder' as const,
-                scrape_job_id: scrapeJobId,
-                icebreaker_status: 'pending' as const,
-                campaign_status: 'not_added' as const,
-            };
+    const leads: Partial<Lead>[] = [];
+
+    for (const r of results) {
+        const email = findEmail(r);
+        if (!email) continue;
+
+        leads.push({
+            organization_id: organizationId,
+            first_name: r.first_name || null,
+            last_name: r.last_name || null,
+            email: email,
+            phone: r.mobile_number || null,
+            linkedin_url: r.linkedin || null,
+            company_name: r.company_name || null,
+            company_domain: r.company_domain || null,
+            job_title: r.job_title || null,
+            industry: r.industry || null,
+            company_size: r.company_size || null,
+            location: [r.city, r.state, r.country].filter(Boolean).join(', ') || null,
+            raw_scraped_data: r as Record<string, unknown>,
+            enrichment_data: {
+                headline: r.headline,
+                functional_level: r.functional_level,
+                seniority_level: r.seniority_level,
+                personal_email: r.personal_email,
+                company_linkedin: r.company_linkedin,
+                company_description: r.company_description,
+                company_funding: r.company_total_funding,
+                company_revenue: r.company_annual_revenue,
+                company_founded: r.company_founded_year,
+                technologies: r.company_technologies,
+            },
+            source: 'apify_leads_finder' as any,
+            scrape_job_id: scrapeJobId as any,
+            icebreaker_status: 'pending' as any,
+            campaign_status: 'not_added' as any,
         });
+    }
+
+    return leads;
 }
 
 // -----------------------------------------------------------------------------
