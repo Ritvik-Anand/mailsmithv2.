@@ -19,6 +19,7 @@ import {
     ChevronLeft,
     Zap,
     Shield,
+    Target,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -40,6 +41,11 @@ const customerNavItems = [
         title: 'Leads',
         href: '/dashboard/leads',
         icon: Users,
+    },
+    {
+        title: 'Lead Finder',
+        href: '/dashboard/lead-finder',
+        icon: Target,
     },
     {
         title: 'Intelligence',

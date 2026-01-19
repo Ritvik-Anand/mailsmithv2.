@@ -112,7 +112,7 @@ export interface Lead {
     campaign_status: 'not_added' | 'queued' | 'sent' | 'opened' | 'replied' | 'bounced';
 
     // Source
-    source: 'apify_linkedin' | 'apify_apollo' | 'manual' | 'csv_import';
+    source: 'apify_linkedin' | 'apify_apollo' | 'apify_leads_finder' | 'manual' | 'csv_import';
     scrape_job_id: string | null;
 
     created_at: string;
@@ -166,7 +166,7 @@ export interface EmailSequence {
 export type CampaignStatus = Campaign['status'];
 
 // -----------------------------------------------------------------------------
-// Scrape Jobs
+// Scrape Jobs (Lead Finder)
 // -----------------------------------------------------------------------------
 export interface ScrapeJob {
     id: string;
@@ -174,7 +174,7 @@ export interface ScrapeJob {
 
     actor_id: string;
     actor_name: string | null;
-    input_params: Record<string, unknown>;
+    input_params: LeadSearchFilters;
 
     status: 'pending' | 'running' | 'completed' | 'failed';
     apify_run_id: string | null;
@@ -187,6 +187,119 @@ export interface ScrapeJob {
     error_message: string | null;
 
     created_at: string;
+}
+
+// -----------------------------------------------------------------------------
+// Lead Search Filters (Lead Finder)
+// -----------------------------------------------------------------------------
+export interface LeadSearchFilters {
+    // People Targeting
+    contact_job_title?: string[];
+    contact_not_job_title?: string[];
+    seniority_level?: SeniorityLevel[];
+    functional_level?: FunctionalLevel[];
+
+    // Location (Include)
+    contact_location?: string[];
+    contact_city?: string[];
+
+    // Location (Exclude)
+    contact_not_location?: string[];
+    contact_not_city?: string[];
+
+    // Email Quality
+    email_status?: EmailQuality[];
+
+    // Company Targeting
+    company_domain?: string[];
+    size?: CompanySize[];
+    company_industry?: string[];
+    company_not_industry?: string[];
+    company_keywords?: string[];
+    company_not_keywords?: string[];
+    min_revenue?: string;
+    max_revenue?: string;
+    funding?: FundingStage[];
+
+    // General
+    fetch_count?: number;
+    file_name?: string;
+}
+
+export type SeniorityLevel =
+    | 'Founder' | 'Owner' | 'C-Level' | 'Director'
+    | 'VP' | 'Head' | 'Manager' | 'Senior' | 'Entry' | 'Trainee';
+
+export type FunctionalLevel =
+    | 'C-Level' | 'Finance' | 'Product' | 'Engineering'
+    | 'Design' | 'HR' | 'IT' | 'Legal' | 'Marketing'
+    | 'Operations' | 'Sales' | 'Support';
+
+export type CompanySize =
+    | '0-1' | '2-10' | '11-20' | '21-50' | '51-100'
+    | '101-200' | '201-500' | '501-1000' | '1001-2000'
+    | '2001-5000' | '10000+';
+
+export type FundingStage =
+    | 'Seed' | 'Angel' | 'Series A' | 'Series B' | 'Series C'
+    | 'Series D' | 'Series E' | 'Series F' | 'Venture'
+    | 'Debt' | 'Convertible' | 'PE' | 'Other';
+
+export type EmailQuality = 'validated' | 'not_validated' | 'unknown';
+
+// Lead Search Preset Templates
+export interface LeadSearchPreset {
+    id: string;
+    name: string;
+    description: string;
+    icon?: string;
+    filters: LeadSearchFilters;
+}
+
+// Apify Lead Result (raw from API)
+export interface ApifyLeadResult {
+    // Person fields
+    first_name?: string;
+    last_name?: string;
+    full_name?: string;
+    job_title?: string;
+    headline?: string;
+    functional_level?: string;
+    seniority_level?: string;
+    email?: string;
+    mobile_number?: string;
+    personal_email?: string;
+    linkedin?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+
+    // Company fields
+    company_name?: string;
+    company_domain?: string;
+    company_website?: string;
+    company_linkedin?: string;
+    company_linkedin_uid?: string;
+    company_size?: string;
+    industry?: string;
+    company_description?: string;
+    company_annual_revenue?: string;
+    company_annual_revenue_clean?: number;
+    company_total_funding?: string;
+    company_total_funding_clean?: number;
+    company_founded_year?: number;
+    company_phone?: string;
+    company_street_address?: string;
+    company_city?: string;
+    company_state?: string;
+    company_country?: string;
+    company_postal_code?: string;
+    company_full_address?: string;
+    company_market_cap?: string;
+
+    // Context
+    keywords?: string[];
+    company_technologies?: string[];
 }
 
 // -----------------------------------------------------------------------------
