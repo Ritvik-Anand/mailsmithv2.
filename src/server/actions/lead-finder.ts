@@ -34,19 +34,35 @@ const ACTOR_DISPLAY_NAME = 'MailSmith Lead Finder'
 /**
  * Get current user's organization ID
  */
-async function getCurrentOrganizationId(): Promise<string | null> {
+async function getCurrentOrganizationId(): Promise<{ organizationId: string | null, error?: string }> {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!user) return null
+    if (authError) {
+        console.error('Auth check failed:', authError)
+        return { organizationId: null, error: 'Authentication check failed' }
+    }
 
-    const { data: userData } = await supabase
+    if (!user) {
+        return { organizationId: null, error: 'No active session found' }
+    }
+
+    const { data: userData, error: userError } = await supabase
         .from('users')
         .select('organization_id')
         .eq('id', user.id)
         .single()
 
-    return userData?.organization_id || null
+    if (userError || !userData) {
+        console.error('User data fetch failed:', userError)
+        return { organizationId: null, error: 'User profile or organization not found' }
+    }
+
+    if (!userData.organization_id) {
+        return { organizationId: null, error: 'User is not assigned to an organization' }
+    }
+
+    return { organizationId: userData.organization_id }
 }
 
 /**
@@ -105,9 +121,9 @@ export async function startLeadSearchJob(filters: LeadSearchFilters): Promise<{
     error?: string
 }> {
     try {
-        const organizationId = await getCurrentOrganizationId()
+        const { organizationId, error: authError } = await getCurrentOrganizationId()
         if (!organizationId) {
-            return { success: false, error: 'Not authenticated' }
+            return { success: false, error: authError || 'Not authenticated' }
         }
 
         const supabase = await createClient()
@@ -201,9 +217,9 @@ export async function quickLeadSearch(filters: LeadSearchFilters): Promise<{
     error?: string
 }> {
     try {
-        const organizationId = await getCurrentOrganizationId()
+        const { organizationId, error: authError } = await getCurrentOrganizationId()
         if (!organizationId) {
-            return { success: false, error: 'Not authenticated' }
+            return { success: false, error: authError || 'Not authenticated' }
         }
 
         // Force small batch for quick search
@@ -238,9 +254,9 @@ export async function getSearchJobStatus(jobId: string): Promise<{
     error?: string
 }> {
     try {
-        const organizationId = await getCurrentOrganizationId()
+        const { organizationId, error: authError } = await getCurrentOrganizationId()
         if (!organizationId) {
-            return { success: false, error: 'Not authenticated' }
+            return { success: false, error: authError || 'Not authenticated' }
         }
 
         const supabase = await createClient()
@@ -295,9 +311,9 @@ export async function cancelSearchJob(jobId: string): Promise<{
     error?: string
 }> {
     try {
-        const organizationId = await getCurrentOrganizationId()
+        const { organizationId, error: authError } = await getCurrentOrganizationId()
         if (!organizationId) {
-            return { success: false, error: 'Not authenticated' }
+            return { success: false, error: authError || 'Not authenticated' }
         }
 
         const supabase = await createClient()
@@ -352,9 +368,9 @@ export async function getSearchJobs(options: {
     error?: string
 }> {
     try {
-        const organizationId = await getCurrentOrganizationId()
+        const { organizationId, error: authError } = await getCurrentOrganizationId()
         if (!organizationId) {
-            return { success: false, error: 'Not authenticated' }
+            return { success: false, error: authError || 'Not authenticated' }
         }
 
         const supabase = await createClient()
@@ -499,9 +515,9 @@ export async function getLeadsFromJob(
     error?: string
 }> {
     try {
-        const organizationId = await getCurrentOrganizationId()
+        const { organizationId, error: authError } = await getCurrentOrganizationId()
         if (!organizationId) {
-            return { success: false, error: 'Not authenticated' }
+            return { success: false, error: authError || 'Not authenticated' }
         }
 
         const { page = 1, pageSize = 50 } = options
@@ -554,8 +570,8 @@ export async function getLeadUsage(): Promise<{
     error?: string
 }> {
     try {
-        const organizationId = await getCurrentOrganizationId()
-        if (!organizationId) return { success: false, error: 'Not authenticated' }
+        const { organizationId, error: authError } = await getCurrentOrganizationId()
+        if (!organizationId) return { success: false, error: authError || 'Not authenticated' }
 
         const supabase = await createClient()
 
@@ -603,8 +619,8 @@ export async function requestLeadLimitIncrease(params: {
     reason: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
-        const organizationId = await getCurrentOrganizationId()
-        if (!organizationId) return { success: false, error: 'Not authenticated' }
+        const { organizationId, error: authError } = await getCurrentOrganizationId()
+        if (!organizationId) return { success: false, error: authError || 'Not authenticated' }
 
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()

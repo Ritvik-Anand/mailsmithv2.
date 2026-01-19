@@ -2,17 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { Organization } from '@/types'
+import { Organization, OrganizationWithStats } from '@/types'
 
-export interface OrganizationWithStats extends Organization {
-    _count: {
-        users: number
-        leads: number
-        campaigns: number
-    }
-    owner_email?: string
-    monthly_lead_limit: number
-}
 
 /**
  * Fetches all organizations with their core stats.

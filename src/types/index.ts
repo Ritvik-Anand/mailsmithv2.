@@ -13,6 +13,7 @@ export interface Organization {
     status: 'active' | 'trial' | 'suspended' | 'churned';
     features: OrganizationFeatures;
     settings: Record<string, unknown>;
+    monthly_lead_limit: number;
     created_at: string;
     updated_at: string;
 }
@@ -35,6 +36,7 @@ export interface OrganizationWithStats extends Organization {
         users: number;
         campaigns: number;
     };
+    owner_email?: string;
 }
 
 // -----------------------------------------------------------------------------
