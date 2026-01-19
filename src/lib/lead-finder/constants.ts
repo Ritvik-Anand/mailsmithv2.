@@ -47,17 +47,19 @@ export const FUNCTIONAL_LEVELS: { value: FunctionalLevel; label: string }[] = [
 ];
 
 export const COMPANY_SIZES: { value: CompanySize; label: string }[] = [
-    { value: '0-1', label: 'Solo (0-1)' },
-    { value: '2-10', label: 'Micro (2-10)' },
-    { value: '11-20', label: 'Small (11-20)' },
-    { value: '21-50', label: 'Small-Medium (21-50)' },
-    { value: '51-100', label: 'Medium (51-100)' },
-    { value: '101-200', label: 'Medium-Large (101-200)' },
-    { value: '201-500', label: 'Large (201-500)' },
+    { value: '1-10', label: 'Small (1-10)' },
+    { value: '11-20', label: 'Small-Medium (11-20)' },
+    { value: '21-50', label: 'Medium (21-50)' },
+    { value: '51-100', label: 'Medium-Large (51-100)' },
+    { value: '101-200', label: 'Large (101-200)' },
+    { value: '201-500', label: 'Very Large (201-500)' },
     { value: '501-1000', label: 'Enterprise (501-1000)' },
     { value: '1001-2000', label: 'Enterprise+ (1001-2000)' },
     { value: '2001-5000', label: 'Large Enterprise (2001-5000)' },
-    { value: '10000+', label: 'Global Enterprise (10000+)' },
+    { value: '5001-10000', label: 'Major Corporation (5001-10000)' },
+    { value: '10001-20000', label: 'Global Enterprise (10001-20000)' },
+    { value: '20001-50000', label: 'Global Enterprise+ (20001-50000)' },
+    { value: '50000+', label: 'Multinational (50000+)' },
 ];
 
 export const FUNDING_STAGES: { value: FundingStage; label: string }[] = [
@@ -174,7 +176,7 @@ export const SEARCH_PRESETS: LeadSearchPreset[] = [
         icon: '💡',
         filters: {
             seniority_level: ['founder', 'owner', 'c_suite'],
-            size: ['2-10', '11-20', '21-50', '51-100'],
+            size: ['1-10', '11-20', '21-50', '51-100'],
             funding: ['seed', 'angel', 'series_a', 'series_b'],
             email_status: ['validated'],
             fetch_count: 1000,

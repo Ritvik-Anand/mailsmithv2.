@@ -238,9 +238,9 @@ export type FunctionalLevel =
     | 'operations' | 'sales' | 'support';
 
 export type CompanySize =
-    | '0-1' | '2-10' | '11-20' | '21-50' | '51-100'
+    | '1-10' | '11-20' | '21-50' | '51-100'
     | '101-200' | '201-500' | '501-1000' | '1001-2000'
-    | '2001-5000' | '10000+';
+    | '2001-5000' | '5001-10000' | '10001-20000' | '20001-50000' | '50000+';
 
 export type FundingStage =
     | 'seed' | 'angel' | 'series_a' | 'series_b' | 'series_c'
