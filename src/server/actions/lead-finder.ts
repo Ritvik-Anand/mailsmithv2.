@@ -14,14 +14,9 @@ import {
     Lead,
     ApifyLeadResult
 } from '@/types'
-import {
-    startLeadSearch,
-    getLeadSearchStatus,
-    fetchLeadSearchResults,
-    abortLeadSearch,
-    runSyncLeadSearch
-} from '@/lib/lead-finder/apify-client'
+import { startLeadSearch, getLeadSearchStatus, fetchLeadSearchResults, abortLeadSearch, runSyncLeadSearch } from '@/lib/lead-finder/apify-client'
 import { DEFAULT_FETCH_COUNT, MAX_FETCH_COUNT } from '@/lib/lead-finder/constants'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 // Internal actor identifier (hidden from users)
 const ACTOR_ID = 'code_crafter~leads-finder'
@@ -74,38 +69,41 @@ function transformToLeads(
     scrapeJobId: string
 ): Partial<Lead>[] {
     return results
-        .filter(r => r.email) // Must have email
-        .map(r => ({
-            organization_id: organizationId,
-            first_name: r.first_name || null,
-            last_name: r.last_name || null,
-            email: r.email!,
-            phone: r.mobile_number || null,
-            linkedin_url: r.linkedin || null,
-            company_name: r.company_name || null,
-            company_domain: r.company_domain || null,
-            job_title: r.job_title || null,
-            industry: r.industry || null,
-            company_size: r.company_size || null,
-            location: [r.city, r.state, r.country].filter(Boolean).join(', ') || null,
-            raw_scraped_data: r as Record<string, unknown>,
-            enrichment_data: {
-                headline: r.headline,
-                functional_level: r.functional_level,
-                seniority_level: r.seniority_level,
-                personal_email: r.personal_email,
-                company_linkedin: r.company_linkedin,
-                company_description: r.company_description,
-                company_funding: r.company_total_funding,
-                company_revenue: r.company_annual_revenue,
-                company_founded: r.company_founded_year,
-                technologies: r.company_technologies,
-            },
-            source: 'apify_leads_finder' as const,
-            scrape_job_id: scrapeJobId,
-            icebreaker_status: 'pending' as const,
-            campaign_status: 'not_added' as const,
-        }))
+        .filter(r => r.email || r.personal_email) // Must have at least one email
+        .map(r => {
+            const email = r.email || r.personal_email;
+            return {
+                organization_id: organizationId,
+                first_name: r.first_name || null,
+                last_name: r.last_name || null,
+                email: email!,
+                phone: r.mobile_number || null,
+                linkedin_url: r.linkedin || null,
+                company_name: r.company_name || null,
+                company_domain: r.company_domain || null,
+                job_title: r.job_title || null,
+                industry: r.industry || null,
+                company_size: r.company_size || null,
+                location: [r.city, r.state, r.country].filter(Boolean).join(', ') || null,
+                raw_scraped_data: r as Record<string, unknown>,
+                enrichment_data: {
+                    headline: r.headline,
+                    functional_level: r.functional_level,
+                    seniority_level: r.seniority_level,
+                    personal_email: r.personal_email,
+                    company_linkedin: r.company_linkedin,
+                    company_description: r.company_description,
+                    company_funding: r.company_total_funding,
+                    company_revenue: r.company_annual_revenue,
+                    company_founded: r.company_founded_year,
+                    technologies: r.company_technologies,
+                },
+                source: 'apify_leads_finder' as const,
+                scrape_job_id: scrapeJobId,
+                icebreaker_status: 'pending' as const,
+                campaign_status: 'not_added' as const,
+            };
+        });
 }
 
 // -----------------------------------------------------------------------------
@@ -434,10 +432,11 @@ export async function processJobResults(
     error?: string
 }> {
     try {
-        const supabase = await createClient()
+        console.log(`[Lead Finder] Processing results for job: ${jobId}, dataset: ${datasetId}`);
+        const supabaseAdmin = createAdminClient();
 
         // Get the job
-        const { data: job, error: jobError } = await supabase
+        const { data: job, error: jobError } = await supabaseAdmin
             .from('scrape_jobs')
             .select('*')
             .eq('id', jobId)
@@ -464,7 +463,8 @@ export async function processJobResults(
         // Insert leads (ignore duplicates based on org + email unique constraint)
         let imported = 0
         if (uniqueLeads.length > 0) {
-            const { data: insertedLeads, error: insertError } = await supabase
+            console.log(`[Lead Finder] Upserting ${uniqueLeads.length} unique leads`);
+            const { data: insertedLeads, error: insertError } = await supabaseAdmin
                 .from('leads')
                 .upsert(
                     uniqueLeads.map(l => ({
@@ -479,14 +479,17 @@ export async function processJobResults(
                 .select('id')
 
             if (insertError) {
-                console.error('Lead insert error:', insertError)
+                console.error('[Lead Finder] Lead insert error:', insertError)
             } else {
                 imported = insertedLeads?.length || 0
+                console.log(`[Lead Finder] Successfully imported ${imported} leads`);
             }
+        } else {
+            console.warn('[Lead Finder] No leads were suitable for import (missing emails?)');
         }
 
         // Update job
-        await supabase
+        await supabaseAdmin
             .from('scrape_jobs')
             .update({
                 status: 'completed',
@@ -497,7 +500,7 @@ export async function processJobResults(
             .eq('id', jobId)
 
         // Log activity
-        await supabase.from('activity_logs').insert({
+        await supabaseAdmin.from('activity_logs').insert({
             organization_id: job.organization_id,
             action: 'lead_search_completed',
             resource_type: 'scrape_job',
