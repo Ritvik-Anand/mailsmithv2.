@@ -12,34 +12,53 @@ import { ApifyLeadResult, Lead } from '@/types'
 export function findEmail(r: any): string | null {
     if (!r) return null;
 
-    // 1. Check standard keys (case-insensitive-ish)
+    // 1. Direct key search (standard names)
     const standardKeys = [
         'email', 'personal_email', 'work_email', 'contact_email',
-        'email_address', 'primary_email', 'business_email', 'emails'
+        'email_address', 'primary_email', 'business_email', 'emails',
+        'personalEmail', 'workEmail', 'contactEmail', 'emailAddress', 'primaryEmail'
     ];
 
     for (const key of standardKeys) {
         const val = r[key];
-        if (typeof val === 'string' && val.includes('@')) return val.trim();
-        if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'string' && val[0].includes('@')) return val[0].trim();
-    }
+        if (!val) continue;
 
-    // 2. Scan all top-level keys for any string that looks like an email
-    for (const key in r) {
-        const val = r[key];
-        if (typeof val === 'string' && val.length > 5 && val.includes('@')) {
-            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim())) {
-                return val.trim();
+        // String format
+        if (typeof val === 'string' && val.includes('@')) {
+            const trimmed = val.trim();
+            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return trimmed;
+        }
+
+        // Array format (strings or objects)
+        if (Array.isArray(val) && val.length > 0) {
+            for (const item of val) {
+                if (typeof item === 'string' && item.includes('@')) {
+                    const trimmed = item.trim();
+                    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return trimmed;
+                }
+                if (typeof item === 'object' && item !== null) {
+                    const found = findEmail(item);
+                    if (found) return found;
+                }
             }
         }
     }
 
-    // 3. Deep scan common nested objects
-    const nestedObjects = ['contact', 'enrichment', 'profile', 'company', 'person'];
-    for (const objKey of nestedObjects) {
-        if (r[objKey] && typeof r[objKey] === 'object') {
-            const nestedEmail = findEmail(r[objKey]);
-            if (nestedEmail) return nestedEmail;
+    // 2. Scan all keys for strings or nested structures
+    for (const key in r) {
+        if (standardKeys.includes(key)) continue; // Already checked
+
+        const val = r[key];
+        if (!val) continue;
+
+        if (typeof val === 'string' && val.length > 5 && val.includes('@')) {
+            const trimmed = val.trim();
+            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return trimmed;
+        }
+
+        if (typeof val === 'object') {
+            const found = findEmail(val);
+            if (found) return found;
         }
     }
 
