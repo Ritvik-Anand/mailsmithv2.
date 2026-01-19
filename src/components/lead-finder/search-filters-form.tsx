@@ -380,14 +380,14 @@ export function SearchFiltersForm({ filters, onChange }: SearchFiltersFormProps)
                                 <div>
                                     <Label className="mb-2 block">Min Revenue</Label>
                                     <Select
-                                        value={filters.min_revenue || ''}
-                                        onValueChange={(v) => updateFilter('min_revenue', v || undefined)}
+                                        value={filters.min_revenue || 'any'}
+                                        onValueChange={(v) => updateFilter('min_revenue', v === 'any' ? undefined : v)}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Any" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="">Any</SelectItem>
+                                            <SelectItem value="any">Any</SelectItem>
                                             {REVENUE_RANGES.map(r => (
                                                 <SelectItem key={r.value} value={r.value}>
                                                     {r.label}
@@ -399,14 +399,14 @@ export function SearchFiltersForm({ filters, onChange }: SearchFiltersFormProps)
                                 <div>
                                     <Label className="mb-2 block">Max Revenue</Label>
                                     <Select
-                                        value={filters.max_revenue || ''}
-                                        onValueChange={(v) => updateFilter('max_revenue', v || undefined)}
+                                        value={filters.max_revenue || 'any'}
+                                        onValueChange={(v) => updateFilter('max_revenue', v === 'any' ? undefined : v)}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Any" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="">Any</SelectItem>
+                                            <SelectItem value="any">Any</SelectItem>
                                             {REVENUE_RANGES.map(r => (
                                                 <SelectItem key={r.value} value={r.value}>
                                                     {r.label}
