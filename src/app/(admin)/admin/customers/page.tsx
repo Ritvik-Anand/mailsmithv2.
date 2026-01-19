@@ -32,9 +32,18 @@ import {
     Users,
     RefreshCw,
     AlertCircle,
+    Target,
 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { getOrganizations, toggleOrganizationStatus } from '@/server/actions/organizations'
+import { getOrganizations, toggleOrganizationStatus, updateOrganization } from '@/server/actions/organizations'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
 import { OrganizationWithStats } from '@/types'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -59,6 +68,9 @@ export default function AdminCustomersPage() {
     const [searchQuery, setSearchQuery] = useState('')
     const [planFilter, setPlanFilter] = useState('all')
     const [statusFilter, setStatusFilter] = useState('all')
+    const [editingOrg, setEditingOrg] = useState<OrganizationWithStats | null>(null)
+    const [newLimit, setNewLimit] = useState<number>(1000)
+    const [isUpdating, setIsUpdating] = useState(false)
 
     const fetchCustomers = async () => {
         setIsLoading(true)
@@ -70,6 +82,21 @@ export default function AdminCustomersPage() {
             toast.error('Failed to retrieve organizations')
         } finally {
             setIsLoading(false)
+        }
+    }
+
+    const handleUpdateLimit = async () => {
+        if (!editingOrg) return
+        setIsUpdating(true)
+        try {
+            await updateOrganization(editingOrg.id, { monthly_lead_limit: newLimit } as any)
+            toast.success('Limit updated successfully')
+            setEditingOrg(null)
+            fetchCustomers()
+        } catch (error: any) {
+            toast.error(error.message)
+        } finally {
+            setIsUpdating(false)
         }
     }
 
@@ -209,7 +236,7 @@ export default function AdminCustomersPage() {
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Users</TableHead>
                             <TableHead className="text-right">Leads</TableHead>
-                            <TableHead className="text-right">Campaigns</TableHead>
+                            <TableHead className="text-right">Monthly Limit</TableHead>
                             <TableHead>Joined at</TableHead>
                             <TableHead className="w-[50px]"></TableHead>
                         </TableRow>
@@ -260,7 +287,9 @@ export default function AdminCustomersPage() {
                                     </TableCell>
                                     <TableCell className="text-right">{customer._count?.users || 0}</TableCell>
                                     <TableCell className="text-right">{customer._count?.leads.toLocaleString() || 0}</TableCell>
-                                    <TableCell className="text-right">{customer._count?.campaigns || 0}</TableCell>
+                                    <TableCell className="text-right font-medium">
+                                        {customer.monthly_lead_limit?.toLocaleString() || '1,000'}
+                                    </TableCell>
                                     <TableCell className="text-muted-foreground">{new Date(customer.created_at).toLocaleDateString()}</TableCell>
                                     <TableCell>
                                         <DropdownMenu>
@@ -284,6 +313,13 @@ export default function AdminCustomersPage() {
                                                     <Mail className="mr-2 h-4 w-4" />
                                                     Send Message
                                                 </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => {
+                                                    setEditingOrg(customer)
+                                                    setNewLimit(customer.monthly_lead_limit || 1000)
+                                                }}>
+                                                    <Target className="mr-2 h-4 w-4" />
+                                                    Set Lead Limit
+                                                </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 {(customer as any).status === 'suspended' ? (
                                                     <DropdownMenuItem onClick={() => handleToggleStatus(customer.id, 'suspended')}>
@@ -305,6 +341,35 @@ export default function AdminCustomersPage() {
                     </TableBody>
                 </Table>
             </Card>
+
+            {/* EDIT LIMIT DIALOG */}
+            <Dialog open={!!editingOrg} onOpenChange={(open) => !open && setEditingOrg(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Set Monthly Lead Limit</DialogTitle>
+                        <DialogDescription>
+                            Update the monthly lead scraping limit for <strong>{editingOrg?.name}</strong>.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-muted-foreground">Monthly Limit (Leads)</label>
+                            <Input
+                                type="number"
+                                value={newLimit}
+                                onChange={(e) => setNewLimit(parseInt(e.target.value))}
+                                placeholder="e.g. 5000"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setEditingOrg(null)}>Cancel</Button>
+                        <Button onClick={handleUpdateLimit} disabled={isUpdating}>
+                            {isUpdating ? 'Updating...' : 'Save Limit'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

@@ -112,19 +112,29 @@ export async function startLeadSearchJob(filters: LeadSearchFilters): Promise<{
 
         const supabase = await createClient()
 
-        // Validate and apply limits
+        // 1. Check Usage & Limit
+        const usage = await getLeadUsage()
+        if (!usage.success) return { success: false, error: usage.error }
+
         const fetchCount = Math.min(
             filters.fetch_count || DEFAULT_FETCH_COUNT,
             MAX_FETCH_COUNT
         )
 
+        if (usage.usage! + fetchCount > usage.limit!) {
+            return {
+                success: false,
+                error: `Monthly lead limit exceeded. You have ${usage.limit! - usage.usage!} leads remaining. Request an increase in the settings tab.`
+            }
+        }
+
+        // 2. Create scrape job record
         const searchFilters: LeadSearchFilters = {
             ...filters,
             fetch_count: fetchCount,
             email_status: filters.email_status || ['validated'],
         }
 
-        // Create scrape job record
         const { data: job, error: jobError } = await supabase
             .from('scrape_jobs')
             .insert({
@@ -531,5 +541,94 @@ export async function getLeadsFromJob(
             success: false,
             error: error instanceof Error ? error.message : 'Failed to fetch leads',
         }
+    }
+}
+
+/**
+ * Get current month usage and limit for organization
+ */
+export async function getLeadUsage(): Promise<{
+    success: boolean
+    usage?: number
+    limit?: number
+    error?: string
+}> {
+    try {
+        const organizationId = await getCurrentOrganizationId()
+        if (!organizationId) return { success: false, error: 'Not authenticated' }
+
+        const supabase = await createClient()
+
+        // 1. Get org limit
+        const { data: org, error: orgError } = await supabase
+            .from('organizations')
+            .select('monthly_lead_limit')
+            .eq('id', organizationId)
+            .single()
+
+        if (orgError) throw orgError
+
+        // 2. Sum up usage for current month
+        const firstOfMonth = new Date()
+        firstOfMonth.setDate(1)
+        firstOfMonth.setHours(0, 0, 0, 0)
+
+        const { data: jobs, error: usageError } = await supabase
+            .from('scrape_jobs')
+            .select('leads_imported')
+            .eq('organization_id', organizationId)
+            .eq('status', 'completed')
+            .gte('created_at', firstOfMonth.toISOString())
+
+        if (usageError) throw usageError
+
+        const totalUsage = jobs.reduce((sum, job) => sum + (job.leads_imported || 0), 0)
+
+        return {
+            success: true,
+            usage: totalUsage,
+            limit: org.monthly_lead_limit || 1000
+        }
+    } catch (error) {
+        console.error('Get lead usage error:', error)
+        return { success: false, error: 'Failed to fetch usage statistics' }
+    }
+}
+
+/**
+ * Request an increase in lead finding limit
+ */
+export async function requestLeadLimitIncrease(params: {
+    requestedLimit: number
+    reason: string
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const organizationId = await getCurrentOrganizationId()
+        if (!organizationId) return { success: false, error: 'Not authenticated' }
+
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return { success: false, error: 'Not authenticated' }
+
+        const usage = await getLeadUsage()
+        if (!usage.success) return { success: false, error: usage.error }
+
+        const { error } = await supabase
+            .from('lead_limit_requests')
+            .insert({
+                organization_id: organizationId,
+                user_id: user.id,
+                current_limit: usage.limit,
+                requested_limit: params.requestedLimit,
+                reason: params.reason,
+                status: 'pending'
+            })
+
+        if (error) throw error
+
+        return { success: true }
+    } catch (error) {
+        console.error('Request limit increase error:', error)
+        return { success: false, error: 'Failed to submit request' }
     }
 }

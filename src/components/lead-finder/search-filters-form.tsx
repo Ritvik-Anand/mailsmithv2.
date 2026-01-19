@@ -49,7 +49,21 @@ import {
     Target,
     Filter,
     Briefcase,
+    ShieldAlert,
+    TrendingUp as TrendingUpIcon,
 } from 'lucide-react'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
+import { Progress } from '@/components/ui/progress'
+import { getLeadUsage, requestLeadLimitIncrease } from '@/server/actions/lead-finder'
+import { toast } from 'sonner'
+import { useEffect } from 'react'
 import {
     Tooltip,
     TooltipContent,
@@ -209,6 +223,40 @@ export function SearchFiltersForm({ filters, onChange }: SearchFiltersFormProps)
         value: LeadSearchFilters[K]
     ) => {
         onChange({ ...filters, [key]: value })
+    }
+
+    // Usage state
+    const [usageData, setUsageData] = useState<{ usage: number; limit: number } | null>(null)
+    const [isRequesting, setIsRequesting] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [requestForm, setRequestForm] = useState({ limit: 5000, reason: '' })
+
+    useEffect(() => {
+        const fetchUsage = async () => {
+            const res = await getLeadUsage()
+            if (res.success) {
+                setUsageData({ usage: res.usage!, limit: res.limit! })
+            }
+        }
+        fetchUsage()
+    }, [])
+
+    const handleRequestIncrease = async () => {
+        setIsSubmitting(true)
+        try {
+            const res = await requestLeadLimitIncrease({
+                requestedLimit: requestForm.limit,
+                reason: requestForm.reason
+            })
+            if (res.success) {
+                toast.success('Limit increase request submitted!')
+                setIsRequesting(false)
+            } else {
+                toast.error(res.error || 'Failed to submit request')
+            }
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     // Calculate estimated cost
@@ -503,8 +551,22 @@ export function SearchFiltersForm({ filters, onChange }: SearchFiltersFormProps)
                                 </div>
                                 <Input
                                     type="number"
-                                    value={filters.fetch_count || DEFAULT_FETCH_COUNT}
-                                    onChange={(e) => updateFilter('fetch_count', Math.min(parseInt(e.target.value) || DEFAULT_FETCH_COUNT, MAX_FETCH_COUNT))}
+                                    value={filters.fetch_count === undefined ? '' : filters.fetch_count}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === '') {
+                                            updateFilter('fetch_count', undefined as any);
+                                            return;
+                                        }
+                                        const num = parseInt(val);
+                                        updateFilter('fetch_count', isNaN(num) ? undefined as any : Math.min(num, MAX_FETCH_COUNT));
+                                    }}
+                                    onBlur={() => {
+                                        if (!filters.fetch_count || filters.fetch_count < 1) {
+                                            updateFilter('fetch_count', DEFAULT_FETCH_COUNT);
+                                        }
+                                    }}
+                                    placeholder={`e.g., ${DEFAULT_FETCH_COUNT}`}
                                     min={1}
                                     max={MAX_FETCH_COUNT}
                                 />
@@ -524,9 +586,77 @@ export function SearchFiltersForm({ filters, onChange }: SearchFiltersFormProps)
                                     Based on ${COST_PER_1000_LEADS}/1,000 leads
                                 </p>
                             </div>
+
+                            <Separator />
+
+                            {/* Usage Statistics */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="space-y-0.5">
+                                        <Label>Monthly Usage</Label>
+                                        <p className="text-xs text-muted-foreground">
+                                            {usageData ? `${usageData.usage.toLocaleString()} / ${usageData.limit.toLocaleString()} leads` : 'Loading...'}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-xs bg-primary/5 hover:bg-primary/10 border-primary/20"
+                                        onClick={() => setIsRequesting(true)}
+                                    >
+                                        Request Increase
+                                    </Button>
+                                </div>
+                                {usageData && (
+                                    <Progress value={(usageData.usage / usageData.limit) * 100} className="h-2" />
+                                )}
+                                {usageData && usageData.usage / usageData.limit > 0.8 && (
+                                    <p className="text-[10px] text-amber-600 flex items-center gap-1">
+                                        <ShieldAlert className="h-3 w-3" />
+                                        You are approaching your monthly limit.
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </TabsContent>
                 </Tabs>
+
+                {/* LIMIT INCREASE MODAL */}
+                <Dialog open={isRequesting} onOpenChange={setIsRequesting}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Request Limit Increase</DialogTitle>
+                            <DialogDescription>
+                                High-volume scraper? Let us know what you need.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                                <Label>Requested Monthly Limit</Label>
+                                <Input
+                                    type="number"
+                                    value={requestForm.limit}
+                                    onChange={e => setRequestForm({ ...requestForm, limit: parseInt(e.target.value) })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Reason for increase</Label>
+                                <textarea
+                                    className="w-full min-h-[100px] p-3 rounded-md border text-sm bg-background"
+                                    placeholder="Tell us about your outreach scale..."
+                                    value={requestForm.reason}
+                                    onChange={e => setRequestForm({ ...requestForm, reason: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="ghost" onClick={() => setIsRequesting(false)}>Cancel</Button>
+                            <Button onClick={handleRequestIncrease} disabled={isSubmitting || !requestForm.reason}>
+                                {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </TooltipProvider>
     )

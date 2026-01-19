@@ -11,6 +11,7 @@ export interface OrganizationWithStats extends Organization {
         campaigns: number
     }
     owner_email?: string
+    monthly_lead_limit: number
 }
 
 /**
@@ -42,7 +43,8 @@ export async function getOrganizations() {
             users: org.users?.[0]?.count || 0,
             leads: org.leads?.[0]?.count || 0,
             campaigns: org.campaigns?.[0]?.count || 0
-        }
+        },
+        monthly_lead_limit: org.monthly_lead_limit || 1000
     })) as OrganizationWithStats[]
 }
 
