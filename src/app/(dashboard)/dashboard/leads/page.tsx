@@ -153,7 +153,7 @@ export default function LeadsPage() {
         } finally {
             setLoadingLeads(false)
         }
-    }, [])
+    }, [selectedJobId])
 
     useEffect(() => {
         loadLeads()
