@@ -59,8 +59,29 @@ export async function startLeadSearch(
 ): Promise<{ runId: string; status: string }> {
     validateConfig();
 
+    // Normalization: Apify actor is extremely strict about lowercase for enum-like fields
+    const normalizedFilters = { ...filters };
+
+    // Fields that MUST be lowercase
+    const lowercaseFields: (keyof LeadSearchFilters)[] = [
+        'contact_location',
+        'contact_city',
+        'company_industry',
+        'company_location',
+        'functional_level' as any,
+        'funding' as any,
+        'size' as any
+    ];
+
+    lowercaseFields.forEach(field => {
+        const val = normalizedFilters[field];
+        if (Array.isArray(val)) {
+            (normalizedFilters[field] as any) = val.map(v => typeof v === 'string' ? v.toLowerCase() : v);
+        }
+    });
+
     const input: ApifyActorInput = {
-        ...filters,
+        ...normalizedFilters,
         // Ensure validated emails by default
         email_status: filters.email_status || ['validated'],
     };

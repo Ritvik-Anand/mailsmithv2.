@@ -233,9 +233,9 @@ export type SeniorityLevel =
     | 'vp' | 'head' | 'manager' | 'senior' | 'entry' | 'trainee';
 
 export type FunctionalLevel =
-    | 'C-Level' | 'Finance' | 'Product' | 'Engineering'
-    | 'Design' | 'HR' | 'IT' | 'Legal' | 'Marketing'
-    | 'Operations' | 'Sales' | 'Support';
+    | 'c_suite' | 'finance' | 'product' | 'engineering'
+    | 'design' | 'hr' | 'it' | 'legal' | 'marketing'
+    | 'operations' | 'sales' | 'support';
 
 export type CompanySize =
     | '0-1' | '2-10' | '11-20' | '21-50' | '51-100'
