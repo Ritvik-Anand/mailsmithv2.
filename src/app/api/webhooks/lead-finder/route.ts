@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { fetchLeadSearchResults } from '@/lib/lead-finder/apify-client'
 import { ApifyLeadResult, Lead } from '@/types'
+import { transformToLeads } from '@/lib/lead-finder/processor'
 
 // Use service role for webhook processing
 const supabaseAdmin = createClient(
@@ -9,74 +10,7 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-/**
- * Robustly find an email address in an Apify result.
- */
-function findEmail(r: any): string | null {
-    if (!r) return null;
-    const standardKeys = ['email', 'personal_email', 'work_email', 'contact_email', 'email_address', 'primary_email'];
-    for (const key of standardKeys) {
-        if (typeof r[key] === 'string' && r[key].includes('@')) return r[key];
-    }
-    if (Array.isArray(r.emails) && r.emails.length > 0 && typeof r.emails[0] === 'string') return r.emails[0];
-    if (Array.isArray(r.email) && r.email.length > 0 && typeof r.email[0] === 'string') return r.email[0];
-    for (const key in r) {
-        if (typeof r[key] === 'string' && r[key].length > 5 && r[key].includes('@')) {
-            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r[key])) return r[key];
-        }
-    }
-    return null;
-}
-
-/**
- * Transform Apify results to Lead format
- */
-function transformToLeads(
-    results: ApifyLeadResult[],
-    organizationId: string,
-    scrapeJobId: string
-): Partial<Lead>[] {
-    const leads: Partial<Lead>[] = [];
-
-    for (const r of results) {
-        const email = findEmail(r);
-        if (!email) continue;
-
-        leads.push({
-            organization_id: organizationId,
-            first_name: r.first_name || null,
-            last_name: r.last_name || null,
-            email: email,
-            phone: r.mobile_number || null,
-            linkedin_url: r.linkedin || null,
-            company_name: r.company_name || null,
-            company_domain: r.company_domain || null,
-            job_title: r.job_title || null,
-            industry: r.industry || null,
-            company_size: r.company_size || null,
-            location: [r.city, r.state, r.country].filter(Boolean).join(', ') || null,
-            raw_scraped_data: r as Record<string, unknown>,
-            enrichment_data: {
-                headline: r.headline,
-                functional_level: r.functional_level,
-                seniority_level: r.seniority_level,
-                personal_email: r.personal_email,
-                company_linkedin: r.company_linkedin,
-                company_description: r.company_description,
-                company_funding: r.company_total_funding,
-                company_revenue: r.company_annual_revenue,
-                company_founded: r.company_founded_year,
-                technologies: r.company_technologies,
-            },
-            source: 'apify_leads_finder' as any,
-            scrape_job_id: scrapeJobId as any,
-            icebreaker_status: 'pending' as any,
-            campaign_status: 'not_added' as any,
-        });
-    }
-
-    return leads;
-}
+// Logic moved to src/lib/lead-finder/processor.ts
 
 export async function POST(request: NextRequest) {
     try {

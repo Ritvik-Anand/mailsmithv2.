@@ -17,6 +17,7 @@ import {
 import { startLeadSearch, getLeadSearchStatus, fetchLeadSearchResults, abortLeadSearch, runSyncLeadSearch } from '@/lib/lead-finder/apify-client'
 import { DEFAULT_FETCH_COUNT, MAX_FETCH_COUNT } from '@/lib/lead-finder/constants'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { transformToLeads } from '@/lib/lead-finder/processor'
 
 // Internal actor identifier (hidden from users)
 const ACTOR_ID = 'code_crafter~leads-finder'
@@ -64,85 +65,7 @@ async function getCurrentOrganizationId(): Promise<{ organizationId: string | nu
  * Robustly find an email address in an Apify result.
  * Handles variations like 'email', 'personal_email', 'work_email', 'emails' array, etc.
  */
-function findEmail(r: any): string | null {
-    if (!r) return null;
-
-    // 1. Standard keys
-    const standardKeys = ['email', 'personal_email', 'work_email', 'contact_email', 'email_address', 'primary_email'];
-    for (const key of standardKeys) {
-        if (typeof r[key] === 'string' && r[key].includes('@')) return r[key];
-    }
-
-    // 2. Array formats
-    if (Array.isArray(r.emails) && r.emails.length > 0 && typeof r.emails[0] === 'string') return r.emails[0];
-    if (Array.isArray(r.email) && r.email.length > 0 && typeof r.email[0] === 'string') return r.email[0];
-
-    // 3. Nested/Enrichment fields
-    if (r.enrichment?.email) return r.enrichment.email;
-    if (r.contact?.email) return r.contact.email;
-
-    // 4. Broad search over all string keys
-    for (const key in r) {
-        if (typeof r[key] === 'string' && r[key].length > 5 && r[key].includes('@')) {
-            // Basic regex to verify it looks like an email
-            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r[key])) {
-                return r[key];
-            }
-        }
-    }
-
-    return null;
-}
-
-/**
- * Transform Apify results to Lead format
- */
-function transformToLeads(
-    results: ApifyLeadResult[],
-    organizationId: string,
-    scrapeJobId: string
-): Partial<Lead>[] {
-    const leads: Partial<Lead>[] = [];
-
-    for (const r of results) {
-        const email = findEmail(r);
-        if (!email) continue;
-
-        leads.push({
-            organization_id: organizationId,
-            first_name: r.first_name || null,
-            last_name: r.last_name || null,
-            email: email,
-            phone: r.mobile_number || null,
-            linkedin_url: r.linkedin || null,
-            company_name: r.company_name || null,
-            company_domain: r.company_domain || null,
-            job_title: r.job_title || null,
-            industry: r.industry || null,
-            company_size: r.company_size || null,
-            location: [r.city, r.state, r.country].filter(Boolean).join(', ') || null,
-            raw_scraped_data: r as Record<string, unknown>,
-            enrichment_data: {
-                headline: r.headline,
-                functional_level: r.functional_level,
-                seniority_level: r.seniority_level,
-                personal_email: r.personal_email,
-                company_linkedin: r.company_linkedin,
-                company_description: r.company_description,
-                company_funding: r.company_total_funding,
-                company_revenue: r.company_annual_revenue,
-                company_founded: r.company_founded_year,
-                technologies: r.company_technologies,
-            },
-            source: 'apify_leads_finder' as any,
-            scrape_job_id: scrapeJobId as any,
-            icebreaker_status: 'pending' as any,
-            campaign_status: 'not_added' as any,
-        });
-    }
-
-    return leads;
-}
+// Logic moved to src/lib/lead-finder/processor.ts
 
 // -----------------------------------------------------------------------------
 // Public Server Actions
@@ -308,14 +231,13 @@ export async function getSearchJobStatus(jobId: string): Promise<{
             return { success: false, error: 'Job not found' }
         }
 
-        // If running, check latest status
-        if (job.status === 'running' && job.apify_run_id) {
+        // If running OR completed but not imported, check/fetch latest status
+        if (job.apify_run_id && (job.status === 'running' || (job.status === 'completed' && (job.leads_imported || 0) === 0))) {
             const status = await getLeadSearchStatus(job.apify_run_id)
 
-            // Update if changed
+            // Update if finished
             if (status.status === 'SUCCEEDED') {
-                // If it just finished, we need to process results
-                // We'll call processJobResults to do the actual data import
+                console.log(`[Lead Finder] Job ${jobId} finished/ready. Processing results...`);
                 await processJobResults(jobId, status.datasetId)
 
                 // Refetch job to get updated counts
