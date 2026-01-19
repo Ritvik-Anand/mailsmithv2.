@@ -277,19 +277,35 @@ export async function getSearchJobStatus(jobId: string): Promise<{
             const status = await getLeadSearchStatus(job.apify_run_id)
 
             // Update if changed
-            if (status.status === 'SUCCEEDED' || status.status === 'FAILED') {
-                const newStatus = status.status === 'SUCCEEDED' ? 'completed' : 'failed'
+            if (status.status === 'SUCCEEDED') {
+                // If it just finished, we need to process results
+                // We'll call processJobResults to do the actual data import
+                await processJobResults(jobId, status.datasetId)
+
+                // Refetch job to get updated counts
+                const { data: updatedJob } = await supabase
+                    .from('scrape_jobs')
+                    .select('*')
+                    .eq('id', jobId)
+                    .single()
+
+                if (updatedJob) {
+                    return { success: true, job: updatedJob as ScrapeJob }
+                }
+            } else if (status.status === 'FAILED' || status.status === 'ABORTED') {
+                const newStatus = status.status === 'ABORTED' ? 'failed' : 'failed'
                 await supabase
                     .from('scrape_jobs')
                     .update({
                         status: newStatus,
                         completed_at: status.finishedAt,
-                        error_message: status.status === 'FAILED' ? status.statusMessage : null,
+                        error_message: status.statusMessage || `Actor run ${status.status}`,
                     })
                     .eq('id', jobId)
 
                 job.status = newStatus
                 job.completed_at = status.finishedAt
+                job.error_message = status.statusMessage || `Actor run ${status.status}`
             }
         }
 

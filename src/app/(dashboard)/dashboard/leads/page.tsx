@@ -109,6 +109,7 @@ export default function LeadsPage() {
     const [searchQuery, setSearchQuery] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
     const [icebreakerFilter, setIcebreakerFilter] = useState('all')
+    const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
 
     // Stats
     const [stats, setStats] = useState({
@@ -123,11 +124,17 @@ export default function LeadsPage() {
         setLoadingLeads(true)
         try {
             const supabase = createClient()
-            const { data, error } = await supabase
+            let query = supabase
                 .from('leads')
                 .select('*')
                 .order('created_at', { ascending: false })
                 .limit(100)
+
+            if (selectedJobId) {
+                query = query.eq('scrape_job_id', selectedJobId)
+            }
+
+            const { data, error } = await query
 
             if (error) throw error
 
@@ -150,7 +157,7 @@ export default function LeadsPage() {
 
     useEffect(() => {
         loadLeads()
-    }, [loadLeads])
+    }, [loadLeads, selectedJobId])
 
     // Lead selection handlers
     const toggleSelectAll = () => {
@@ -364,6 +371,16 @@ export default function LeadsPage() {
                             >
                                 <RefreshCw className={cn("h-4 w-4", loadingLeads && "animate-spin")} />
                             </Button>
+                            {selectedJobId && (
+                                <Button
+                                    variant="outline"
+                                    className="gap-2"
+                                    onClick={() => setSelectedJobId(null)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    Clear Job Filter
+                                </Button>
+                            )}
                         </div>
 
                         {/* Bulk Actions */}
@@ -679,8 +696,9 @@ export default function LeadsPage() {
                             <SearchJobsList
                                 refreshKey={refreshKey}
                                 onViewJob={(jobId) => {
-                                    // Could open a modal or filter leads by job
-                                    toast.info('View leads from this search')
+                                    setSelectedJobId(jobId)
+                                    setActiveTab('all-leads')
+                                    toast.success('Filtering leads from this search')
                                 }}
                             />
                         </CardContent>
