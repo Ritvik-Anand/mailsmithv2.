@@ -229,8 +229,8 @@ export interface LeadSearchFilters {
 }
 
 export type SeniorityLevel =
-    | 'Founder' | 'Owner' | 'C-Level' | 'Director'
-    | 'VP' | 'Head' | 'Manager' | 'Senior' | 'Entry' | 'Trainee';
+    | 'founder' | 'owner' | 'c_suite' | 'director' | 'partner'
+    | 'vp' | 'head' | 'manager' | 'senior' | 'entry' | 'trainee';
 
 export type FunctionalLevel =
     | 'C-Level' | 'Finance' | 'Product' | 'Engineering'

@@ -18,16 +18,17 @@ import {
 // -----------------------------------------------------------------------------
 
 export const SENIORITY_LEVELS: { value: SeniorityLevel; label: string }[] = [
-    { value: 'Founder', label: 'Founder' },
-    { value: 'Owner', label: 'Owner' },
-    { value: 'C-Level', label: 'C-Level Executive' },
-    { value: 'Director', label: 'Director' },
-    { value: 'VP', label: 'Vice President' },
-    { value: 'Head', label: 'Head of Department' },
-    { value: 'Manager', label: 'Manager' },
-    { value: 'Senior', label: 'Senior Individual Contributor' },
-    { value: 'Entry', label: 'Entry Level' },
-    { value: 'Trainee', label: 'Trainee / Intern' },
+    { value: 'founder', label: 'Founder' },
+    { value: 'owner', label: 'Owner' },
+    { value: 'c_suite', label: 'C-Level Executive' },
+    { value: 'director', label: 'Director' },
+    { value: 'partner', label: 'Partner' },
+    { value: 'vp', label: 'Vice President' },
+    { value: 'head', label: 'Head of Department' },
+    { value: 'manager', label: 'Manager' },
+    { value: 'senior', label: 'Senior Individual Contributor' },
+    { value: 'entry', label: 'Entry Level' },
+    { value: 'trainee', label: 'Trainee / Intern' },
 ];
 
 export const FUNCTIONAL_LEVELS: { value: FunctionalLevel; label: string }[] = [
@@ -159,7 +160,7 @@ export const SEARCH_PRESETS: LeadSearchPreset[] = [
         description: 'C-Level and VPs at SaaS companies in the US',
         icon: '🚀',
         filters: {
-            seniority_level: ['C-Level', 'VP', 'Director'],
+            seniority_level: ['c_suite', 'vp', 'director'],
             contact_location: ['United States'],
             company_industry: ['Computer Software', 'SaaS', 'Internet'],
             email_status: ['validated'],
@@ -172,7 +173,7 @@ export const SEARCH_PRESETS: LeadSearchPreset[] = [
         description: 'Founders and CEOs at funded startups',
         icon: '💡',
         filters: {
-            seniority_level: ['Founder', 'Owner', 'C-Level'],
+            seniority_level: ['founder', 'owner', 'c_suite'],
             size: ['2-10', '11-20', '21-50', '51-100'],
             funding: ['Seed', 'Angel', 'Series A', 'Series B'],
             email_status: ['validated'],
@@ -187,7 +188,7 @@ export const SEARCH_PRESETS: LeadSearchPreset[] = [
         filters: {
             contact_job_title: ['CMO', 'VP Marketing', 'Head of Marketing', 'Marketing Director'],
             functional_level: ['Marketing'],
-            seniority_level: ['C-Level', 'VP', 'Director', 'Head'],
+            seniority_level: ['c_suite', 'vp', 'director', 'head'],
             email_status: ['validated'],
             fetch_count: 1000,
         },
@@ -200,7 +201,7 @@ export const SEARCH_PRESETS: LeadSearchPreset[] = [
         filters: {
             contact_job_title: ['CRO', 'VP Sales', 'Head of Sales', 'Sales Director'],
             functional_level: ['Sales'],
-            seniority_level: ['C-Level', 'VP', 'Director', 'Head'],
+            seniority_level: ['c_suite', 'vp', 'director', 'head'],
             email_status: ['validated'],
             fetch_count: 1000,
         },
@@ -224,7 +225,7 @@ export const SEARCH_PRESETS: LeadSearchPreset[] = [
         description: 'Decision makers at online retail companies',
         icon: '🛒',
         filters: {
-            seniority_level: ['C-Level', 'VP', 'Director'],
+            seniority_level: ['c_suite', 'vp', 'director'],
             company_industry: ['E-commerce', 'Retail', 'Consumer Goods'],
             email_status: ['validated'],
             fetch_count: 1000,
@@ -236,7 +237,7 @@ export const SEARCH_PRESETS: LeadSearchPreset[] = [
         description: 'Executives at financial technology companies',
         icon: '🏦',
         filters: {
-            seniority_level: ['C-Level', 'VP', 'Director'],
+            seniority_level: ['c_suite', 'vp', 'director'],
             company_industry: ['Financial Services', 'Fintech', 'Banking'],
             funding: ['Series A', 'Series B', 'Series C', 'Series D'],
             email_status: ['validated'],
