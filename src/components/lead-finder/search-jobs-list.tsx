@@ -223,17 +223,30 @@ export function SearchJobsList({ onViewJob, refreshKey }: SearchJobsListProps) {
 
                                     <div className="flex flex-col items-end gap-2 shrink-0">
                                         {job.status === 'running' && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    handleCancel(job.id)
-                                                }}
-                                            >
-                                                <StopCircle className="h-4 w-4 mr-1" />
-                                                Cancel
-                                            </Button>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="text-xs"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        onViewJob?.(job.id)
+                                                    }}
+                                                >
+                                                    <RefreshCw className="h-3 w-3 mr-1" />
+                                                    Sync Now
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        handleCancel(job.id)
+                                                    }}
+                                                >
+                                                    <StopCircle className="h-4 w-4 text-muted-foreground" />
+                                                </Button>
+                                            </div>
                                         )}
                                         {job.status === 'completed' && (
                                             <div className="flex gap-2">

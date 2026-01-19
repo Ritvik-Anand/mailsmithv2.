@@ -237,7 +237,14 @@ export async function getSearchJobStatus(jobId: string): Promise<{
 
             // Update if finished
             if (status.status === 'SUCCEEDED') {
-                console.log(`[Lead Finder] Job ${jobId} finished/ready. Processing results...`);
+                console.log(`[Lead Finder] Job ${jobId} finished on Apify. Transitioning to processing...`);
+
+                // Immediately set to completed so polling sees the change
+                await supabase
+                    .from('scrape_jobs')
+                    .update({ status: 'completed' })
+                    .eq('id', jobId)
+
                 await processJobResults(jobId, status.datasetId)
 
                 // Refetch job to get updated counts
