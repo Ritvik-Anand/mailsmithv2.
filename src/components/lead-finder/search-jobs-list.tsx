@@ -221,7 +221,7 @@ export function SearchJobsList({ onViewJob, refreshKey }: SearchJobsListProps) {
                                         )}
                                     </div>
 
-                                    <div className="flex items-center gap-2 shrink-0">
+                                    <div className="flex flex-col items-end gap-2 shrink-0">
                                         {job.status === 'running' && (
                                             <Button
                                                 variant="outline"
@@ -235,7 +235,39 @@ export function SearchJobsList({ onViewJob, refreshKey }: SearchJobsListProps) {
                                                 Cancel
                                             </Button>
                                         )}
-                                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                        {job.status === 'completed' && (
+                                            <div className="flex gap-2">
+                                                {job.leads_found > 0 && job.leads_imported === 0 && (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="text-xs"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            onViewJob?.(job.id)
+                                                        }}
+                                                    >
+                                                        <RefreshCw className="h-3 w-3 mr-1" />
+                                                        Retry Sync
+                                                    </Button>
+                                                )}
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    className="text-xs"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        onViewJob?.(job.id)
+                                                    }}
+                                                >
+                                                    View Leads
+                                                    <ChevronRight className="h-4 w-4 ml-1" />
+                                                </Button>
+                                            </div>
+                                        )}
+                                        {job.status !== 'completed' && job.status !== 'running' && (
+                                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                        )}
                                     </div>
                                 </div>
                             </CardContent>

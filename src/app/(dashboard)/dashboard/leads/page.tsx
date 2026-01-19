@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/dialog'
 import { LeadSearchFilters, Lead, ScrapeJob } from '@/types'
 import { SearchPresets, SearchFiltersForm, SearchJobsList } from '@/components/lead-finder'
-import { startLeadSearchJob, quickLeadSearch, getSearchJobs } from '@/server/actions/lead-finder'
+import { startLeadSearchJob, quickLeadSearch, getSearchJobs, getSearchJobStatus } from '@/server/actions/lead-finder'
 import { DEFAULT_FETCH_COUNT, COST_PER_1000_LEADS } from '@/lib/lead-finder/constants'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -695,10 +695,17 @@ export default function LeadsPage() {
                         <CardContent>
                             <SearchJobsList
                                 refreshKey={refreshKey}
-                                onViewJob={(jobId) => {
+                                onViewJob={async (jobId) => {
                                     setSelectedJobId(jobId)
                                     setActiveTab('all-leads')
                                     toast.success('Filtering leads from this search')
+
+                                    // Trigger a re-check and wait for it to complete
+                                    const result = await getSearchJobStatus(jobId)
+                                    if (result.success && result.job && result.job.leads_imported > 0) {
+                                        toast.success(`Successfully imported ${result.job.leads_imported} leads!`)
+                                        loadLeads() // Refresh the list to show new leads
+                                    }
                                 }}
                             />
                         </CardContent>
