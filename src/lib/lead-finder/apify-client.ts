@@ -89,9 +89,15 @@ export async function startLeadSearch(
     });
 
     if (!response.ok) {
-        const error = await response.text();
-        console.error('Lead search start failed:', error);
-        throw new Error('Failed to start lead search. Please try again later.');
+        let errorDetail = 'Unknown error'
+        try {
+            const errorJson = await response.json()
+            errorDetail = errorJson.error?.message || JSON.stringify(errorJson)
+        } catch {
+            errorDetail = await response.text()
+        }
+        console.error('Lead search start failed:', errorDetail)
+        throw new Error(`Failed to start lead search: ${errorDetail}`)
     }
 
     const result: ApifyRunResponse = await response.json();

@@ -198,11 +198,11 @@ export async function startLeadSearchJob(filters: LeadSearchFilters): Promise<{
         revalidatePath('/dashboard/lead-finder')
 
         return { success: true, jobId: job.id }
-    } catch (error) {
+    } catch (error: any) {
         console.error('Start lead search error:', error)
         return {
             success: false,
-            error: error instanceof Error ? error.message : 'Failed to start search'
+            error: error.message || 'Failed to start lead search'
         }
     }
 }
@@ -605,9 +605,9 @@ export async function getLeadUsage(): Promise<{
             usage: totalUsage,
             limit: org.monthly_lead_limit || 1000
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error('Get lead usage error:', error)
-        return { success: false, error: 'Failed to fetch usage statistics' }
+        return { success: false, error: error.message || 'Failed to fetch usage statistics' }
     }
 }
 
