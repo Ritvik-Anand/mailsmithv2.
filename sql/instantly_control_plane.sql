@@ -51,6 +51,12 @@ ALTER TABLE instantly_email_accounts ENABLE ROW LEVEL SECURITY;
 
 -- 4. RLS Policies
 
+-- Drop existing policies if they exist to allow re-running
+DROP POLICY IF EXISTS "Super admins can manage all outreach nodes" ON instantly_email_accounts;
+DROP POLICY IF EXISTS "Operators can manage assigned outreach nodes" ON instantly_email_accounts;
+DROP POLICY IF EXISTS "Customers can view their outreach nodes" ON instantly_email_accounts;
+DROP POLICY IF EXISTS "Service role can manage all outreach nodes" ON instantly_email_accounts;
+
 -- Super Admins can manage everything
 CREATE POLICY "Super admins can manage all outreach nodes" ON instantly_email_accounts FOR ALL
 USING (
@@ -84,6 +90,9 @@ BEGIN
     RETURN NEW;
 END;
 $$ language 'plpgsql';
+
+-- Drop trigger if exists to allow re-running
+DROP TRIGGER IF EXISTS update_instantly_email_accounts_updated_at ON instantly_email_accounts;
 
 CREATE TRIGGER update_instantly_email_accounts_updated_at
     BEFORE UPDATE ON instantly_email_accounts

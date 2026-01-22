@@ -45,9 +45,16 @@ export async function updateSession(request: NextRequest) {
     )
 
     if (!user && !isPublicRoute) {
-        // Redirect to login if not authenticated and trying to access protected route
+        // SMART REDIRECT: Redirect to the correct login page based on the requested route
         const url = request.nextUrl.clone()
-        url.pathname = '/login'
+        const path = request.nextUrl.pathname
+
+        if (path.startsWith('/operator') || path.startsWith('/admin-console')) {
+            url.pathname = '/admin'
+        } else {
+            url.pathname = '/login'
+        }
+
         return NextResponse.redirect(url)
     }
 

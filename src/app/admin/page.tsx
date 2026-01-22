@@ -31,6 +31,10 @@ export default function AdminLoginPage() {
                     const path = userData.role === 'super_admin' ? '/admin-console' : '/operator'
                     window.location.href = path
                     return
+                } else if (userData) {
+                    // Logged in as customer, but trying to access admin login
+                    window.location.href = '/portal'
+                    return
                 }
             }
             setIsLoading(false)

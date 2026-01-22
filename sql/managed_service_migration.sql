@@ -249,18 +249,23 @@ USING (
 );
 
 -- Service role bypass for all new tables
+DROP POLICY IF EXISTS "Service role can manage all operator_assignments" ON operator_assignments;
 CREATE POLICY "Service role can manage all operator_assignments" ON operator_assignments FOR ALL
 TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Service role can manage all ai_chat_sessions" ON ai_chat_sessions;
 CREATE POLICY "Service role can manage all ai_chat_sessions" ON ai_chat_sessions FOR ALL
 TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Service role can manage all ai_chat_messages" ON ai_chat_messages;
 CREATE POLICY "Service role can manage all ai_chat_messages" ON ai_chat_messages FOR ALL
 TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Service role can manage all customer_reports" ON customer_reports;
 CREATE POLICY "Service role can manage all customer_reports" ON customer_reports FOR ALL
 TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Service role can manage all activity_feed" ON activity_feed;
 CREATE POLICY "Service role can manage all activity_feed" ON activity_feed FOR ALL
 TO service_role USING (true) WITH CHECK (true);
 
