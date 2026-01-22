@@ -265,7 +265,7 @@ export default function AdminCustomersPage() {
                                 <TableRow key={customer.id}>
                                     <TableCell>
                                         <Link
-                                            href={`/admin/customers/${customer.id}`}
+                                            href={`/admin-console/customers/${customer.id}`}
                                             className="font-medium hover:underline"
                                         >
                                             {customer.name}
@@ -300,7 +300,7 @@ export default function AdminCustomersPage() {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuItem asChild>
-                                                    <Link href={`/admin/customers/${customer.id}`}>
+                                                    <Link href={`/admin-console/customers/${customer.id}`}>
                                                         <Eye className="mr-2 h-4 w-4" />
                                                         View Details
                                                     </Link>

@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Zap, Loader2, Mail, Lock } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/client'
+import { getRedirectPath } from '@/server/actions/roles'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -29,30 +30,33 @@ export default function LoginPage() {
 
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(email)) {
-            setError('Please enter a valid email address (e.g. name@domain.com).');
+            setError('Please enter a valid email address.');
             setIsLoading(false);
             return;
         }
 
         try {
-            const { error: signInError } = await supabase.auth.signInWithPassword({
+            const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             })
 
             if (signInError) throw signInError
 
-            // Redirect to dashboard
-            router.push('/dashboard')
+            // Fetch role to redirect correctly
+            const { data: userData } = await supabase
+                .from('users')
+                .select('role')
+                .eq('id', authData.user.id)
+                .single()
+
+            const role = userData?.role || 'customer'
+            const redirectPath = await getRedirectPath(role as any)
+            router.push(redirectPath)
+            router.refresh()
         } catch (err: any) {
-            console.error('AUTHENTICATION FAILURE:', err);
-            if (err instanceof Error) {
-                console.error('Error Message:', err.message);
-                console.error('Error Stack:', err.stack);
-            }
-            console.error('Error Object Details:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
+            console.error('CUSTOMER AUTH FAILURE:', err);
             setError(err.message || 'Invalid email or password')
-        } finally {
             setIsLoading(false)
         }
     }

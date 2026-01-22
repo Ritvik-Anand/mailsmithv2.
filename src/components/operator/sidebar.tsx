@@ -10,92 +10,63 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import {
     LayoutDashboard,
-    Mail,
     Users,
-    MessageSquare,
+    Mail,
+    Inbox,
+    ClipboardList,
+    Target,
     Settings,
-    Bell,
     Menu,
     ChevronLeft,
     Zap,
-    Shield,
-    Target,
 } from 'lucide-react'
+import type { UserWithRole } from '@/server/actions/roles'
 
-interface SidebarProps {
-    isAdmin?: boolean
+interface OperatorSidebarProps {
+    user: UserWithRole
 }
 
-const customerNavItems = [
+const navItems = [
     {
         title: 'Dashboard',
-        href: '/portal',
+        href: '/operator',
         icon: LayoutDashboard,
+    },
+    {
+        title: 'My Customers',
+        href: '/operator/customers',
+        icon: Users,
+    },
+    {
+        title: 'Task Queue',
+        href: '/operator/queue',
+        icon: ClipboardList,
+    },
+    {
+        title: 'Reply Inbox',
+        href: '/operator/inbox',
+        icon: Inbox,
+    },
+    {
+        title: 'Lead Scraper',
+        href: '/operator/scraper',
+        icon: Target,
     },
     {
         title: 'Campaigns',
-        href: '/portal/campaigns',
+        href: '/operator/campaigns',
         icon: Mail,
     },
     {
-        title: 'Leads',
-        href: '/portal/leads',
-        icon: Users,
-    },
-    {
-        title: 'Intelligence',
-        href: '/portal/notifications',
-        icon: Bell,
-    },
-    {
-        title: 'Support',
-        href: '/portal/support',
-        icon: MessageSquare,
-    },
-    {
         title: 'Settings',
-        href: '/portal/settings',
+        href: '/operator/settings',
         icon: Settings,
     },
 ]
 
-const adminNavItems = [
-    {
-        title: 'Dashboard',
-        href: '/admin-console',
-        icon: LayoutDashboard,
-    },
-    {
-        title: 'Customers',
-        href: '/admin-console/customers',
-        icon: Users,
-    },
-    {
-        title: 'Internal Team',
-        href: '/admin-console/team',
-        icon: Shield,
-    },
-    {
-        title: 'Support Queue',
-        href: '/admin-console/support',
-        icon: MessageSquare,
-    },
-    {
-        title: 'Notifications',
-        href: '/admin-console/notifications',
-        icon: Bell,
-    },
-    {
-        title: 'Settings',
-        href: '/admin-console/settings',
-        icon: Settings,
-    },
-]
-
-export function Sidebar({ isAdmin = false }: SidebarProps) {
+export function OperatorSidebar({ user }: OperatorSidebarProps) {
     const pathname = usePathname()
     const [collapsed, setCollapsed] = useState(false)
-    const navItems = isAdmin ? adminNavItems : customerNavItems
 
     return (
         <aside
@@ -106,20 +77,15 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         >
             {/* Logo */}
             <div className="flex h-16 items-center border-b px-4">
-                <Link href={isAdmin ? '/admin-console' : '/portal'} className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary overflow-hidden">
-                        <Image
-                            src="/logo.png"
-                            alt="MailSmith Logo"
-                            width={32}
-                            height={32}
-                            className="object-contain p-1"
-                        />
+                <Link href="/operator" className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 overflow-hidden">
+                        <Zap className="h-5 w-5 text-white" />
                     </div>
                     {!collapsed && (
-                        <span className="font-semibold text-lg">
-                            MailSmith {isAdmin && <span className="text-xs text-muted-foreground">Admin</span>}
-                        </span>
+                        <div className="flex flex-col">
+                            <span className="font-semibold text-lg">MailSmith</span>
+                            <span className="text-xs text-amber-500">Operator Console</span>
+                        </div>
                     )}
                 </Link>
             </div>
@@ -128,7 +94,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             <ScrollArea className="flex-1 py-4">
                 <nav className="space-y-1 px-2">
                     {navItems.map((item) => {
-                        const isActive = item.href === '/admin-console' || item.href === '/portal'
+                        const isActive = item.href === '/operator'
                             ? pathname === item.href
                             : pathname.startsWith(item.href)
                         return (
@@ -138,7 +104,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
                                 className={cn(
                                     'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                                     isActive
-                                        ? 'bg-primary text-primary-foreground'
+                                        ? 'bg-amber-500 text-white'
                                         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                 )}
                             >
@@ -149,6 +115,21 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
                     })}
                 </nav>
             </ScrollArea>
+
+            {/* User Info */}
+            <div className="border-t p-4">
+                {!collapsed && (
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/10 text-amber-500 text-sm font-medium">
+                            {user.fullName?.charAt(0) || user.email?.charAt(0) || 'O'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{user.fullName || 'Operator'}</p>
+                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* Collapse Toggle */}
             <div className="border-t p-2">
@@ -168,9 +149,8 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
     )
 }
 
-export function MobileSidebar({ isAdmin = false }: SidebarProps) {
+export function OperatorMobileSidebar({ user }: OperatorSidebarProps) {
     const pathname = usePathname()
-    const navItems = isAdmin ? adminNavItems : customerNavItems
 
     return (
         <Sheet>
@@ -182,15 +162,9 @@ export function MobileSidebar({ isAdmin = false }: SidebarProps) {
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0">
                 <div className="flex h-16 items-center border-b px-4">
-                    <Link href={isAdmin ? '/admin-console' : '/portal'} className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary overflow-hidden">
-                            <Image
-                                src="/logo.png"
-                                alt="MailSmith Logo"
-                                width={32}
-                                height={32}
-                                className="object-contain p-1"
-                            />
+                    <Link href="/operator" className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500">
+                            <Zap className="h-5 w-5 text-white" />
                         </div>
                         <span className="font-semibold text-lg">MailSmith</span>
                     </Link>
@@ -206,7 +180,7 @@ export function MobileSidebar({ isAdmin = false }: SidebarProps) {
                                     className={cn(
                                         'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                                         isActive
-                                            ? 'bg-primary text-primary-foreground'
+                                            ? 'bg-amber-500 text-white'
                                             : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                     )}
                                 >

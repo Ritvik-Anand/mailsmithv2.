@@ -147,6 +147,60 @@ export const POPULAR_INDUSTRIES: string[] = [
     'government administration',
 ];
 
+export const POPULAR_JOB_TITLES: string[] = [
+    'CEO',
+    'Founder',
+    'Co-Founder',
+    'Owner',
+    'Managing Director',
+    'President',
+    'CTO',
+    'Chief Technology Officer',
+    'VP Engineering',
+    'Head of Engineering',
+    'CMO',
+    'Chief Marketing Officer',
+    'VP Marketing',
+    'Head of Marketing',
+    'CRO',
+    'Chief Revenue Officer',
+    'VP Sales',
+    'Head of Sales',
+    'COO',
+    'Chief Operating Officer',
+    'CFO',
+    'Chief Financial Officer',
+    'Product Manager',
+    'Marketing Manager',
+    'Sales Manager',
+    'Operations Manager',
+    'HR Manager',
+    'Creative Director',
+    'General Manager',
+];
+
+export const POPULAR_LOCATIONS: string[] = [
+    'United States',
+    'United Kingdom',
+    'Canada',
+    'Australia',
+    'Germany',
+    'France',
+    'Netherlands',
+    'Singapore',
+    'United Arab Emirates',
+    'London',
+    'New York',
+    'San Francisco',
+    'Dubai',
+    'Berlin',
+    'Paris',
+    'Dublin',
+    'Sydney',
+    'Austin',
+    'Boston',
+];
+
 // -----------------------------------------------------------------------------
 // Search Presets
 // -----------------------------------------------------------------------------

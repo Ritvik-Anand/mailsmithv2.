@@ -212,6 +212,7 @@ export default function HomePage() {
             <div className="flex items-center gap-8 text-sm text-white/50">
               <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
               <Link href="#" className="hover:text-white transition-colors">Terms</Link>
+              <Link href="/admin" className="hover:text-white transition-colors italic opacity-50 hover:opacity-100">Team Login</Link>
               <Link href="#" className="hover:text-white transition-colors">Contact</Link>
             </div>
             <p className="text-sm text-white/30">

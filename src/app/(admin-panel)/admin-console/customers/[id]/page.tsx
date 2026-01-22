@@ -62,7 +62,7 @@ export default function AdminCustomerDetailPage() {
             const data = await getOrganizationDetails(id)
             if (!data) {
                 toast.error('Organization not found')
-                router.push('/admin/customers')
+                router.push('/admin-console/customers')
                 return
             }
             setOrg(data)
@@ -149,7 +149,7 @@ export default function AdminCustomerDetailPage() {
             <div className="flex items-start justify-between">
                 <div className="space-y-1">
                     <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                        <Link href="/admin/customers" className="hover:text-foreground transition-colors">
+                        <Link href="/admin-console/customers" className="hover:text-foreground transition-colors">
                             <ArrowLeft className="h-4 w-4" />
                         </Link>
                         <span>Customers</span>

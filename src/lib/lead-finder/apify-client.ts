@@ -72,10 +72,10 @@ export async function startLeadSearch(
         'company_not_industry',
         'company_keywords',
         'company_not_keywords',
-        'functional_level' as any,
-        'funding' as any,
-        'size' as any,
-        'seniority_level' as any
+        'functional_level',
+        'funding',
+        'seniority_level',
+        'email_status'
     ];
 
     fieldsToNormalize.forEach(field => {
@@ -98,9 +98,7 @@ export async function startLeadSearch(
     const input: ApifyActorInput = {
         ...normalizedFilters,
         // Ensure email_status is correctly formatted
-        email_status: filters.email_status ?
-            filters.email_status.map(s => s.toLowerCase() as any) :
-            ['validated'],
+        email_status: normalizedFilters.email_status || ['validated'],
     };
 
     const url = `${APIFY_BASE_URL}/acts/${APIFY_ACTOR_ID}/runs?token=${APIFY_API_TOKEN}`;

@@ -172,7 +172,7 @@ export default function SignupPage() {
             }
 
             toast.success('System Provisioned. Welcome to MailSmith.')
-            router.push('/dashboard')
+            router.push('/portal')
         } catch (error: any) {
             // Maximum Detail Logging for Debugging "Load Error"
             console.error('CRITICAL SIGNUP FAILURE:', error);

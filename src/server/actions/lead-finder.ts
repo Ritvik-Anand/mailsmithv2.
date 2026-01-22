@@ -74,16 +74,19 @@ async function getCurrentOrganizationId(): Promise<{ organizationId: string | nu
 /**
  * Start a new lead search job
  */
-export async function startLeadSearchJob(filters: LeadSearchFilters): Promise<{
+export async function startLeadSearchJob(filters: LeadSearchFilters, targetOrganizationId?: string): Promise<{
     success: boolean
     jobId?: string
     error?: string
 }> {
     try {
-        const { organizationId, error: authError } = await getCurrentOrganizationId()
-        if (!organizationId) {
+        const { organizationId: userOrgId, error: authError } = await getCurrentOrganizationId()
+        if (!userOrgId) {
             return { success: false, error: authError || 'Not authenticated' }
         }
+
+        // Use target organization if provided (for operators)
+        const organizationId = targetOrganizationId || userOrgId
 
         const supabase = await createClient()
 

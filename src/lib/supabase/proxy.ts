@@ -38,10 +38,9 @@ export async function updateSession(request: NextRequest) {
 
     // Define public routes that don't require authentication
     // Note: /admin routes are "public" to middleware but locked in the layout
-    const publicRoutes = ['/login', '/signup', '/']
+    const publicRoutes = ['/login', '/signup', '/', '/admin', '/unauthorized']
     const isPublicRoute = publicRoutes.some(route =>
         request.nextUrl.pathname === route ||
-        request.nextUrl.pathname.startsWith('/admin') ||
         request.nextUrl.pathname.startsWith('/api/webhooks')
     )
 
@@ -53,9 +52,9 @@ export async function updateSession(request: NextRequest) {
     }
 
     if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
-        // Redirect to dashboard if already authenticated
+        // Redirect to portal if already authenticated
         const url = request.nextUrl.clone()
-        url.pathname = '/dashboard'
+        url.pathname = '/portal'
         return NextResponse.redirect(url)
     }
 

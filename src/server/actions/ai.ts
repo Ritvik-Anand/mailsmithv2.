@@ -1,0 +1,70 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { generateIcebreaker } from '@/lib/ai/anthropic'
+import { revalidatePath } from 'next/cache'
+
+/**
+ * Generates icebreakers for a batch of leads
+ */
+export async function generateIcebreakersForBatch(leadIds: string[]) {
+    const supabaseAdmin = createAdminClient()
+
+    let successCount = 0
+    let failureCount = 0
+
+    for (const id of leadIds) {
+        try {
+            // 1. Get lead data
+            const { data: lead, error: fetchError } = await supabaseAdmin
+                .from('leads')
+                .select('*')
+                .eq('id', id)
+                .single()
+
+            if (fetchError || !lead) {
+                console.error(`Failed to fetch lead ${id}:`, fetchError)
+                failureCount++
+                continue
+            }
+
+            // 2. Update status to generating
+            await supabaseAdmin
+                .from('leads')
+                .update({ icebreaker_status: 'generating' })
+                .eq('id', id)
+
+            // 3. Generate icebreaker
+            const icebreaker = await generateIcebreaker(lead)
+
+            if (icebreaker) {
+                // 4. Update lead with icebreaker
+                const { error: updateError } = await supabaseAdmin
+                    .from('leads')
+                    .update({
+                        icebreaker,
+                        icebreaker_status: 'completed',
+                        icebreaker_generated_at: new Date().toISOString()
+                    })
+                    .eq('id', id)
+
+                if (updateError) throw updateError
+                successCount++
+            } else {
+                throw new Error('No icebreaker generated')
+            }
+
+        } catch (error) {
+            console.error(`Icebreaker generation failed for lead ${id}:`, error)
+            await supabaseAdmin
+                .from('leads')
+                .update({ icebreaker_status: 'failed' })
+                .eq('id', id)
+            failureCount++
+        }
+    }
+
+    revalidatePath('/operator/leads')
+    return { success: true, successCount, failureCount }
+}

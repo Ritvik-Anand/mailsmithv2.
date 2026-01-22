@@ -364,7 +364,7 @@ export default function AdminSupportPage() {
                         {/* Quick Actions */}
                         <div className="flex items-center gap-2 py-2 border-b">
                             <Button variant="outline" size="sm" asChild>
-                                <Link href={`/admin/customers/${selectedTicket.id}`}>
+                                <Link href={`/admin-console/customers/${selectedTicket.id}`}>
                                     <UserCog className="mr-2 h-4 w-4" />
                                     View Customer
                                 </Link>

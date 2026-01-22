@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
     DropdownMenu,
@@ -150,20 +151,25 @@ export function Header({ isAdmin = false }: HeaderProps) {
     }
 
     return (
-        <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6">
-            <MobileSidebar isAdmin={isAdmin} />
+        <header className={cn(
+            "sticky top-0 z-50 flex h-16 items-center justify-between gap-4 border-b border-zinc-900/50 px-6 backdrop-blur-md transition-all duration-300",
+            isAdmin ? "bg-black/90" : "bg-zinc-950/90"
+        )}>
+            <div className="flex items-center gap-4">
+                <MobileSidebar isAdmin={isAdmin} />
 
-            <div className="flex-1">
-                <Button
-                    variant="outline"
-                    className="relative h-9 w-full justify-start text-sm text-muted-foreground sm:w-64 md:w-80"
-                >
-                    <Search className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline-flex">Search...</span>
-                    <kbd className="pointer-events-none absolute right-2 top-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-                        <Command className="h-3 w-3" />K
+                <div className="relative group hidden sm:block">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-4 w-4 text-zinc-600 group-focus-within:text-primary transition-colors" />
+                    </div>
+                    <Input
+                        placeholder="Search..."
+                        className="pl-10 h-10 w-64 md:w-80 bg-zinc-900/40 border-zinc-800/60 text-xs text-white placeholder:text-zinc-600 focus:ring-1 focus:ring-primary focus:border-primary transition-all rounded-lg"
+                    />
+                    <kbd className="pointer-events-none absolute right-2.5 top-2.5 hidden h-5 select-none items-center gap-1 rounded bg-zinc-950 border border-zinc-900 px-1.5 font-mono text-[9px] font-medium text-zinc-600 opacity-100 sm:flex">
+                        <Command className="h-2.5 w-2.5" />K
                     </kbd>
-                </Button>
+                </div>
             </div>
 
             <div className="flex items-center gap-2 md:gap-4">
@@ -238,7 +244,7 @@ export function Header({ isAdmin = false }: HeaderProps) {
                         </ScrollArea>
                         <div className="p-2 border-t text-center">
                             <Link
-                                href={isAdmin ? "/admin/notifications" : "/dashboard/notifications"}
+                                href={isAdmin ? "/admin-console/notifications" : "/portal/notifications"}
                                 className="text-[10px] text-muted-foreground hover:text-primary uppercase tracking-wider font-semibold flex items-center justify-center gap-1 group"
                                 onClick={() => setNotificationsOpen(false)}
                             >
@@ -250,7 +256,7 @@ export function Header({ isAdmin = false }: HeaderProps) {
                 </Popover>
 
                 <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
-                    <Link href={isAdmin ? "/admin/support" : "/dashboard/support"}>
+                    <Link href={isAdmin ? "/admin-console/support" : "/portal/support"}>
                         <HelpCircle className="h-5 w-5" />
                     </Link>
                 </Button>
@@ -278,13 +284,13 @@ export function Header({ isAdmin = false }: HeaderProps) {
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild className="cursor-pointer">
-                            <Link href={isAdmin ? "/admin/team" : "/dashboard/settings"} className="flex items-center w-full">
+                            <Link href={isAdmin ? "/admin-console/team" : "/portal/settings"} className="flex items-center w-full">
                                 <User className="mr-2 h-4 w-4" />
                                 <span>{isAdmin ? 'Team Profile' : 'Profile'}</span>
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild className="cursor-pointer">
-                            <Link href={isAdmin ? "/admin/settings" : "/dashboard/settings"} className="flex items-center w-full">
+                            <Link href={isAdmin ? "/admin-console/settings" : "/portal/settings"} className="flex items-center w-full">
                                 <Settings className="mr-2 h-4 w-4" />
                                 <span>Settings</span>
                             </Link>
