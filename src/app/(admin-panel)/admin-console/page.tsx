@@ -11,7 +11,8 @@ import {
     ArrowUpRight,
     Search,
     Filter,
-    Activity
+    Activity,
+    Zap
 } from 'lucide-react'
 import Link from 'next/link'
 import { getAdminDashboardStats } from '@/server/actions/organizations'
@@ -163,7 +164,7 @@ export default function AdminDashboardPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-primary/5 border-primary/20 rounded-xl p-5 border shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
+                    <Card className="bg-primary/5 border-primary/20 rounded-xl p-5 border shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] mb-6">
                         <div className="flex items-center gap-3 mb-3">
                             <Activity className="h-4 w-4 text-primary" />
                             <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Operational Status</span>
@@ -171,6 +172,26 @@ export default function AdminDashboardPage() {
                         <p className="text-[11px] text-zinc-400 font-semibold leading-relaxed">
                             System is running at full capacity. All nodes are balanced and background scraping tasks are proceeding as scheduled.
                         </p>
+                    </Card>
+
+                    <Card className="bg-zinc-950 border-zinc-800 rounded-xl overflow-hidden shadow-none border-t-2 border-t-primary/30">
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Operator Console</CardTitle>
+                                <Zap className="h-4 w-4 text-primary animate-pulse" />
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <p className="text-[11px] text-zinc-500 font-medium leading-relaxed">
+                                Access the lead generation engine, AI campaign managers, and high-level customer operations.
+                            </p>
+                            <Link href="/operator">
+                                <Button className="w-full h-10 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-lg transition-all group">
+                                    Launch Operator Hub
+                                    <ArrowUpRight className="ml-2 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                                </Button>
+                            </Link>
+                        </CardContent>
                     </Card>
                 </div>
             </div>

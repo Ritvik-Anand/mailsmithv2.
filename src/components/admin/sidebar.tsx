@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
+    Zap,
     LayoutDashboard,
     Users,
     MessageSquare,
@@ -22,6 +23,11 @@ const adminNavItems = [
         title: 'Console Home',
         href: '/admin-console',
         icon: LayoutDashboard,
+    },
+    {
+        title: 'Operator Portal',
+        href: '/operator',
+        icon: Zap,
     },
     {
         title: 'Organizations',
