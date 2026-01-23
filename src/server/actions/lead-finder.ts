@@ -166,8 +166,8 @@ export async function startLeadSearchJob(filters: LeadSearchFilters, targetOrgan
         // Start the search
         const { runId } = await startLeadSearch(searchFilters, webhookUrl)
 
-        // Update job with run ID
-        await supabase
+        // Update job with run ID (use dbClient to ensure RLS bypass for operators)
+        const { error: updateError } = await dbClient
             .from('scrape_jobs')
             .update({
                 apify_run_id: runId,
@@ -176,8 +176,12 @@ export async function startLeadSearchJob(filters: LeadSearchFilters, targetOrgan
             })
             .eq('id', job.id)
 
+        if (updateError) {
+            console.error('Failed to update job with run ID:', updateError)
+        }
+
         // Log activity
-        await supabase.from('activity_logs').insert({
+        await dbClient.from('activity_logs').insert({
             organization_id: organizationId,
             action: 'lead_search_started',
             resource_type: 'scrape_job',
@@ -187,6 +191,7 @@ export async function startLeadSearchJob(filters: LeadSearchFilters, targetOrgan
 
         revalidatePath('/dashboard/leads')
         revalidatePath('/dashboard/lead-finder')
+        revalidatePath('/operator/jobs')
 
         return { success: true, jobId: job.id }
     } catch (error: any) {
@@ -271,8 +276,8 @@ export async function getSearchJobStatus(jobId: string): Promise<{
             return { success: false, error: 'Job not found' }
         }
 
-        // If running OR completed but not imported, check/fetch latest status
-        if (job.apify_run_id && (job.status === 'running' || (job.status === 'completed' && (job.leads_imported || 0) === 0))) {
+        // If running, pending, OR completed but not imported, check/fetch latest status from Apify
+        if (job.apify_run_id && (job.status === 'running' || job.status === 'pending' || (job.status === 'completed' && (job.leads_imported || 0) === 0))) {
             const status = await getLeadSearchStatus(job.apify_run_id)
 
             // Update if finished

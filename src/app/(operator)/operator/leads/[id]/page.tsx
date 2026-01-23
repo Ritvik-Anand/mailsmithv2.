@@ -74,6 +74,20 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
         fetchData()
     }, [jobId])
 
+    // Auto-poll for running/pending jobs
+    useEffect(() => {
+        if (!job) return
+
+        // If job is still running or pending, poll every 5 seconds
+        if (job.status === 'running' || job.status === 'pending') {
+            const pollInterval = setInterval(() => {
+                fetchData()
+            }, 5000)
+
+            return () => clearInterval(pollInterval)
+        }
+    }, [job?.status])
+
     const handleGenerateIcebreakers = async () => {
         const pendingLeads = leads.filter(l => l.icebreaker_status === 'pending' || l.icebreaker_status === 'failed')
         if (pendingLeads.length === 0) {
