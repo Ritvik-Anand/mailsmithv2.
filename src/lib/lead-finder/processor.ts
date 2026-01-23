@@ -1,8 +1,13 @@
 /**
  * Centralized logic for processing and transforming lead data from external sources (Apify)
+ * 
+ * DESIGN PRINCIPLE: Apify returns dynamic, variable data. We:
+ * 1. Store ALL raw data in a JSONB column (raw_scraped_data) for maximum flexibility
+ * 2. Only extract essential indexed fields as columns (email, name, company)
+ * 3. Use the raw JSONB data for icebreaker generation and AI enrichment
  */
 
-import { ApifyLeadResult, Lead } from '@/types'
+import { Lead } from '@/types'
 
 /**
  * Robustly find an email address in an Apify result.
@@ -67,7 +72,24 @@ export function findEmail(r: any): string | null {
 }
 
 /**
+ * Safely extract a string value from various possible field names
+ */
+function extractField(r: any, ...keys: string[]): string | null {
+    for (const key of keys) {
+        if (r[key] && typeof r[key] === 'string') {
+            return r[key];
+        }
+    }
+    return null;
+}
+
+/**
  * Transforms raw Apify results into our internal Lead format.
+ * 
+ * FLEXIBLE DESIGN:
+ * - Only extracts CORE indexed fields as columns (for querying/filtering)
+ * - Stores EVERYTHING in raw_scraped_data JSONB (for icebreaker generation)
+ * - The AI icebreaker generator reads from raw_scraped_data, not individual columns
  */
 export function transformToLeads(
     results: any[],
@@ -80,32 +102,28 @@ export function transformToLeads(
         const email = findEmail(r);
         if (!email) continue;
 
+        // Extract ONLY essential indexed fields
+        // Everything else stays in raw_scraped_data JSONB
         leads.push({
+            // Required fields
             organization_id: organizationId,
-            first_name: r.first_name || r.firstName || null,
-            last_name: r.last_name || r.lastName || null,
             email: email,
-            phone: r.mobile_number || r.phone || r.phoneNumber || null,
-            linkedin_url: r.linkedin || r.linkedin_url || r.linkedinUrl || null,
-            company_name: r.company_name || r.companyName || r.company?.name || null,
-            company_domain: r.company_domain || r.company_website || r.website || null,
-            job_title: r.job_title || r.jobTitle || r.title || null,
-            industry: r.industry || r.company_industry || null,
-            company_size: r.company_size || r.size || null,
-            location: [r.city, r.state, r.country].filter(Boolean).join(', ') || r.location || null,
+
+            // Core contact info (indexed for search/filtering)
+            first_name: extractField(r, 'first_name', 'firstName'),
+            last_name: extractField(r, 'last_name', 'lastName'),
+            phone: extractField(r, 'mobile_number', 'phone', 'phoneNumber'),
+            linkedin_url: extractField(r, 'linkedin', 'linkedin_url', 'linkedinUrl'),
+
+            // Core company info (indexed for search/filtering)
+            company_name: extractField(r, 'company_name', 'companyName') || r.company?.name || null,
+            job_title: extractField(r, 'job_title', 'jobTitle', 'title'),
+
+            // ALL raw Apify data stored here for AI/icebreaker use
+            // This is the source of truth for icebreaker generation
             raw_scraped_data: r as Record<string, unknown>,
-            enrichment_data: {
-                headline: r.headline,
-                functional_level: r.functional_level,
-                seniority_level: r.seniority_level,
-                personal_email: r.personal_email,
-                company_linkedin: r.company_linkedin,
-                company_description: r.company_description,
-                company_funding: r.company_total_funding,
-                company_revenue: r.company_annual_revenue,
-                company_founded: r.company_founded_year,
-                technologies: r.company_technologies,
-            },
+
+            // Status tracking
             source: 'apify_leads_finder' as any,
             scrape_job_id: scrapeJobId as any,
             icebreaker_status: 'pending' as any,
