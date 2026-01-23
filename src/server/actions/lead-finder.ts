@@ -114,8 +114,8 @@ export async function startLeadSearchJob(filters: LeadSearchFilters, targetOrgan
 
         const supabase = await createClient()
 
-        // 1. Check Usage & Limit
-        const usage = await getLeadUsage()
+        // 1. Check Usage & Limit for the target organization
+        const usage = await getLeadUsage(organizationId)
         if (!usage.success) return { success: false, error: usage.error }
 
         const fetchCount = Math.min(
@@ -580,18 +580,21 @@ export async function getLeadsFromJob(
     }
 }
 
-/**
- * Get current month usage and limit for organization
- */
-export async function getLeadUsage(): Promise<{
+export async function getLeadUsage(targetOrgId?: string): Promise<{
     success: boolean
     usage?: number
     limit?: number
     error?: string
 }> {
     try {
-        const { organizationId, error: authError } = await getCurrentUserContext()
-        if (!organizationId) return { success: false, error: authError || 'Not authenticated' }
+        let organizationId = targetOrgId
+
+        // If no org provided, try to get from user context
+        if (!organizationId) {
+            const { organizationId: userOrgId, error: authError } = await getCurrentUserContext()
+            if (!userOrgId) return { success: false, error: authError || 'Not authenticated' }
+            organizationId = userOrgId
+        }
 
         const supabase = await createClient()
 
