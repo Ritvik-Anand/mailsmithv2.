@@ -370,29 +370,48 @@ export async function cancelSearchJob(jobId: string): Promise<{
 }
 
 /**
- * Get all search jobs for current organization
+ * Get all search jobs for current organization or specified organization (for operators)
  */
 export async function getSearchJobs(options: {
     limit?: number
     status?: string
+    organizationId?: string
 } = {}): Promise<{
     success: boolean
     jobs?: ScrapeJob[]
     error?: string
 }> {
     try {
-        const { organizationId, error: authError } = await getCurrentUserContext()
-        if (!organizationId) {
-            return { success: false, error: authError || 'Not authenticated' }
+        const { organizationId: userOrgId, role, error: authError } = await getCurrentUserContext()
+
+        // Determine which organization to query
+        let targetOrgId: string | null = null
+
+        if (role === 'super_admin' || role === 'operator') {
+            // Operators can specify an org or see all jobs
+            targetOrgId = options.organizationId || null
+        } else {
+            // Regular users can only see their own org
+            if (!userOrgId) {
+                return { success: false, error: authError || 'Not authenticated' }
+            }
+            targetOrgId = userOrgId
         }
 
-        const supabase = await createClient()
+        // Use admin client for operators/admins
+        const supabase = (role === 'super_admin' || role === 'operator')
+            ? createAdminClient()
+            : await createClient()
 
         let query = supabase
             .from('scrape_jobs')
             .select('*')
-            .eq('organization_id', organizationId)
             .order('created_at', { ascending: false })
+
+        // Filter by org if specified
+        if (targetOrgId) {
+            query = query.eq('organization_id', targetOrgId)
+        }
 
         if (options.limit) {
             query = query.limit(options.limit)
@@ -674,5 +693,42 @@ export async function requestLeadLimitIncrease(params: {
     } catch (error) {
         console.error('Request limit increase error:', error)
         return { success: false, error: 'Failed to submit request' }
+    }
+}
+
+/**
+ * Get all leads for a specific organization (for operators/admins)
+ */
+export async function getLeadsForOrganization(organizationId: string): Promise<{
+    success: boolean
+    leads?: Lead[]
+    error?: string
+}> {
+    try {
+        const { role, error: authError } = await getCurrentUserContext()
+        if (authError && authError !== 'User profile not found') {
+            return { success: false, error: authError }
+        }
+
+        // Only operators and super_admins can fetch leads for other organizations
+        if (role !== 'super_admin' && role !== 'operator') {
+            return { success: false, error: 'Unauthorized' }
+        }
+
+        const supabase = createAdminClient()
+
+        const { data: leads, error } = await supabase
+            .from('leads')
+            .select('*')
+            .eq('organization_id', organizationId)
+            .order('created_at', { ascending: false })
+            .limit(500)
+
+        if (error) throw error
+
+        return { success: true, leads: leads || [] }
+    } catch (error: any) {
+        console.error('Get leads for organization error:', error)
+        return { success: false, error: error.message || 'Failed to fetch leads' }
     }
 }

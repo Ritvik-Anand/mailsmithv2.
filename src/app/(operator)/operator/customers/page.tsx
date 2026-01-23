@@ -114,16 +114,15 @@ export default function OperatorCustomersPage() {
                             </div>
 
                             <div className="flex flex-col gap-2 pt-2">
-                                <Link href={`/operator/scraper?org=${org.id}`}>
-                                    <Button className="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-bold h-10 border-zinc-800 border">
-                                        <Target className="mr-2 h-3.5 w-3.5" />
-                                        Launch Lead Engine
+                                <Link href={`/operator/customers/${org.id}`}>
+                                    <Button className="w-full bg-primary hover:bg-primary/90 text-white text-xs font-bold h-10">
+                                        View Customer Profile
                                     </Button>
                                 </Link>
-                                <Link href={`#`}>
-                                    <Button variant="ghost" className="w-full text-zinc-600 hover:text-white text-xs font-bold h-10 transition-colors">
-                                        Open Management Suite
-                                        <ExternalLink className="ml-2 h-3 w-3" />
+                                <Link href={`/operator/scraper?org=${org.id}`}>
+                                    <Button variant="outline" className="w-full text-zinc-400 hover:text-white text-xs font-bold h-10 border-zinc-800">
+                                        <Target className="mr-2 h-3.5 w-3.5" />
+                                        Launch Lead Engine
                                     </Button>
                                 </Link>
                             </div>

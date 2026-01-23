@@ -44,6 +44,11 @@ const navItems = [
         icon: Target,
     },
     {
+        title: 'Scrape Jobs',
+        href: '/operator/jobs',
+        icon: ClipboardList,
+    },
+    {
         title: 'Campaigns',
         href: '/operator/campaigns',
         icon: Mail,
