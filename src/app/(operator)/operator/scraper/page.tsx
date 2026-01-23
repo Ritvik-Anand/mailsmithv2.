@@ -258,8 +258,10 @@ function ScraperContent() {
         setIsSubmitting(true)
         try {
             const result = await startLeadSearchJob(filters as LeadSearchFilters, selectedOrg)
-            if (result.success) {
-                toast.success('Lead search job initiated successfully')
+            if (result.success && result.jobId) {
+                toast.success('Lead search job initiated! Redirecting to results...')
+                // Redirect to the leads page for this job
+                window.location.href = `/operator/leads/${result.jobId}`
             } else {
                 toast.error(result.error || 'Failed to start job')
             }
