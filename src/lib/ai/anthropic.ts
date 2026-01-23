@@ -61,29 +61,35 @@ function buildProspectInfo(leadData: any): string {
  * Get customer context for icebreaker personalization
  */
 async function getCustomerContext(organizationId: string): Promise<string> {
-    const supabase = createAdminClient();
+    try {
+        const supabase = createAdminClient();
 
-    const { data: org, error } = await supabase
-        .from('organizations')
-        .select('icebreaker_context, name')
-        .eq('id', organizationId)
-        .single();
+        const { data: org, error } = await supabase
+            .from('organizations')
+            .select('icebreaker_context, name')
+            .eq('id', organizationId)
+            .single();
 
-    if (error || !org?.icebreaker_context) {
-        // Default context if none configured
+        // If error (including column not existing) or no context, return empty
+        if (error || !org?.icebreaker_context) {
+            return '';
+        }
+
+        const ctx = org.icebreaker_context;
+
+        // Build context string from stored config
+        const contextParts = [];
+
+        if (ctx.description) {
+            contextParts.push(ctx.description);
+        }
+
+        return contextParts.join(' ');
+    } catch (error) {
+        // If any error (including column not existing), just return empty
+        console.warn('Could not fetch customer context:', error);
         return '';
     }
-
-    const ctx = org.icebreaker_context;
-
-    // Build context string from stored config
-    const contextParts = [];
-
-    if (ctx.description) {
-        contextParts.push(ctx.description);
-    }
-
-    return contextParts.join(' ');
 }
 
 /**
