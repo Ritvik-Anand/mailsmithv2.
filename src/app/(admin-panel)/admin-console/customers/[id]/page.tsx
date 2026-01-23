@@ -66,12 +66,13 @@ export default function AdminCustomerDetailPage() {
     const fetchOrg = async () => {
         setIsLoading(true)
         try {
-            const data = await getOrganizationDetails(id)
-            if (!data) {
+            const result = await getOrganizationDetails(id)
+            if (!result.success || !result.organization) {
                 toast.error('Organization not found')
                 router.push('/admin-console/customers')
                 return
             }
+            const data = result.organization
             setOrg(data)
             setFeatures(data.features || {
                 maxLeads: 100,
