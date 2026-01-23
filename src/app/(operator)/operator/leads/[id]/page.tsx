@@ -49,21 +49,33 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
     const fetchData = async () => {
         setIsLoading(true)
         try {
+            console.log('[LeadJobPage] Fetching data for job:', jobId)
             const [jobRes, leadsRes] = await Promise.all([
                 getSearchJobStatus(jobId),
                 getLeadsFromJob(jobId, { pageSize: 100 })
             ])
+
+            console.log('[LeadJobPage] Job response:', jobRes)
+            console.log('[LeadJobPage] Leads response:', leadsRes)
 
             if (jobRes.success && jobRes.job) {
                 setJob(jobRes.job)
                 // Also fetch campaigns for this org
                 const caps = await getOrganizationCampaigns(jobRes.job.organization_id)
                 setCampaigns(caps)
+            } else {
+                console.error('[LeadJobPage] Job fetch error:', jobRes.error)
             }
+
             if (leadsRes.success && leadsRes.leads) {
+                console.log('[LeadJobPage] Setting leads:', leadsRes.leads.length)
                 setLeads(leadsRes.leads)
+            } else {
+                console.error('[LeadJobPage] Leads fetch error:', leadsRes.error)
+                toast.error(leadsRes.error || 'Failed to fetch leads')
             }
         } catch (error) {
+            console.error('[LeadJobPage] Unexpected error:', error)
             toast.error('Failed to load job data')
         } finally {
             setIsLoading(false)
