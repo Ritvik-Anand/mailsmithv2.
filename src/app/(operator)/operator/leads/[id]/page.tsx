@@ -25,7 +25,12 @@ import {
     ExternalLink,
     RefreshCw,
     Sparkles,
-    Send
+    Send,
+    Eye,
+    X,
+    Building2,
+    Phone,
+    Linkedin
 } from 'lucide-react'
 import { getLeadsFromJob, getSearchJobStatus, retrySyncFromApify } from '@/server/actions/lead-finder'
 import { generateIcebreakersForBatch } from '@/server/actions/ai'
@@ -45,6 +50,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
     const [isSyncing, setIsSyncing] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [filterStatus, setFilterStatus] = useState<'all' | 'ready' | 'queued' | 'sent'>('all')
+    const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
 
     const fetchData = async () => {
         setIsLoading(true)
@@ -304,7 +310,11 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                             </TableCell>
                                         </TableRow>
                                     ) : filteredLeads.map((lead) => (
-                                        <TableRow key={lead.id} className="border-zinc-900/50 hover:bg-zinc-900/30 transition-colors">
+                                        <TableRow
+                                            key={lead.id}
+                                            className="border-zinc-900/50 hover:bg-zinc-900/30 transition-colors cursor-pointer"
+                                            onClick={() => setSelectedLead(lead)}
+                                        >
                                             <TableCell className="pl-6 py-4 max-w-[200px]">
                                                 <div className="flex flex-col">
                                                     <span className="font-bold text-sm text-zinc-200">{lead.first_name} {lead.last_name}</span>
@@ -312,7 +322,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <span className="text-[10px] text-zinc-600 truncate">{lead.email}</span>
                                                         {lead.linkedin_url && (
-                                                            <a href={lead.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
+                                                            <a href={lead.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80" onClick={(e) => e.stopPropagation()}>
                                                                 <ExternalLink className="h-3 w-3" />
                                                             </a>
                                                         )}
@@ -334,14 +344,19 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                                 )}
                                             </TableCell>
                                             <TableCell className="pr-6 text-right">
-                                                <Badge variant="outline" className={`
-                                                    text-[10px] font-bold px-1.5 py-0 rounded lowercase
-                                                    ${lead.campaign_status === 'queued' ? 'bg-amber-500/5 text-amber-500 border-amber-500/20' :
-                                                        lead.campaign_status === 'sent' ? 'bg-emerald-500/5 text-emerald-500 border-emerald-500/20' :
-                                                            'bg-zinc-500/5 text-zinc-500 border-zinc-500/20'}
-                                                `}>
-                                                    {lead.campaign_status === 'not_added' ? 'ready' : lead.campaign_status}
-                                                </Badge>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Badge variant="outline" className={`
+                                                        text-[10px] font-bold px-1.5 py-0 rounded lowercase
+                                                        ${lead.campaign_status === 'queued' ? 'bg-amber-500/5 text-amber-500 border-amber-500/20' :
+                                                            lead.campaign_status === 'sent' ? 'bg-emerald-500/5 text-emerald-500 border-emerald-500/20' :
+                                                                'bg-zinc-500/5 text-zinc-500 border-zinc-500/20'}
+                                                    `}>
+                                                        {lead.campaign_status === 'not_added' ? 'ready' : lead.campaign_status}
+                                                    </Badge>
+                                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-zinc-500 hover:text-primary">
+                                                        <Eye className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -426,6 +441,117 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     </Card>
                 </div>
             </div>
+
+            {/* Lead Detail Panel (Slide-out) */}
+            {selectedLead && (
+                <div className="fixed inset-0 z-50 flex justify-end">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setSelectedLead(null)}
+                    />
+
+                    {/* Panel */}
+                    <div className="relative w-full max-w-xl bg-zinc-950 border-l border-zinc-800 h-full overflow-y-auto animate-in slide-in-from-right duration-300">
+                        {/* Header */}
+                        <div className="sticky top-0 bg-zinc-950 border-b border-zinc-800 p-6 flex items-start justify-between">
+                            <div>
+                                <h2 className="text-xl font-bold text-white">
+                                    {selectedLead.first_name} {selectedLead.last_name}
+                                </h2>
+                                <p className="text-zinc-500 text-sm">{selectedLead.job_title} @ {selectedLead.company_name}</p>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setSelectedLead(null)}
+                                className="text-zinc-500 hover:text-white"
+                            >
+                                <X className="h-5 w-5" />
+                            </Button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 space-y-6">
+                            {/* Contact Info */}
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Contact Info</h3>
+                                <div className="grid gap-3">
+                                    <div className="flex items-center gap-3 text-sm">
+                                        <Mail className="h-4 w-4 text-zinc-600" />
+                                        <span className="text-zinc-200">{selectedLead.email}</span>
+                                    </div>
+                                    {selectedLead.phone && (
+                                        <div className="flex items-center gap-3 text-sm">
+                                            <Phone className="h-4 w-4 text-zinc-600" />
+                                            <span className="text-zinc-200">{selectedLead.phone}</span>
+                                        </div>
+                                    )}
+                                    {selectedLead.linkedin_url && (
+                                        <a
+                                            href={selectedLead.linkedin_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-3 text-sm text-primary hover:text-primary/80"
+                                        >
+                                            <Linkedin className="h-4 w-4" />
+                                            View LinkedIn Profile
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Icebreaker */}
+                            {selectedLead.icebreaker && (
+                                <div className="space-y-3">
+                                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">AI Icebreaker</h3>
+                                    <p className="text-sm text-zinc-300 italic bg-zinc-900 p-4 rounded-lg border border-zinc-800">
+                                        "{selectedLead.icebreaker}"
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Raw Apify Data */}
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                                    Full Scraped Data (from Apify)
+                                </h3>
+                                <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800 max-h-[400px] overflow-y-auto">
+                                    {selectedLead.raw_scraped_data && typeof selectedLead.raw_scraped_data === 'object' ? (
+                                        <div className="space-y-2">
+                                            {Object.entries(selectedLead.raw_scraped_data as Record<string, any>).map(([key, value]) => {
+                                                if (value === null || value === undefined || value === '') return null;
+                                                return (
+                                                    <div key={key} className="grid grid-cols-3 gap-2 py-1 border-b border-zinc-800 last:border-0">
+                                                        <span className="text-[10px] text-zinc-500 font-mono uppercase">
+                                                            {key.replace(/_/g, ' ')}
+                                                        </span>
+                                                        <span className="col-span-2 text-xs text-zinc-300 break-words">
+                                                            {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <p className="text-zinc-600 text-sm italic">No raw data available</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Raw JSON (collapsible) */}
+                            <details className="group">
+                                <summary className="text-xs font-bold text-zinc-600 uppercase tracking-widest cursor-pointer hover:text-zinc-400">
+                                    View Raw JSON
+                                </summary>
+                                <pre className="mt-3 bg-black p-4 rounded-lg border border-zinc-800 text-[10px] text-zinc-400 overflow-x-auto max-h-[300px] overflow-y-auto">
+                                    {JSON.stringify(selectedLead.raw_scraped_data, null, 2)}
+                                </pre>
+                            </details>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
