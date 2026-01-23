@@ -88,6 +88,7 @@ export async function toggleOrganizationStatus(id: string, status: 'active' | 's
 
 /**
  * Fetches full details for a single organization.
+ * Works for both admin users and operators.
  */
 export async function getOrganizationDetails(id: string) {
     const supabase = await createClient()
@@ -106,7 +107,7 @@ export async function getOrganizationDetails(id: string) {
 
     if (orgError) {
         console.error('Error fetching org details:', orgError)
-        return null
+        return { success: false, error: 'Organization not found' }
     }
 
     // 2. Fetch recent activity logs
@@ -118,13 +119,16 @@ export async function getOrganizationDetails(id: string) {
         .limit(10)
 
     return {
-        ...org,
-        _count: {
-            leads: org.leads?.[0]?.count || 0,
-            campaigns: org.campaigns?.[0]?.count || 0,
-            users: org.users?.length || 0
-        },
-        activity: activity || []
+        success: true,
+        organization: {
+            ...org,
+            _count: {
+                leads: org.leads?.[0]?.count || 0,
+                campaigns: org.campaigns?.[0]?.count || 0,
+                users: org.users?.length || 0
+            },
+            activity: activity || []
+        }
     }
 }
 
@@ -161,4 +165,37 @@ export async function getAdminDashboardStats() {
             }
         }))
     }
+}
+
+/**
+ * Updates the icebreaker context for an organization.
+ * This context is used by the AI to generate personalized icebreakers.
+ */
+export async function updateOrganizationIcebreakerContext(
+    organizationId: string,
+    context: {
+        description: string
+        industry_focus?: string
+        services?: string
+        experience?: string
+    }
+): Promise<{ success: boolean; error?: string }> {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+        .from('organizations')
+        .update({
+            icebreaker_context: context,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', organizationId)
+
+    if (error) {
+        console.error('Error updating icebreaker context:', error)
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath(`/operator/customers/${organizationId}`)
+    revalidatePath(`/operator/customers/${organizationId}/icebreaker`)
+    return { success: true }
 }

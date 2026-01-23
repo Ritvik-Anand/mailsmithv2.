@@ -18,7 +18,9 @@ import {
     CheckCircle2,
     Clock,
     Send,
-    Sparkles
+    Sparkles,
+    Wand2,
+    Settings
 } from 'lucide-react'
 import { getOrganizationDetails } from '@/server/actions/organizations'
 import { getSearchJobs, getLeadsForOrganization } from '@/server/actions/lead-finder'
@@ -117,12 +119,20 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                         </div>
                     </div>
                 </div>
-                <Link href={`/operator/scraper?org=${id}`}>
-                    <Button className="bg-primary hover:bg-primary/90">
-                        <Target className="h-4 w-4 mr-2" />
-                        New Lead Scrape
-                    </Button>
-                </Link>
+                <div className="flex items-center gap-2">
+                    <Link href={`/operator/customers/${id}/icebreaker`}>
+                        <Button variant="outline" className="border-zinc-800 text-zinc-400 hover:text-white">
+                            <Wand2 className="h-4 w-4 mr-2" />
+                            Icebreaker Settings
+                        </Button>
+                    </Link>
+                    <Link href={`/operator/scraper?org=${id}`}>
+                        <Button className="bg-primary hover:bg-primary/90">
+                            <Target className="h-4 w-4 mr-2" />
+                            New Lead Scrape
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             {/* Quick Stats */}
@@ -288,7 +298,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                                 <Card className="bg-zinc-950 border-zinc-900 hover:border-zinc-700 transition-all cursor-pointer">
                                     <CardContent className="p-4 flex items-center gap-4">
                                         <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${job.status === 'running' || job.status === 'pending' ? 'bg-amber-500/10' :
-                                                job.status === 'completed' ? 'bg-emerald-500/10' : 'bg-red-500/10'
+                                            job.status === 'completed' ? 'bg-emerald-500/10' : 'bg-red-500/10'
                                             }`}>
                                             {job.status === 'running' || job.status === 'pending' ? (
                                                 <Loader2 className="h-5 w-5 text-amber-500 animate-spin" />

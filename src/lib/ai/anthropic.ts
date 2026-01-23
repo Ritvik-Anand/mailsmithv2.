@@ -1,59 +1,233 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-export async function generateIcebreaker(leadData: any) {
+/**
+ * Build prospect info string from raw scraped data
+ */
+function buildProspectInfo(leadData: any): string {
     const {
         first_name,
+        last_name,
         company_name,
         job_title,
-        enrichment_data
+        raw_scraped_data,
     } = leadData;
 
-    const companyDescription = enrichment_data?.company_description || '';
-    const headline = enrichment_data?.headline || '';
+    // Extract all useful info from raw_scraped_data
+    const raw = raw_scraped_data || {};
 
-    const prompt = `
-    You are an expert sales copywriter. Your task is to write a personalized, 1-sentence "icebreaker" for a cold email.
-    
-    Target Lead:
-    - Name: ${first_name}
-    - Job Title: ${job_title}
-    - Company: ${company_name}
-    - Headline: ${headline}
-    - Company Description: ${companyDescription}
-    
-    Rules:
-    1. Be concise (one sentence, max 15-20 words).
-    2. Be specific to their company or role.
-    3. Don't be "salesy". Use a professional yet casual tone.
-    4. Focus on a recent achievement, their specific role's challenge, or something unique about their company.
-    5. Don't use placeholders like [Company].
-    6. Return ONLY the icebreaker text. No preamble, no quotes.
-    
-    Example: "I noticed ${company_name} is scaling their engineering team in Austin—impressive growth!"
-    
-    Icebreaker:
-  `;
+    const parts = [
+        first_name,
+        last_name,
+        company_name,
+        job_title,
+    ];
+
+    // Add all relevant fields from raw data
+    const relevantFields = [
+        'headline',
+        'company_description',
+        'company_industry',
+        'company_linkedin',
+        'company_website',
+        'company_total_funding',
+        'company_annual_revenue',
+        'company_founded_year',
+        'company_technologies',
+        'seniority_level',
+        'functional_level',
+        'location',
+        'city',
+        'state',
+        'country',
+    ];
+
+    for (const field of relevantFields) {
+        if (raw[field] && typeof raw[field] === 'string') {
+            parts.push(raw[field]);
+        } else if (raw[field] && Array.isArray(raw[field])) {
+            parts.push(raw[field].join(', '));
+        }
+    }
+
+    return parts.filter(Boolean).join(', ');
+}
+
+/**
+ * Get customer context for icebreaker personalization
+ */
+async function getCustomerContext(organizationId: string): Promise<string> {
+    const supabase = createAdminClient();
+
+    const { data: org, error } = await supabase
+        .from('organizations')
+        .select('icebreaker_context, name')
+        .eq('id', organizationId)
+        .single();
+
+    if (error || !org?.icebreaker_context) {
+        // Default context if none configured
+        return '';
+    }
+
+    const ctx = org.icebreaker_context;
+
+    // Build context string from stored config
+    const contextParts = [];
+
+    if (ctx.description) {
+        contextParts.push(ctx.description);
+    }
+
+    return contextParts.join(' ');
+}
+
+/**
+ * Generate icebreaker using the exact proven prompt structure
+ */
+export async function generateIcebreaker(leadData: any): Promise<string | null> {
+    const firstName = leadData.first_name || '';
+    const prospectInfo = buildProspectInfo(leadData);
+
+    // Get customer context if available
+    let customerContext = '';
+    if (leadData.organization_id) {
+        customerContext = await getCustomerContext(leadData.organization_id);
+    }
+
+    // Build the customer context section
+    const customerContextSection = customerContext
+        ? `Here is a bunch of information about me so that you can make these icebreakers more personalised:\n\n${customerContext}`
+        : '';
+
+    // System message
+    const systemMessage = 'You are a helpful, intelligent writing assistant.';
+
+    // User message with the proven prompt structure
+    const userMessage = `Your task is to take as input a bunch of personal information about a prospect, and then design a customized, one line icebreaker to begin the conversation and to imply the rest of my communique is personalised.
+
+You'll return this icebreaker in JSON using this format:
+
+{"icebreaker":"Hey {name}, \\n\\n really respect X and love that you're doing Y. Wanted to run something by you"}
+
+${customerContextSection}
+
+Rules:
+- Write in a spartan, laconic tone of voice
+- Weave in context with my personal information wherever possible.
+- Keep things very short and follow the provided format.
+- Make sure to use the above format when constructing your Icebreakers
+- Shorten the company name (say, "XYZ" instead of "XYZ Tech") do so whenever possible. More examples: "Noah" instead of "Noah AI", "Plena" instead of "Plena Inc.", etc
+- Start with "Hey ${firstName},"
+- The icebreaker should be 2-3 sentences max
+- Return ONLY valid JSON, no other text
+
+Here is the prospect information:
+
+${prospectInfo}`;
 
     try {
         const message = await anthropic.messages.create({
-            model: 'claude-3-5-sonnet-20240620',
-            max_tokens: 100,
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 200,
             messages: [
-                { role: 'user', content: prompt }
+                { role: 'user', content: systemMessage + '\n\n' + userMessage }
             ],
         });
 
         const content = message.content[0];
         if (content.type === 'text') {
-            return content.text.trim().replace(/^"|"$/g, '');
+            // Parse the JSON response
+            const text = content.text.trim();
+
+            try {
+                // Try to extract JSON from the response
+                const jsonMatch = text.match(/\{[\s\S]*"icebreaker"[\s\S]*\}/);
+                if (jsonMatch) {
+                    const parsed = JSON.parse(jsonMatch[0]);
+                    if (parsed.icebreaker) {
+                        // Clean up the icebreaker text
+                        return parsed.icebreaker
+                            .replace(/\\n/g, '\n')
+                            .replace(/^["']|["']$/g, '')
+                            .trim();
+                    }
+                }
+
+                // Fallback: if no valid JSON, try to use the text directly
+                return text.replace(/^["']|["']$/g, '').trim();
+            } catch (parseError) {
+                console.warn('Failed to parse JSON response, using raw text:', parseError);
+                return text.replace(/^["']|["']$/g, '').trim();
+            }
         }
         return null;
     } catch (error) {
         console.error('Anthropic API Error:', error);
         throw error;
     }
+}
+
+/**
+ * Generate icebreakers for multiple leads in batch
+ */
+export async function generateIcebreakersForLeads(
+    leadIds: string[],
+    organizationId?: string
+): Promise<{ success: number; failed: number }> {
+    const supabase = createAdminClient();
+    let success = 0;
+    let failed = 0;
+
+    for (const leadId of leadIds) {
+        try {
+            // Get lead data
+            const { data: lead, error } = await supabase
+                .from('leads')
+                .select('*')
+                .eq('id', leadId)
+                .single();
+
+            if (error || !lead) {
+                failed++;
+                continue;
+            }
+
+            // Update status to generating
+            await supabase
+                .from('leads')
+                .update({ icebreaker_status: 'generating' })
+                .eq('id', leadId);
+
+            // Generate icebreaker
+            const icebreaker = await generateIcebreaker(lead);
+
+            if (icebreaker) {
+                await supabase
+                    .from('leads')
+                    .update({
+                        icebreaker,
+                        icebreaker_status: 'completed',
+                        icebreaker_generated_at: new Date().toISOString(),
+                    })
+                    .eq('id', leadId);
+                success++;
+            } else {
+                throw new Error('No icebreaker generated');
+            }
+        } catch (error) {
+            console.error(`Failed to generate icebreaker for lead ${leadId}:`, error);
+            await supabase
+                .from('leads')
+                .update({ icebreaker_status: 'failed' })
+                .eq('id', leadId);
+            failed++;
+        }
+    }
+
+    return { success, failed };
 }
