@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -190,9 +191,17 @@ function ListInput({
     )
 }
 
-export default function ScraperPage() {
+function ScraperContent() {
+    const searchParams = useSearchParams()
+    const orgIdFromQuery = searchParams.get('org')
     const [organizations, setOrganizations] = useState<any[]>([])
     const [selectedOrg, setSelectedOrg] = useState<string>('')
+
+    useEffect(() => {
+        if (orgIdFromQuery) {
+            setSelectedOrg(orgIdFromQuery)
+        }
+    }, [orgIdFromQuery])
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [filters, setFilters] = useState<Partial<LeadSearchFilters>>({
         contact_job_title: [],
@@ -589,5 +598,18 @@ export default function ScraperPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function ScraperPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-[60vh] flex-col items-center justify-center gap-4">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <p className="text-zinc-500 font-medium">Initializing Lead Engine...</p>
+            </div>
+        }>
+            <ScraperContent />
+        </Suspense>
     )
 }
