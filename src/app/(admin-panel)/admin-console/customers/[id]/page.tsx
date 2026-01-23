@@ -33,9 +33,13 @@ import {
     Save,
     ExternalLink,
     RefreshCw,
+    ShieldCheck,
+    Monitor,
+    Zap
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getOrganizationDetails, updateOrganization, toggleOrganizationStatus } from '@/server/actions/organizations'
+import { getOrganizationNodes, assignNodeToOrganization, getAllOutreachNodes } from '@/server/actions/instantly'
 import { OrganizationFeatures } from '@/types'
 
 const planColors: Record<string, string> = {
@@ -55,6 +59,9 @@ export default function AdminCustomerDetailPage() {
     const [isSaving, setIsSaving] = useState(false)
     const [features, setFeatures] = useState<OrganizationFeatures | null>(null)
     const [limits, setLimits] = useState<any>(null)
+    const [orgNodes, setOrgNodes] = useState<any[]>([])
+    const [allNodes, setAllNodes] = useState<any[]>([])
+    const [isNodesLoading, setIsNodesLoading] = useState(false)
 
     const fetchOrg = async () => {
         setIsLoading(true)
@@ -90,8 +97,25 @@ export default function AdminCustomerDetailPage() {
         }
     }
 
+    const fetchNodes = async () => {
+        setIsNodesLoading(true)
+        try {
+            const [orgNodesData, allNodesData] = await Promise.all([
+                getOrganizationNodes(id),
+                getAllOutreachNodes()
+            ])
+            setOrgNodes(orgNodesData || [])
+            setAllNodes(allNodesData || [])
+        } catch (error) {
+            console.error('Error fetching nodes:', error)
+        } finally {
+            setIsNodesLoading(false)
+        }
+    }
+
     useEffect(() => {
         fetchOrg()
+        fetchNodes()
     }, [id])
 
     const handleSaveFeatures = async () => {
@@ -124,6 +148,20 @@ export default function AdminCustomerDetailPage() {
             fetchOrg()
         } catch (error: any) {
             toast.error(`${action} failed: ${error.message}`)
+        }
+    }
+
+    const handleAssignNode = async (nodeId: string, orgId: string) => {
+        try {
+            const result = await assignNodeToOrganization(nodeId, orgId)
+            if (result.success) {
+                toast.success(orgId === id ? 'Node assigned' : 'Node unassigned')
+                fetchNodes()
+            } else {
+                toast.error(result.error || 'Failed to update assignment')
+            }
+        } catch (error) {
+            toast.error('An error occurred')
         }
     }
 
@@ -210,6 +248,10 @@ export default function AdminCustomerDetailPage() {
                     <TabsTrigger value="activity">
                         <Activity className="mr-2 h-4 w-4" />
                         Activity Log
+                    </TabsTrigger>
+                    <TabsTrigger value="infrastructure">
+                        <Zap className="mr-2 h-4 w-4" />
+                        Outreach Infrastructure
                     </TabsTrigger>
                 </TabsList>
 
@@ -495,6 +537,102 @@ export default function AdminCustomerDetailPage() {
                             </div>
                         </CardContent>
                     </Card>
+                </TabsContent>
+
+                {/* Infrastructure Tab */}
+                <TabsContent value="infrastructure" className="space-y-6">
+                    <div className="grid gap-6 md:grid-cols-2">
+                        <Card className="bg-zinc-950 border-zinc-800">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <ShieldCheck className="h-5 w-5 text-primary" />
+                                    Active Outreach Nodes
+                                </CardTitle>
+                                <CardDescription>Specifically assigned to {org.name}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {isNodesLoading ? (
+                                    <div className="space-y-4">
+                                        {[1, 2].map(i => <div key={i} className="h-12 bg-zinc-900 animate-pulse rounded-lg" />)}
+                                    </div>
+                                ) : orgNodes.length === 0 ? (
+                                    <div className="py-10 text-center border-2 border-dashed border-zinc-900 rounded-xl">
+                                        <p className="text-sm text-zinc-500">No nodes assigned yet.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {orgNodes.map(node => (
+                                            <div key={node.id} className="flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-zinc-900/10">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center">
+                                                        <Monitor className="h-4 w-4 text-primary" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-zinc-200">{node.email_address}</p>
+                                                        <p className="text-[10px] text-zinc-500 font-mono">ID: {node.instantly_account_id.slice(0, 15)}...</p>
+                                                    </div>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                                                    onClick={() => handleAssignNode(node.id, 'unassigned')}
+                                                >
+                                                    Remove
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card className="bg-zinc-950 border-zinc-800">
+                            <CardHeader>
+                                <CardTitle>Available Nodes</CardTitle>
+                                <CardDescription>Global unassigned capacity</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {isNodesLoading ? (
+                                    <div className="space-y-4">
+                                        {[1, 2].map(i => <div key={i} className="h-12 bg-zinc-900 animate-pulse rounded-lg" />)}
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {allNodes.filter(n => !n.organization_id).length === 0 ? (
+                                            <div className="py-10 text-center border-2 border-dashed border-zinc-900 rounded-xl">
+                                                <p className="text-sm text-zinc-500">No unassigned nodes available.</p>
+                                                <Link href="/admin-console/infrastructure">
+                                                    <Button variant="link" className="text-primary text-xs">Manage Global Infra</Button>
+                                                </Link>
+                                            </div>
+                                        ) : (
+                                            allNodes.filter(n => !n.organization_id).map(node => (
+                                                <div key={node.id} className="flex items-center justify-between p-3 rounded-lg border border-zinc-800 hover:border-zinc-700 transition-colors">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="h-8 w-8 rounded bg-zinc-800 flex items-center justify-center">
+                                                            <Monitor className="h-4 w-4 text-zinc-400" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-medium text-zinc-300">{node.email_address}</p>
+                                                            <Badge variant="outline" className="text-[9px] px-1 py-0 border-emerald-500/20 text-emerald-500">{node.reputation_score}% score</Badge>
+                                                        </div>
+                                                    </div>
+                                                    <Button
+                                                        size="sm"
+                                                        className="bg-primary hover:bg-primary/90 text-white"
+                                                        onClick={() => handleAssignNode(node.id, id)}
+                                                    >
+                                                        Assign
+                                                    </Button>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
                 </TabsContent>
             </Tabs>
         </div>

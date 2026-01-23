@@ -15,6 +15,7 @@ import {
     TableRow
 } from '@/components/ui/table'
 import {
+    Search,
     Users,
     Mail,
     Zap,
@@ -41,6 +42,8 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
     const [isLoading, setIsLoading] = useState(true)
     const [isGenerating, setIsGenerating] = useState(false)
     const [isPushing, setIsPushing] = useState(false)
+    const [searchTerm, setSearchTerm] = useState('')
+    const [filterStatus, setFilterStatus] = useState<'all' | 'ready' | 'queued' | 'sent'>('all')
 
     const fetchData = async () => {
         setIsLoading(true)
@@ -131,6 +134,19 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
         )
     }
 
+    const filteredLeads = leads.filter(lead => {
+        const matchesSearch =
+            lead.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            lead.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            lead.job_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            lead.company_name?.toLowerCase().includes(searchTerm.toLowerCase())
+
+        if (filterStatus === 'all') return matchesSearch
+        if (filterStatus === 'ready') return matchesSearch && lead.campaign_status === 'not_added'
+        return matchesSearch && lead.campaign_status === filterStatus
+    })
+
     return (
         <div className="space-y-8 pb-10">
             {/* Header */}
@@ -171,10 +187,38 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
 
             <div className="grid gap-6 lg:grid-cols-3">
                 {/* Leads Table */}
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 space-y-4">
+                    <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                        <div className="relative flex-1 w-full">
+                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
+                            <Input
+                                placeholder="Search leads by name, email, or company..."
+                                className="pl-10 bg-zinc-950 border-zinc-800 h-10 text-sm"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            {(['all', 'ready', 'queued', 'sent'] as const).map(status => (
+                                <Button
+                                    key={status}
+                                    variant="outline"
+                                    size="sm"
+                                    className={`text-[10px] font-bold uppercase tracking-widest h-8 px-3 ${filterStatus === status ? 'border-primary text-primary bg-primary/5' : 'border-zinc-800 text-zinc-500'}`}
+                                    onClick={() => setFilterStatus(status)}
+                                >
+                                    {status}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+
                     <Card className="bg-zinc-950 border-zinc-800 rounded-xl overflow-hidden shadow-none">
-                        <CardHeader className="border-b border-zinc-900 bg-zinc-900/10">
-                            <CardTitle className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Prospect List</CardTitle>
+                        <CardHeader className="border-b border-zinc-900 bg-zinc-900/10 py-3">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Prospect List</CardTitle>
+                                <span className="text-[10px] text-zinc-500 font-mono">{filteredLeads.length} matches</span>
+                            </div>
                         </CardHeader>
                         <CardContent className="p-0">
                             <Table>
@@ -186,7 +230,13 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {leads.map((lead) => (
+                                    {filteredLeads.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={3} className="h-32 text-center text-zinc-600 italic text-xs">
+                                                No leads matching your filters
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : filteredLeads.map((lead) => (
                                         <TableRow key={lead.id} className="border-zinc-900/50 hover:bg-zinc-900/30 transition-colors">
                                             <TableCell className="pl-6 py-4 max-w-[200px]">
                                                 <div className="flex flex-col">
