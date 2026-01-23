@@ -137,7 +137,12 @@ export async function startLeadSearchJob(filters: LeadSearchFilters, targetOrgan
             email_status: filters.email_status || ['validated'],
         }
 
-        const { data: job, error: jobError } = await supabase
+        // Use admin client for operators/admins to bypass RLS
+        const dbClient = (role === 'super_admin' || role === 'operator')
+            ? createAdminClient()
+            : supabase
+
+        const { data: job, error: jobError } = await dbClient
             .from('scrape_jobs')
             .insert({
                 organization_id: organizationId,
