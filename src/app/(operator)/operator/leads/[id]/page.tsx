@@ -27,7 +27,7 @@ import {
     Sparkles,
     Send
 } from 'lucide-react'
-import { getLeadsFromJob, getSearchJobStatus } from '@/server/actions/lead-finder'
+import { getLeadsFromJob, getSearchJobStatus, retrySyncFromApify } from '@/server/actions/lead-finder'
 import { generateIcebreakersForBatch } from '@/server/actions/ai'
 import { addLeadsToInstantlyCampaign, getOrganizationCampaigns } from '@/server/actions/instantly'
 import { toast } from 'sonner'
@@ -42,6 +42,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
     const [isLoading, setIsLoading] = useState(true)
     const [isGenerating, setIsGenerating] = useState(false)
     const [isPushing, setIsPushing] = useState(false)
+    const [isSyncing, setIsSyncing] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [filterStatus, setFilterStatus] = useState<'all' | 'ready' | 'queued' | 'sent'>('all')
 
@@ -125,6 +126,23 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
         }
     }
 
+    const handleRetrySync = async () => {
+        setIsSyncing(true)
+        try {
+            const result = await retrySyncFromApify(jobId)
+            if (result.success) {
+                toast.success(result.message || `Synced ${result.leadsImported} leads from Apify`)
+                fetchData() // Refresh the data
+            } else {
+                toast.error(result.error || 'Failed to sync from Apify')
+            }
+        } catch (error) {
+            toast.error('Failed to sync from Apify')
+        } finally {
+            setIsSyncing(false)
+        }
+    }
+
     if (isLoading && !job) {
         return (
             <div className="h-96 flex flex-col items-center justify-center gap-4">
@@ -152,20 +170,43 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="space-y-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 hover:bg-primary/10 transition-colors cursor-default">
                             {job?.status === 'completed' ? <CheckCircle2 className="mr-1 h-3 w-3" /> : <RefreshCw className="mr-1 h-3 w-3 animate-spin" />}
                             {job?.status.toUpperCase()}
                         </Badge>
-                        <span className="text-xs text-zinc-500 font-mono">ID: {jobId.slice(0, 8)}</span>
+                        <span className="text-xs text-zinc-500 font-mono">Job: {jobId.slice(0, 8)}</span>
+                        {job?.apify_run_id && (
+                            <a
+                                href={`https://console.apify.com/actors/runs/${job.apify_run_id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-500 hover:text-blue-400 font-mono flex items-center gap-1"
+                            >
+                                Apify: {job.apify_run_id.slice(0, 8)}
+                                <ExternalLink className="h-3 w-3" />
+                            </a>
+                        )}
                     </div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight">Scrape Results: {job?.input_params.contact_job_title?.join(', ')}</h1>
+                    <h1 className="text-2xl font-bold text-white tracking-tight">Scrape Results: {job?.input_params.contact_job_title?.join(', ') || 'General Search'}</h1>
                     <p className="text-zinc-500 text-sm font-medium">
-                        Found {job?.leads_found} potential leads. Imported {job?.leads_imported} to MailSmith.
+                        Found {job?.leads_found || 0} potential leads. Imported {job?.leads_imported || 0} to MailSmith.
                     </p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                    {/* Show Retry Sync button if job has apify_run_id but no leads imported */}
+                    {job?.apify_run_id && (job?.leads_imported || 0) === 0 && (
+                        <Button
+                            variant="outline"
+                            className="bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20 hover:text-amber-400"
+                            onClick={handleRetrySync}
+                            disabled={isSyncing}
+                        >
+                            {isSyncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                            Retry Sync from Apify
+                        </Button>
+                    )}
                     <Button
                         variant="outline"
                         className="bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white"

@@ -245,19 +245,27 @@ export async function getSearchJobStatus(jobId: string): Promise<{
     error?: string
 }> {
     try {
-        const { organizationId, error: authError } = await getCurrentUserContext()
-        if (!organizationId) {
-            return { success: false, error: authError || 'Not authenticated' }
-        }
+        const { organizationId: userOrgId, role, error: authError } = await getCurrentUserContext()
 
-        const supabase = await createClient()
+        // Use admin client for operators/admins
+        const supabase = (role === 'super_admin' || role === 'operator')
+            ? createAdminClient()
+            : await createClient()
 
-        const { data: job, error } = await supabase
+        let query = supabase
             .from('scrape_jobs')
             .select('*')
             .eq('id', jobId)
-            .eq('organization_id', organizationId)
-            .single()
+
+        // Regular users can only see their own org's jobs
+        if (role !== 'super_admin' && role !== 'operator') {
+            if (!userOrgId) {
+                return { success: false, error: authError || 'Not authenticated' }
+            }
+            query = query.eq('organization_id', userOrgId)
+        }
+
+        const { data: job, error } = await query.single()
 
         if (error || !job) {
             return { success: false, error: 'Job not found' }
@@ -313,6 +321,66 @@ export async function getSearchJobStatus(jobId: string): Promise<{
             success: false,
             error: error instanceof Error ? error.message : 'Failed to get status',
         }
+    }
+}
+
+/**
+ * Manually retry syncing job results from Apify
+ */
+export async function retrySyncFromApify(jobId: string): Promise<{
+    success: boolean
+    message?: string
+    leadsImported?: number
+    error?: string
+}> {
+    try {
+        const { role } = await getCurrentUserContext()
+
+        // Use admin client for this operation
+        const supabase = (role === 'super_admin' || role === 'operator')
+            ? createAdminClient()
+            : await createClient()
+
+        // Get the job
+        const { data: job, error } = await supabase
+            .from('scrape_jobs')
+            .select('*')
+            .eq('id', jobId)
+            .single()
+
+        if (error || !job) {
+            return { success: false, error: 'Job not found' }
+        }
+
+        if (!job.apify_run_id) {
+            return { success: false, error: 'No Apify run ID found for this job' }
+        }
+
+        // Check status on Apify
+        const status = await getLeadSearchStatus(job.apify_run_id)
+
+        if (status.status !== 'SUCCEEDED') {
+            return {
+                success: false,
+                error: `Apify job status is ${status.status}. Cannot sync incomplete jobs.`
+            }
+        }
+
+        // Process the results
+        const result = await processJobResults(jobId, status.datasetId)
+
+        if (result.success) {
+            return {
+                success: true,
+                message: `Successfully synced ${result.leadsImported || 0} leads from Apify`,
+                leadsImported: result.leadsImported
+            }
+        } else {
+            return { success: false, error: result.error || 'Failed to process results' }
+        }
+    } catch (error: any) {
+        console.error('Retry sync error:', error)
+        return { success: false, error: error.message || 'Failed to sync from Apify' }
     }
 }
 
