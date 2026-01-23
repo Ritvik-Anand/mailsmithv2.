@@ -557,18 +557,32 @@ export async function processJobResults(
         let imported = 0
         if (uniqueLeads.length > 0) {
             console.log(`[Lead Finder] Upserting ${uniqueLeads.length} unique leads`);
+
+            // Explicitly map only the columns that exist in the database
+            // This prevents TypeScript type fields from breaking the insert
+            const leadsToInsert = uniqueLeads.map(l => ({
+                organization_id: l.organization_id,
+                email: l.email,
+                first_name: l.first_name || null,
+                last_name: l.last_name || null,
+                phone: l.phone || null,
+                linkedin_url: l.linkedin_url || null,
+                company_name: l.company_name || null,
+                job_title: l.job_title || null,
+                raw_scraped_data: l.raw_scraped_data || {},
+                source: l.source || 'apify_leads_finder',
+                scrape_job_id: l.scrape_job_id || null,
+                icebreaker_status: l.icebreaker_status || 'pending',
+                campaign_status: l.campaign_status || 'not_added',
+                updated_at: new Date().toISOString(),
+            }));
+
             const { data: insertedLeads, error: insertError } = await supabaseAdmin
                 .from('leads')
-                .upsert(
-                    uniqueLeads.map(l => ({
-                        ...l,
-                        updated_at: new Date().toISOString(),
-                    })),
-                    {
-                        onConflict: 'organization_id,email',
-                        ignoreDuplicates: false
-                    }
-                )
+                .upsert(leadsToInsert, {
+                    onConflict: 'organization_id,email',
+                    ignoreDuplicates: false
+                })
                 .select('id')
 
             if (insertError) {
