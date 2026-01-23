@@ -646,28 +646,37 @@ export async function getLeadsFromJob(
     error?: string
 }> {
     try {
-        const { organizationId, error: authError } = await getCurrentUserContext()
-        if (!organizationId) {
-            return { success: false, error: authError || 'Not authenticated' }
-        }
+        const { role } = await getCurrentUserContext()
+
+        // Use admin client for operators/admins
+        const supabase = (role === 'super_admin' || role === 'operator')
+            ? createAdminClient()
+            : await createClient()
 
         const { page = 1, pageSize = 50 } = options
         const offset = (page - 1) * pageSize
 
-        const supabase = await createClient()
+        // First get the job to find the organization_id
+        const { data: job, error: jobError } = await supabase
+            .from('scrape_jobs')
+            .select('organization_id')
+            .eq('id', jobId)
+            .single()
+
+        if (jobError || !job) {
+            return { success: false, error: 'Job not found' }
+        }
 
         // Get total count
         const { count } = await supabase
             .from('leads')
             .select('*', { count: 'exact', head: true })
-            .eq('organization_id', organizationId)
             .eq('scrape_job_id', jobId)
 
         // Get paginated leads
         const { data, error } = await supabase
             .from('leads')
             .select('*')
-            .eq('organization_id', organizationId)
             .eq('scrape_job_id', jobId)
             .order('created_at', { ascending: false })
             .range(offset, offset + pageSize - 1)
