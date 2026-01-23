@@ -32,7 +32,8 @@ import {
     Lock,
     Clock,
     Megaphone,
-    ArrowRight
+    ArrowRight,
+    Zap
 } from 'lucide-react'
 import { MobileSidebar } from './sidebar'
 import { cn } from '@/lib/utils'
@@ -64,7 +65,7 @@ export function Header({ isAdmin = false }: HeaderProps) {
     const [notificationsOpen, setNotificationsOpen] = useState(false)
     const [notifications, setNotifications] = useState<Notification[]>([])
     const [isLoading, setIsLoading] = useState(false)
-    const [user, setUser] = useState<{ email?: string; name?: string } | null>(null)
+    const [user, setUser] = useState<{ email?: string; name?: string; role?: string } | null>(null)
 
     const fetchNotifications = async () => {
         const data = await getNotifications()
@@ -283,6 +284,14 @@ export function Header({ isAdmin = false }: HeaderProps) {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild className="cursor-pointer">
+                            {isAdmin || user?.role === 'operator' ? (
+                                <Link href="/operator" className="flex items-center w-full">
+                                    <Zap className="mr-2 h-4 w-4 text-primary" />
+                                    <span>Operator Portal</span>
+                                </Link>
+                            ) : null}
+                        </DropdownMenuItem>
                         <DropdownMenuItem asChild className="cursor-pointer">
                             <Link href={isAdmin ? "/admin-console/team" : "/portal/settings"} className="flex items-center w-full">
                                 <User className="mr-2 h-4 w-4" />

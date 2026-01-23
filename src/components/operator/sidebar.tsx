@@ -19,6 +19,7 @@ import {
     Menu,
     ChevronLeft,
     Zap,
+    Shield,
 } from 'lucide-react'
 import type { UserWithRole } from '@/server/actions/roles'
 
@@ -36,16 +37,6 @@ const navItems = [
         title: 'My Customers',
         href: '/operator/customers',
         icon: Users,
-    },
-    {
-        title: 'Task Queue',
-        href: '/operator/queue',
-        icon: ClipboardList,
-    },
-    {
-        title: 'Reply Inbox',
-        href: '/operator/inbox',
-        icon: Inbox,
     },
     {
         title: 'Lead Scraper',
@@ -113,6 +104,19 @@ export function OperatorSidebar({ user }: OperatorSidebarProps) {
                             </Link>
                         )
                     })}
+
+                    {/* Admin Switcher for Super Admins */}
+                    {user.role === 'super_admin' && (
+                        <div className="mt-4 pt-4 border-t border-border">
+                            <Link
+                                href="/admin-console"
+                                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                            >
+                                <Shield className="h-4 w-4 shrink-0" />
+                                {!collapsed && <span>Admin Console</span>}
+                            </Link>
+                        </div>
+                    )}
                 </nav>
             </ScrollArea>
 

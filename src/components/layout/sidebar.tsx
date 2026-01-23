@@ -66,6 +66,11 @@ const adminNavItems = [
         icon: LayoutDashboard,
     },
     {
+        title: 'Operator Portal',
+        href: '/operator',
+        icon: Zap,
+    },
+    {
         title: 'Customers',
         href: '/admin-console/customers',
         icon: Users,
