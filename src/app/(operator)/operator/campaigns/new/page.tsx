@@ -2,11 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import Link from 'next/link'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
     Select,
     SelectContent,
@@ -14,35 +17,91 @@ import {
     SelectTrigger,
     SelectValue
 } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
 import {
-    Mail,
+    ArrowLeft,
+    Save,
     Rocket,
-    Layout,
-    CheckCircle2,
-    ChevronRight,
-    Loader2,
+    Plus,
+    Trash2,
+    Copy,
+    BarChart3,
     Users,
-    Activity
+    Mail,
+    Calendar,
+    Settings,
+    Loader2,
+    CheckCircle2,
+    Clock,
+    Zap,
+    Eye
 } from 'lucide-react'
 import { getOrganizations } from '@/server/actions/organizations'
 import { getOrganizationNodes, launchCampaign } from '@/server/actions/instantly'
 import { toast } from 'sonner'
 
+// Timezone options
+const TIMEZONES = [
+    { value: 'America/New_York', label: 'Eastern Time (ET)' },
+    { value: 'America/Chicago', label: 'Central Time (CT)' },
+    { value: 'America/Denver', label: 'Mountain Time (MT)' },
+    { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+    { value: 'America/Phoenix', label: 'Arizona (MST)' },
+    { value: 'Europe/London', label: 'London (GMT)' },
+    { value: 'Europe/Paris', label: 'Paris (CET)' },
+    { value: 'Asia/Dubai', label: 'Dubai (GST)' },
+    { value: 'Asia/Kolkata', label: 'India (IST)' },
+    { value: 'Asia/Singapore', label: 'Singapore (SGT)' },
+    { value: 'Australia/Sydney', label: 'Sydney (AEDT)' },
+]
+
+// Tab type
+type TabType = 'sequences' | 'schedule' | 'options'
+
 export default function NewCampaignPage() {
     const router = useRouter()
+    const [activeTab, setActiveTab] = useState<TabType>('sequences')
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
+    // Organization and nodes
     const [organizations, setOrganizations] = useState<any[]>([])
     const [selectedOrgId, setSelectedOrgId] = useState<string>('')
     const [orgNodes, setOrgNodes] = useState<any[]>([])
     const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([])
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [step, setStep] = useState(1)
 
-    // Form states
+    // Campaign basics
     const [campaignName, setCampaignName] = useState('')
-    const [subject, setSubject] = useState('')
-    const [body, setBody] = useState('')
 
+    // Sequences (multi-step emails)
+    const [sequences, setSequences] = useState([
+        { id: 1, stepNumber: 1, delayDays: 0, subject: '', body: '', variants: [] as any[] }
+    ])
+
+    // Schedule
+    const [schedule, setSchedule] = useState({
+        sendFromHour: 9,
+        sendToHour: 17,
+        timezone: 'America/New_York',
+        days: {
+            monday: true,
+            tuesday: true,
+            wednesday: true,
+            thursday: true,
+            friday: true,
+            saturday: false,
+            sunday: false
+        }
+    })
+
+    // Options
+    const [options, setOptions] = useState({
+        stopOnReply: true,
+        openTracking: true,
+        linkTracking: false,
+        sendAsText: false,
+        dailyLimit: 50
+    })
+
+    // Load organizations
     useEffect(() => {
         async function loadOrgs() {
             const orgs = await getOrganizations()
@@ -51,13 +110,13 @@ export default function NewCampaignPage() {
         loadOrgs()
     }, [])
 
+    // Load nodes when org changes
     useEffect(() => {
         async function loadNodes() {
             if (selectedOrgId) {
                 const nodes = await getOrganizationNodes(selectedOrgId)
                 setOrgNodes(nodes)
-                // Auto-select all nodes by default for convenience
-                setSelectedNodeIds(nodes.map(n => n.id))
+                setSelectedNodeIds(nodes.map((n: any) => n.id))
             } else {
                 setOrgNodes([])
                 setSelectedNodeIds([])
@@ -66,15 +125,56 @@ export default function NewCampaignPage() {
         loadNodes()
     }, [selectedOrgId])
 
+    // Toggle node selection
     const toggleNode = (id: string) => {
         setSelectedNodeIds(prev =>
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         )
     }
 
+    // Add new sequence step
+    const addSequenceStep = () => {
+        const newStep = {
+            id: sequences.length + 1,
+            stepNumber: sequences.length + 1,
+            delayDays: 3,
+            subject: '',
+            body: '',
+            variants: []
+        }
+        setSequences([...sequences, newStep])
+    }
+
+    // Remove sequence step
+    const removeSequenceStep = (id: number) => {
+        if (sequences.length > 1) {
+            setSequences(sequences.filter(s => s.id !== id))
+        }
+    }
+
+    // Update sequence
+    const updateSequence = (id: number, field: string, value: any) => {
+        setSequences(sequences.map(s =>
+            s.id === id ? { ...s, [field]: value } : s
+        ))
+    }
+
+    // Handle launch
     const handleLaunch = async (startImmediately: boolean = false) => {
-        if (!selectedOrgId || !campaignName || !subject || !body || selectedNodeIds.length === 0) {
-            toast.error('Please fill in all fields and select at least one outreach node.')
+        if (!selectedOrgId) {
+            toast.error('Please select a customer organization')
+            return
+        }
+        if (!campaignName) {
+            toast.error('Please enter a campaign name')
+            return
+        }
+        if (!sequences[0]?.subject || !sequences[0]?.body) {
+            toast.error('Please complete the first email sequence')
+            return
+        }
+        if (selectedNodeIds.length === 0) {
+            toast.error('Please select at least one sending account')
             return
         }
 
@@ -83,8 +183,8 @@ export default function NewCampaignPage() {
             const result = await launchCampaign({
                 organizationId: selectedOrgId,
                 name: campaignName,
-                subject,
-                body,
+                subject: sequences[0].subject,
+                body: sequences[0].body,
                 outreachNodeIds: selectedNodeIds,
                 startImmediately
             })
@@ -93,7 +193,7 @@ export default function NewCampaignPage() {
                 toast.success(`Campaign "${campaignName}" ${startImmediately ? 'launched' : 'created'} successfully!`)
                 router.push('/operator/campaigns')
             } else {
-                toast.error(result.error || 'Failed to launch campaign')
+                toast.error(result.error || 'Failed to create campaign')
             }
         } catch (error) {
             toast.error('An unexpected error occurred')
@@ -102,237 +202,465 @@ export default function NewCampaignPage() {
         }
     }
 
+    // Tab components
+    const tabs = [
+        { id: 'sequences' as TabType, label: 'Sequences', icon: Mail },
+        { id: 'schedule' as TabType, label: 'Schedule', icon: Calendar },
+        { id: 'options' as TabType, label: 'Options', icon: Settings },
+    ]
+
     return (
-        <div className="max-w-4xl mx-auto space-y-8 pb-20">
+        <div className="min-h-screen pb-20">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Campaign Launcher</h1>
-                    <p className="text-muted-foreground">Setup and blast a new outreach campaign via Instantly.</p>
-                </div>
-            </div>
-
-            {/* Stepper */}
-            <div className="flex items-center gap-4 text-sm font-medium">
-                <div className={`flex items-center gap-2 ${step >= 1 ? 'text-primary' : 'text-muted-foreground'}`}>
-                    <div className={`flex h-6 w-6 items-center justify-center rounded-full border ${step >= 1 ? 'bg-primary border-primary text-white' : 'border-current'}`}>1</div>
-                    Target Client
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                <div className={`flex items-center gap-2 ${step >= 2 ? 'text-primary' : 'text-muted-foreground'}`}>
-                    <div className={`flex h-6 w-6 items-center justify-center rounded-full border ${step >= 2 ? 'bg-primary border-primary text-white' : 'border-current'}`}>2</div>
-                    Creative & Assets
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                <div className={`flex items-center gap-2 ${step >= 3 ? 'text-primary' : 'text-muted-foreground'}`}>
-                    <div className={`flex h-6 w-6 items-center justify-center rounded-full border ${step >= 3 ? 'bg-primary border-primary text-white' : 'border-current'}`}>3</div>
-                    Configuration
-                </div>
-            </div>
-
-            {/* Step Content */}
-            {step === 1 && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Select Target Customer</CardTitle>
-                        <CardDescription>Choose which customer organization this campaign belongs to.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="space-y-2">
-                            <Label>Customer Organization</Label>
-                            <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select an organization" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {organizations.map(org => (
-                                        <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-zinc-800">
+                <div className="container py-4">
+                    <div className="flex items-center justify-between">
+                        {/* Left: Back + Title */}
+                        <div className="flex items-center gap-4">
+                            <Link href="/operator/campaigns">
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <ArrowLeft className="h-4 w-4" />
+                                </Button>
+                            </Link>
+                            <div className="flex items-center gap-3">
+                                <Input
+                                    value={campaignName}
+                                    onChange={(e) => setCampaignName(e.target.value)}
+                                    placeholder="New Campaign Name..."
+                                    className="text-lg font-bold bg-transparent border-none focus-visible:ring-0 px-0 h-auto w-[300px]"
+                                />
+                                <Badge variant="outline" className="bg-zinc-800 text-zinc-400 border-zinc-700">
+                                    DRAFT
+                                </Badge>
+                            </div>
                         </div>
 
-                        {selectedOrgId && (
-                            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg flex items-center gap-3">
-                                <Users className="h-5 w-5 text-green-500" />
+                        {/* Right: Actions */}
+                        <div className="flex items-center gap-3">
+                            <Button
+                                variant="outline"
+                                className="border-zinc-700 text-zinc-400"
+                                onClick={() => handleLaunch(false)}
+                                disabled={isSubmitting}
+                            >
+                                <Save className="mr-2 h-4 w-4" />
+                                Save Draft
+                            </Button>
+                            <Button
+                                className="bg-amber-500 hover:bg-amber-600 text-black font-bold"
+                                onClick={() => handleLaunch(true)}
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Rocket className="mr-2 h-4 w-4" />
+                                )}
+                                Launch Campaign
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Tabs */}
+                    <div className="flex items-center gap-1 mt-4">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === tab.id
+                                        ? 'bg-amber-500/10 text-amber-500'
+                                        : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                                    }`}
+                            >
+                                <tab.icon className="h-4 w-4" />
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            <div className="container py-6">
+                {/* Customer Selection Banner */}
+                <Card className="bg-zinc-900/50 border-zinc-800 mb-6">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                                    <Users className="h-5 w-5 text-amber-500" />
+                                </div>
                                 <div>
-                                    <p className="text-sm font-medium">Context Active: {organizations.find(o => o.id === selectedOrgId)?.name}</p>
-                                    <p className="text-xs text-muted-foreground">Infrastructure nodes for this client will be loaded in the next step.</p>
+                                    <Label className="text-xs text-zinc-500 uppercase tracking-wider">Target Customer</Label>
+                                    <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
+                                        <SelectTrigger className="w-[300px] mt-1 bg-zinc-950 border-zinc-800">
+                                            <SelectValue placeholder="Select customer organization..." />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-zinc-950 border-zinc-800">
+                                            {organizations.map(org => (
+                                                <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
-                        )}
-
-                        <div className="flex justify-end">
-                            <Button disabled={!selectedOrgId} onClick={() => setStep(2)}>
-                                Next Step
-                                <ChevronRight className="ml-2 h-4 w-4" />
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            {step === 2 && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Creative & Assets</CardTitle>
-                        <CardDescription>Define the outreach sequence and campaign metadata.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Internal Campaign Name</Label>
-                            <Input
-                                id="name"
-                                placeholder="e.g. Q1 SaaS Founders Cold Outreach"
-                                value={campaignName}
-                                onChange={(e) => setCampaignName(e.target.value)}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="subject">Email Subject</Label>
-                            <Input
-                                id="subject"
-                                placeholder="Quick question regarding {{companyName}}"
-                                value={subject}
-                                onChange={(e) => setSubject(e.target.value)}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="body">Email Body (First Step)</Label>
-                            <Textarea
-                                id="body"
-                                placeholder="Hi {{firstName}}, I saw your work at {{companyName}}..."
-                                className="min-h-[200px]"
-                                value={body}
-                                onChange={(e) => setBody(e.target.value)}
-                            />
-                            <p className="text-[10px] text-muted-foreground">Variables allowed: {"{{firstName}}, {{companyName}}, {{industry}}, {{jobTitle}}"}</p>
-                        </div>
-
-                        <div className="flex justify-between">
-                            <Button variant="ghost" onClick={() => setStep(1)}>Back</Button>
-                            <Button disabled={!campaignName || !subject || !body} onClick={() => setStep(3)}>
-                                Next Step
-                                <ChevronRight className="ml-2 h-4 w-4" />
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            {step === 3 && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Configuration & Launch</CardTitle>
-                        <CardDescription>Select the outreach nodes and finalize settings.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <Label className="text-base">Outreach Nodes (Active Senders)</Label>
-                                <Badge variant="secondary">{selectedNodeIds.length} Selected</Badge>
-                            </div>
-
-                            {orgNodes.length === 0 ? (
-                                <div className="p-8 text-center border-2 border-dashed rounded-lg">
-                                    <AlertCircle className="h-8 w-8 text-amber-500 mx-auto mb-2" />
-                                    <p className="text-sm font-medium">No outreach nodes assigned to this client.</p>
-                                    <p className="text-xs text-muted-foreground mt-1">Assign nodes in the Admin Console first.</p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {orgNodes.map(node => (
-                                        <div
-                                            key={node.id}
-                                            onClick={() => toggleNode(node.id)}
-                                            className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center justify-between ${selectedNodeIds.includes(node.id)
-                                                    ? 'border-primary bg-primary/5'
-                                                    : 'border-zinc-800 hover:border-zinc-700'
-                                                }`}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className={`h-2 w-2 rounded-full ${node.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-medium text-white">{node.email_address}</span>
-                                                    <span className="text-[10px] text-zinc-500">Reputation: {node.reputation_score}%</span>
-                                                </div>
-                                            </div>
-                                            {selectedNodeIds.includes(node.id) && (
-                                                <CheckCircle2 className="h-4 w-4 text-primary" />
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
+                            {selectedOrgId && (
+                                <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                                    <CheckCircle2 className="mr-1 h-3 w-3" />
+                                    Customer Connected
+                                </Badge>
                             )}
                         </div>
-
-                        <div className="p-4 rounded-lg bg-zinc-900/50 border border-zinc-800 space-y-3">
-                            <h4 className="text-sm font-bold flex items-center gap-2">
-                                <Activity className="h-4 w-4 text-primary" />
-                                Pre-flight Check
-                            </h4>
-                            <div className="grid grid-cols-2 gap-4 text-xs">
-                                <div>
-                                    <span className="text-zinc-500">Campaign:</span>
-                                    <p className="font-semibold text-white">{campaignName}</p>
-                                </div>
-                                <div>
-                                    <span className="text-zinc-500">Outreach Nodes:</span>
-                                    <p className="font-semibold text-white">{selectedNodeIds.length} active nodes</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-between gap-4 pt-4">
-                            <Button variant="ghost" onClick={() => setStep(2)}>Back</Button>
-                            <div className="flex gap-3">
-                                <Button
-                                    variant="outline"
-                                    disabled={isSubmitting || selectedNodeIds.length === 0}
-                                    onClick={() => handleLaunch(false)}
-                                >
-                                    Save as Draft
-                                </Button>
-                                <Button
-                                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
-                                    disabled={isSubmitting || selectedNodeIds.length === 0}
-                                    onClick={() => handleLaunch(true)}
-                                >
-                                    {isSubmitting ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <Rocket className="mr-2 h-4 w-4" />
-                                    )}
-                                    Launch Instantly
-                                </Button>
-                            </div>
-                        </div>
                     </CardContent>
                 </Card>
-            )}
-        </div>
-    )
-}
 
-function AlertCircle(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
+                {/* Tab Content */}
+                {activeTab === 'sequences' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Sequence Steps */}
+                        <div className="lg:col-span-1 space-y-3">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Email Steps</h3>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={addSequenceStep}
+                                    className="text-amber-500 hover:text-amber-400 hover:bg-amber-500/10"
+                                >
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    Add Step
+                                </Button>
+                            </div>
+
+                            {sequences.map((seq, idx) => (
+                                <div
+                                    key={seq.id}
+                                    className={`p-4 rounded-xl border transition-all cursor-pointer ${idx === 0
+                                            ? 'bg-amber-500/5 border-amber-500/30'
+                                            : 'bg-zinc-900/50 border-zinc-800 hover:border-zinc-700'
+                                        }`}
+                                >
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${idx === 0 ? 'bg-amber-500 text-black' : 'bg-zinc-800 text-zinc-400'
+                                                }`}>
+                                                {seq.stepNumber}
+                                            </div>
+                                            <span className="text-sm font-medium">Step {seq.stepNumber}</span>
+                                        </div>
+                                        {sequences.length > 1 && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6 text-zinc-600 hover:text-red-500"
+                                                onClick={() => removeSequenceStep(seq.id)}
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </Button>
+                                        )}
+                                    </div>
+
+                                    {idx > 0 && (
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <Clock className="h-3 w-3 text-zinc-600" />
+                                            <span className="text-xs text-zinc-600">Wait</span>
+                                            <Input
+                                                type="number"
+                                                value={seq.delayDays}
+                                                onChange={(e) => updateSequence(seq.id, 'delayDays', parseInt(e.target.value))}
+                                                className="w-14 h-6 text-xs bg-zinc-950 border-zinc-800 text-center"
+                                            />
+                                            <span className="text-xs text-zinc-600">days</span>
+                                        </div>
+                                    )}
+
+                                    <p className="text-xs text-zinc-500 truncate">
+                                        {seq.subject || 'No subject yet...'}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Email Editor */}
+                        <div className="lg:col-span-2">
+                            <Card className="bg-zinc-900/50 border-zinc-800">
+                                <CardHeader className="border-b border-zinc-800">
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="text-base">Step 1 Email</CardTitle>
+                                        <Button variant="ghost" size="sm" className="text-zinc-500">
+                                            <Eye className="h-4 w-4 mr-2" />
+                                            Preview
+                                        </Button>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-6 space-y-4">
+                                    <div>
+                                        <Label className="text-xs text-zinc-500 mb-2 block">Subject Line</Label>
+                                        <Input
+                                            value={sequences[0]?.subject || ''}
+                                            onChange={(e) => updateSequence(1, 'subject', e.target.value)}
+                                            placeholder="{{firstName}}, quick question"
+                                            className="bg-zinc-950 border-zinc-800"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <Label className="text-xs text-zinc-500 mb-2 block">Email Body</Label>
+                                        <Textarea
+                                            value={sequences[0]?.body || ''}
+                                            onChange={(e) => updateSequence(1, 'body', e.target.value)}
+                                            placeholder={`{{personalization}}
+
+This might be a long shot, but teams with complex offerings often run into the same issue:
+
+The product is strong, but the way it's explained publicly doesn't make the value obvious – which quietly hurts inbound demand and trust.
+
+We help teams fix that by building simple content systems that make complex products easy to understand and easy to buy.
+
+Just curious if this is something you're actively thinking about right now, or not a focus this quarter.
+
+Thanks,
+{{sendingAccountFirstName}}`}
+                                            className="min-h-[300px] bg-zinc-950 border-zinc-800 font-mono text-sm"
+                                        />
+                                    </div>
+
+                                    {/* Variable hints */}
+                                    <div className="flex flex-wrap gap-2 pt-2">
+                                        <span className="text-xs text-zinc-600">Available variables:</span>
+                                        {['{{firstName}}', '{{lastName}}', '{{companyName}}', '{{jobTitle}}', '{{personalization}}', '{{sendingAccountFirstName}}'].map(v => (
+                                            <Badge
+                                                key={v}
+                                                variant="outline"
+                                                className="text-[10px] bg-zinc-950 border-zinc-800 text-zinc-500 cursor-pointer hover:border-amber-500/50 hover:text-amber-500"
+                                            >
+                                                {v}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'schedule' && (
+                    <div className="max-w-2xl">
+                        <Card className="bg-zinc-900/50 border-zinc-800">
+                            <CardHeader>
+                                <CardTitle className="text-base flex items-center gap-2">
+                                    <Calendar className="h-4 w-4 text-amber-500" />
+                                    Sending Schedule
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                {/* Time Range */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label className="text-xs text-zinc-500 mb-2 block">Send From</Label>
+                                        <Select
+                                            value={schedule.sendFromHour.toString()}
+                                            onValueChange={(v) => setSchedule({ ...schedule, sendFromHour: parseInt(v) })}
+                                        >
+                                            <SelectTrigger className="bg-zinc-950 border-zinc-800">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-zinc-950 border-zinc-800">
+                                                {[...Array(24)].map((_, i) => (
+                                                    <SelectItem key={i} value={i.toString()}>
+                                                        {i.toString().padStart(2, '0')}:00
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs text-zinc-500 mb-2 block">Send To</Label>
+                                        <Select
+                                            value={schedule.sendToHour.toString()}
+                                            onValueChange={(v) => setSchedule({ ...schedule, sendToHour: parseInt(v) })}
+                                        >
+                                            <SelectTrigger className="bg-zinc-950 border-zinc-800">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-zinc-950 border-zinc-800">
+                                                {[...Array(24)].map((_, i) => (
+                                                    <SelectItem key={i} value={i.toString()}>
+                                                        {i.toString().padStart(2, '0')}:00
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                {/* Timezone */}
+                                <div>
+                                    <Label className="text-xs text-zinc-500 mb-2 block">Timezone</Label>
+                                    <Select
+                                        value={schedule.timezone}
+                                        onValueChange={(v) => setSchedule({ ...schedule, timezone: v })}
+                                    >
+                                        <SelectTrigger className="bg-zinc-950 border-zinc-800">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-zinc-950 border-zinc-800">
+                                            {TIMEZONES.map(tz => (
+                                                <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Days of Week */}
+                                <div>
+                                    <Label className="text-xs text-zinc-500 mb-3 block">Active Days</Label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {Object.entries(schedule.days).map(([day, active]) => (
+                                            <button
+                                                key={day}
+                                                onClick={() => setSchedule({
+                                                    ...schedule,
+                                                    days: { ...schedule.days, [day]: !active }
+                                                })}
+                                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${active
+                                                        ? 'bg-amber-500 text-black'
+                                                        : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800'
+                                                    }`}
+                                            >
+                                                {day.charAt(0).toUpperCase() + day.slice(1, 3)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+
+                {activeTab === 'options' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Sending Accounts */}
+                        <Card className="bg-zinc-900/50 border-zinc-800">
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <CardTitle className="text-base flex items-center gap-2">
+                                        <Mail className="h-4 w-4 text-amber-500" />
+                                        Sending Accounts
+                                    </CardTitle>
+                                    <Badge variant="outline" className="bg-zinc-800 border-zinc-700">
+                                        {selectedNodeIds.length} Selected
+                                    </Badge>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                {!selectedOrgId ? (
+                                    <div className="text-center py-8 text-zinc-600">
+                                        <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                        <p className="text-sm">Select a customer first</p>
+                                    </div>
+                                ) : orgNodes.length === 0 ? (
+                                    <div className="text-center py-8 text-zinc-600">
+                                        <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                        <p className="text-sm">No sending accounts assigned</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                                        {orgNodes.map(node => (
+                                            <div
+                                                key={node.id}
+                                                onClick={() => toggleNode(node.id)}
+                                                className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center justify-between ${selectedNodeIds.includes(node.id)
+                                                        ? 'border-amber-500/50 bg-amber-500/5'
+                                                        : 'border-zinc-800 hover:border-zinc-700'
+                                                    }`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`h-2 w-2 rounded-full ${node.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                                    <div>
+                                                        <p className="text-sm font-medium">{node.email_address}</p>
+                                                        <p className="text-xs text-zinc-600">Warmup: {node.reputation_score || 0}%</p>
+                                                    </div>
+                                                </div>
+                                                {selectedNodeIds.includes(node.id) && (
+                                                    <CheckCircle2 className="h-4 w-4 text-amber-500" />
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Campaign Settings */}
+                        <Card className="bg-zinc-900/50 border-zinc-800">
+                            <CardHeader>
+                                <CardTitle className="text-base flex items-center gap-2">
+                                    <Settings className="h-4 w-4 text-amber-500" />
+                                    Campaign Settings
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center justify-between py-3 border-b border-zinc-800">
+                                    <div>
+                                        <p className="text-sm font-medium">Stop on Reply</p>
+                                        <p className="text-xs text-zinc-600">Pause sequence when lead replies</p>
+                                    </div>
+                                    <Checkbox
+                                        checked={options.stopOnReply}
+                                        onCheckedChange={(checked) => setOptions({ ...options, stopOnReply: !!checked })}
+                                    />
+                                </div>
+
+                                <div className="flex items-center justify-between py-3 border-b border-zinc-800">
+                                    <div>
+                                        <p className="text-sm font-medium">Open Tracking</p>
+                                        <p className="text-xs text-zinc-600">Track when emails are opened</p>
+                                    </div>
+                                    <Checkbox
+                                        checked={options.openTracking}
+                                        onCheckedChange={(checked) => setOptions({ ...options, openTracking: !!checked })}
+                                    />
+                                </div>
+
+                                <div className="flex items-center justify-between py-3 border-b border-zinc-800">
+                                    <div>
+                                        <p className="text-sm font-medium">Link Tracking</p>
+                                        <p className="text-xs text-zinc-600">Track link clicks in emails</p>
+                                    </div>
+                                    <Checkbox
+                                        checked={options.linkTracking}
+                                        onCheckedChange={(checked) => setOptions({ ...options, linkTracking: !!checked })}
+                                    />
+                                </div>
+
+                                <div className="flex items-center justify-between py-3 border-b border-zinc-800">
+                                    <div>
+                                        <p className="text-sm font-medium">Send as Plain Text</p>
+                                        <p className="text-xs text-zinc-600">Better deliverability, no formatting</p>
+                                    </div>
+                                    <Checkbox
+                                        checked={options.sendAsText}
+                                        onCheckedChange={(checked) => setOptions({ ...options, sendAsText: !!checked })}
+                                    />
+                                </div>
+
+                                <div className="flex items-center justify-between py-3">
+                                    <div>
+                                        <p className="text-sm font-medium">Daily Email Limit</p>
+                                        <p className="text-xs text-zinc-600">Max emails per account per day</p>
+                                    </div>
+                                    <Input
+                                        type="number"
+                                        value={options.dailyLimit}
+                                        onChange={(e) => setOptions({ ...options, dailyLimit: parseInt(e.target.value) })}
+                                        className="w-20 h-8 bg-zinc-950 border-zinc-800 text-center"
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+            </div>
+        </div>
     )
 }
