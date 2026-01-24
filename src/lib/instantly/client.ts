@@ -150,6 +150,83 @@ export class InstantlyClient {
         // For now, listing campaigns is a good fallback or if there's a specific summary endpoint
         return this.request<any[]>('/campaigns')
     }
+
+    /**
+     * Get detailed campaign info by ID
+     */
+    async getCampaign(campaignId: string): Promise<any> {
+        return this.request<any>(`/campaigns/${campaignId}`)
+    }
+
+    /**
+     * Get campaign analytics/stats
+     */
+    async getCampaignAnalytics(campaignId: string): Promise<any> {
+        // V2 analytics endpoint
+        return this.request<any>(`/campaigns/${campaignId}/analytics`)
+    }
+
+    /**
+     * Get leads for a specific campaign
+     */
+    async getCampaignLeads(campaignId: string, limit: number = 100, skip: number = 0): Promise<any> {
+        return this.request<any>(`/leads?campaign=${campaignId}&limit=${limit}&skip=${skip}`)
+    }
+
+    /**
+     * Update campaign sequences (email steps)
+     */
+    async updateCampaignSequences(campaignId: string, sequences: any[]): Promise<any> {
+        return this.request(`/campaigns/${campaignId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+                sequences: sequences.map(seq => ({
+                    subject: seq.subject,
+                    body: seq.body,
+                    delay: seq.delay_days || 1,
+                }))
+            }),
+        })
+    }
+
+    /**
+     * Update campaign schedule
+     */
+    async updateCampaignSchedule(campaignId: string, schedule: {
+        from_hour: number;
+        to_hour: number;
+        timezone: string;
+        days: number[]; // 0-6 for Sunday-Saturday
+    }): Promise<any> {
+        return this.request(`/campaigns/${campaignId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+                schedule: {
+                    from: `${schedule.from_hour.toString().padStart(2, '0')}:00`,
+                    to: `${schedule.to_hour.toString().padStart(2, '0')}:00`,
+                    timezone: schedule.timezone,
+                    days: schedule.days,
+                }
+            }),
+        })
+    }
+
+    /**
+     * Update campaign options
+     */
+    async updateCampaignOptions(campaignId: string, options: {
+        stop_on_reply?: boolean;
+        open_tracking?: boolean;
+        link_tracking?: boolean;
+        send_as_text?: boolean;
+        daily_limit?: number;
+    }): Promise<any> {
+        return this.request(`/campaigns/${campaignId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(options),
+        })
+    }
 }
 
 export const instantly = new InstantlyClient()
+

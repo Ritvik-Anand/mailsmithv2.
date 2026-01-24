@@ -146,14 +146,18 @@ export default function OperatorCampaignsPage() {
             ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {campaigns.map((campaign) => (
-                        <Card key={campaign.id} className="bg-zinc-950 border-zinc-800 hover:border-zinc-700 transition-all group overflow-hidden shadow-none">
+                        <Card
+                            key={campaign.id}
+                            className="bg-zinc-950 border-zinc-800 hover:border-zinc-700 transition-all group overflow-hidden shadow-none cursor-pointer"
+                            onClick={() => window.location.href = `/operator/campaigns/${campaign.id}`}
+                        >
                             <CardHeader className="p-5 pb-2">
                                 <div className="flex items-start justify-between">
                                     <Badge variant="outline" className={cn("text-[10px] font-black uppercase tracking-tighter px-2", getStatusStyle(campaign.status))}>
                                         {campaign.status}
                                     </Badge>
                                     <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
+                                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500">
                                                 <MoreHorizontal className="h-4 w-4" />
                                             </Button>
@@ -187,10 +191,12 @@ export default function OperatorCampaignsPage() {
                                         </div>
                                         <span className="text-[10px] font-bold text-zinc-500">{campaign.emails_opened || 0}% Open Rate</span>
                                     </div>
-                                    <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] font-bold text-zinc-600 hover:text-white uppercase tracking-wider">
-                                        Quick View
-                                        <ChevronRight className="ml-1 h-3 w-3" />
-                                    </Button>
+                                    <Link href={`/operator/campaigns/${campaign.id}`} onClick={(e) => e.stopPropagation()}>
+                                        <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] font-bold text-zinc-600 hover:text-white uppercase tracking-wider">
+                                            View Details
+                                            <ChevronRight className="ml-1 h-3 w-3" />
+                                        </Button>
+                                    </Link>
                                 </div>
                             </CardContent>
                         </Card>
