@@ -92,13 +92,23 @@ export default function NewCampaignPage() {
         }
     })
 
-    // Options
+    // Options - All Instantly campaign options
     const [options, setOptions] = useState({
         stopOnReply: true,
         openTracking: true,
         linkTracking: false,
         sendAsText: false,
-        dailyLimit: 50
+        dailyLimit: 50,
+        // Advanced options
+        ccEmail: '',
+        bccEmail: '',
+        customTrackingDomain: '',
+        prioritizeNewLeads: true,
+        matchLeadTimezone: false,
+        skipWeekends: true,
+        randomizeDelay: true,
+        minDelay: 3,
+        maxDelay: 7
     })
 
     // Load organizations
@@ -134,27 +144,32 @@ export default function NewCampaignPage() {
 
     // Add new sequence step
     const addSequenceStep = () => {
-        const newStep = {
-            id: sequences.length + 1,
-            stepNumber: sequences.length + 1,
-            delayDays: 3,
-            subject: '',
-            body: '',
-            variants: []
-        }
-        setSequences([...sequences, newStep])
+        setSequences(prev => {
+            const newStep = {
+                id: Math.max(...prev.map(s => s.id)) + 1,
+                stepNumber: prev.length + 1,
+                delayDays: 3,
+                subject: '',
+                body: '',
+                variants: []
+            }
+            return [...prev, newStep]
+        })
     }
 
     // Remove sequence step
     const removeSequenceStep = (id: number) => {
-        if (sequences.length > 1) {
-            setSequences(sequences.filter(s => s.id !== id))
-        }
+        setSequences(prev => {
+            if (prev.length > 1) {
+                return prev.filter(s => s.id !== id)
+            }
+            return prev
+        })
     }
 
-    // Update sequence
+    // Update sequence - using functional update to fix stale closure
     const updateSequence = (id: number, field: string, value: any) => {
-        setSequences(sequences.map(s =>
+        setSequences(prev => prev.map(s =>
             s.id === id ? { ...s, [field]: value } : s
         ))
     }
@@ -268,8 +283,8 @@ export default function NewCampaignPage() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === tab.id
-                                        ? 'bg-amber-500/10 text-amber-500'
-                                        : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                                    ? 'bg-amber-500/10 text-amber-500'
+                                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
                                     }`}
                             >
                                 <tab.icon className="h-4 w-4" />
@@ -335,8 +350,8 @@ export default function NewCampaignPage() {
                                 <div
                                     key={seq.id}
                                     className={`p-4 rounded-xl border transition-all cursor-pointer ${idx === 0
-                                            ? 'bg-amber-500/5 border-amber-500/30'
-                                            : 'bg-zinc-900/50 border-zinc-800 hover:border-zinc-700'
+                                        ? 'bg-amber-500/5 border-amber-500/30'
+                                        : 'bg-zinc-900/50 border-zinc-800 hover:border-zinc-700'
                                         }`}
                                 >
                                     <div className="flex items-center justify-between mb-3">
@@ -397,8 +412,8 @@ export default function NewCampaignPage() {
                                         <Label className="text-xs text-zinc-500 mb-2 block">Subject Line</Label>
                                         <Input
                                             value={sequences[0]?.subject || ''}
-                                            onChange={(e) => updateSequence(1, 'subject', e.target.value)}
-                                            placeholder="{{firstName}}, quick question"
+                                            onChange={(e) => updateSequence(sequences[0]?.id || 1, 'subject', e.target.value)}
+                                            placeholder="Enter subject line..."
                                             className="bg-zinc-950 border-zinc-800"
                                         />
                                     </div>
@@ -407,19 +422,8 @@ export default function NewCampaignPage() {
                                         <Label className="text-xs text-zinc-500 mb-2 block">Email Body</Label>
                                         <Textarea
                                             value={sequences[0]?.body || ''}
-                                            onChange={(e) => updateSequence(1, 'body', e.target.value)}
-                                            placeholder={`{{personalization}}
-
-This might be a long shot, but teams with complex offerings often run into the same issue:
-
-The product is strong, but the way it's explained publicly doesn't make the value obvious – which quietly hurts inbound demand and trust.
-
-We help teams fix that by building simple content systems that make complex products easy to understand and easy to buy.
-
-Just curious if this is something you're actively thinking about right now, or not a focus this quarter.
-
-Thanks,
-{{sendingAccountFirstName}}`}
+                                            onChange={(e) => updateSequence(sequences[0]?.id || 1, 'body', e.target.value)}
+                                            placeholder="Write your email here... Use {{icebreaker}} for AI-generated personalization."
                                             className="min-h-[300px] bg-zinc-950 border-zinc-800 font-mono text-sm"
                                         />
                                     </div>
@@ -427,13 +431,25 @@ Thanks,
                                     {/* Variable hints */}
                                     <div className="flex flex-wrap gap-2 pt-2">
                                         <span className="text-xs text-zinc-600">Available variables:</span>
-                                        {['{{firstName}}', '{{lastName}}', '{{companyName}}', '{{jobTitle}}', '{{personalization}}', '{{sendingAccountFirstName}}'].map(v => (
+                                        {[
+                                            { var: '{{icebreaker}}', desc: 'AI Personalization', highlight: true },
+                                            { var: '{{firstName}}', desc: 'First Name' },
+                                            { var: '{{lastName}}', desc: 'Last Name' },
+                                            { var: '{{companyName}}', desc: 'Company' },
+                                            { var: '{{jobTitle}}', desc: 'Job Title' },
+                                            { var: '{{email}}', desc: 'Email' },
+                                            { var: '{{sendingAccountFirstName}}', desc: 'Your Name' }
+                                        ].map(v => (
                                             <Badge
-                                                key={v}
+                                                key={v.var}
                                                 variant="outline"
-                                                className="text-[10px] bg-zinc-950 border-zinc-800 text-zinc-500 cursor-pointer hover:border-amber-500/50 hover:text-amber-500"
+                                                className={`text-[10px] cursor-pointer ${v.highlight
+                                                    ? 'bg-amber-500/10 border-amber-500/50 text-amber-500 hover:bg-amber-500/20'
+                                                    : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-amber-500/50 hover:text-amber-500'
+                                                    }`}
+                                                title={v.desc}
                                             >
-                                                {v}
+                                                {v.var}
                                             </Badge>
                                         ))}
                                     </div>
@@ -523,8 +539,8 @@ Thanks,
                                                     days: { ...schedule.days, [day]: !active }
                                                 })}
                                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${active
-                                                        ? 'bg-amber-500 text-black'
-                                                        : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800'
+                                                    ? 'bg-amber-500 text-black'
+                                                    : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800'
                                                     }`}
                                             >
                                                 {day.charAt(0).toUpperCase() + day.slice(1, 3)}
@@ -570,8 +586,8 @@ Thanks,
                                                 key={node.id}
                                                 onClick={() => toggleNode(node.id)}
                                                 className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center justify-between ${selectedNodeIds.includes(node.id)
-                                                        ? 'border-amber-500/50 bg-amber-500/5'
-                                                        : 'border-zinc-800 hover:border-zinc-700'
+                                                    ? 'border-amber-500/50 bg-amber-500/5'
+                                                    : 'border-zinc-800 hover:border-zinc-700'
                                                     }`}
                                             >
                                                 <div className="flex items-center gap-3">
@@ -599,62 +615,166 @@ Thanks,
                                     Campaign Settings
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-                                    <div>
-                                        <p className="text-sm font-medium">Stop on Reply</p>
-                                        <p className="text-xs text-zinc-600">Pause sequence when lead replies</p>
+                            <CardContent className="space-y-6">
+                                {/* Basic Settings */}
+                                <div className="space-y-4">
+                                    <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Behavior</h4>
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Stop on Reply</p>
+                                            <p className="text-xs text-zinc-600">Pause sequence when lead replies</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.stopOnReply}
+                                            onCheckedChange={(checked) => setOptions({ ...options, stopOnReply: !!checked })}
+                                        />
                                     </div>
-                                    <Checkbox
-                                        checked={options.stopOnReply}
-                                        onCheckedChange={(checked) => setOptions({ ...options, stopOnReply: !!checked })}
-                                    />
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Prioritize New Leads</p>
+                                            <p className="text-xs text-zinc-600">Send to new leads first</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.prioritizeNewLeads}
+                                            onCheckedChange={(checked) => setOptions({ ...options, prioritizeNewLeads: !!checked })}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Match Lead Timezone</p>
+                                            <p className="text-xs text-zinc-600">Send based on lead&apos;s timezone</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.matchLeadTimezone}
+                                            onCheckedChange={(checked) => setOptions({ ...options, matchLeadTimezone: !!checked })}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Skip Weekends</p>
+                                            <p className="text-xs text-zinc-600">Don&apos;t count weekends in delays</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.skipWeekends}
+                                            onCheckedChange={(checked) => setOptions({ ...options, skipWeekends: !!checked })}
+                                        />
+                                    </div>
                                 </div>
 
-                                <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-                                    <div>
-                                        <p className="text-sm font-medium">Open Tracking</p>
-                                        <p className="text-xs text-zinc-600">Track when emails are opened</p>
+                                {/* Tracking Settings */}
+                                <div className="space-y-4 pt-4 border-t border-zinc-800">
+                                    <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Tracking</h4>
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Open Tracking</p>
+                                            <p className="text-xs text-zinc-600">Track when emails are opened</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.openTracking}
+                                            onCheckedChange={(checked) => setOptions({ ...options, openTracking: !!checked })}
+                                        />
                                     </div>
-                                    <Checkbox
-                                        checked={options.openTracking}
-                                        onCheckedChange={(checked) => setOptions({ ...options, openTracking: !!checked })}
-                                    />
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Link Tracking</p>
+                                            <p className="text-xs text-zinc-600">Track link clicks in emails</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.linkTracking}
+                                            onCheckedChange={(checked) => setOptions({ ...options, linkTracking: !!checked })}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Send as Plain Text</p>
+                                            <p className="text-xs text-zinc-600">Better deliverability, no formatting</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.sendAsText}
+                                            onCheckedChange={(checked) => setOptions({ ...options, sendAsText: !!checked })}
+                                        />
+                                    </div>
                                 </div>
 
-                                <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-                                    <div>
-                                        <p className="text-sm font-medium">Link Tracking</p>
-                                        <p className="text-xs text-zinc-600">Track link clicks in emails</p>
+                                {/* Limits */}
+                                <div className="space-y-4 pt-4 border-t border-zinc-800">
+                                    <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Limits & Delays</h4>
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Daily Email Limit</p>
+                                            <p className="text-xs text-zinc-600">Max emails per account per day</p>
+                                        </div>
+                                        <Input
+                                            type="number"
+                                            value={options.dailyLimit}
+                                            onChange={(e) => setOptions({ ...options, dailyLimit: parseInt(e.target.value) || 50 })}
+                                            className="w-20 h-8 bg-zinc-950 border-zinc-800 text-center"
+                                        />
                                     </div>
-                                    <Checkbox
-                                        checked={options.linkTracking}
-                                        onCheckedChange={(checked) => setOptions({ ...options, linkTracking: !!checked })}
-                                    />
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Randomize Delay</p>
+                                            <p className="text-xs text-zinc-600">Add random variation to sequence delays</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.randomizeDelay}
+                                            onCheckedChange={(checked) => setOptions({ ...options, randomizeDelay: !!checked })}
+                                        />
+                                    </div>
+
+                                    {options.randomizeDelay && (
+                                        <div className="flex items-center gap-3 py-2 pl-4 border-l-2 border-amber-500/30">
+                                            <span className="text-xs text-zinc-600">Delay range:</span>
+                                            <Input
+                                                type="number"
+                                                value={options.minDelay}
+                                                onChange={(e) => setOptions({ ...options, minDelay: parseInt(e.target.value) || 1 })}
+                                                className="w-16 h-7 text-xs bg-zinc-950 border-zinc-800 text-center"
+                                            />
+                                            <span className="text-xs text-zinc-600">to</span>
+                                            <Input
+                                                type="number"
+                                                value={options.maxDelay}
+                                                onChange={(e) => setOptions({ ...options, maxDelay: parseInt(e.target.value) || 7 })}
+                                                className="w-16 h-7 text-xs bg-zinc-950 border-zinc-800 text-center"
+                                            />
+                                            <span className="text-xs text-zinc-600">days</span>
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-                                    <div>
-                                        <p className="text-sm font-medium">Send as Plain Text</p>
-                                        <p className="text-xs text-zinc-600">Better deliverability, no formatting</p>
-                                    </div>
-                                    <Checkbox
-                                        checked={options.sendAsText}
-                                        onCheckedChange={(checked) => setOptions({ ...options, sendAsText: !!checked })}
-                                    />
-                                </div>
+                                {/* CC/BCC */}
+                                <div className="space-y-4 pt-4 border-t border-zinc-800">
+                                    <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Email Copies</h4>
 
-                                <div className="flex items-center justify-between py-3">
-                                    <div>
-                                        <p className="text-sm font-medium">Daily Email Limit</p>
-                                        <p className="text-xs text-zinc-600">Max emails per account per day</p>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs text-zinc-500">CC Email (optional)</Label>
+                                        <Input
+                                            value={options.ccEmail}
+                                            onChange={(e) => setOptions({ ...options, ccEmail: e.target.value })}
+                                            placeholder="cc@example.com"
+                                            className="bg-zinc-950 border-zinc-800 text-sm"
+                                        />
                                     </div>
-                                    <Input
-                                        type="number"
-                                        value={options.dailyLimit}
-                                        onChange={(e) => setOptions({ ...options, dailyLimit: parseInt(e.target.value) })}
-                                        className="w-20 h-8 bg-zinc-950 border-zinc-800 text-center"
-                                    />
+
+                                    <div className="space-y-2">
+                                        <Label className="text-xs text-zinc-500">BCC Email (optional)</Label>
+                                        <Input
+                                            value={options.bccEmail}
+                                            onChange={(e) => setOptions({ ...options, bccEmail: e.target.value })}
+                                            placeholder="bcc@example.com"
+                                            className="bg-zinc-950 border-zinc-800 text-sm"
+                                        />
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
