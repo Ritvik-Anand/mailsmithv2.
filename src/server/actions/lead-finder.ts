@@ -828,3 +828,43 @@ export async function getLeadsForOrganization(organizationId: string): Promise<{
         return { success: false, error: error.message || 'Failed to fetch leads' }
     }
 }
+
+/**
+ * Update a lead's icebreaker manually
+ */
+export async function updateLeadIcebreaker(
+    leadId: string,
+    icebreaker: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const { role } = await getCurrentUserContext()
+
+        // Use admin client for operators/admins to bypass RLS if needed
+        const supabase = (role === 'super_admin' || role === 'operator')
+            ? createAdminClient()
+            : await createClient()
+
+        const { error } = await supabase
+            .from('leads')
+            .update({
+                icebreaker,
+                icebreaker_status: 'completed', // Ensure status is set to completed if manually edited
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', leadId)
+
+        if (error) {
+            console.error('Update icebreaker error:', error)
+            return { success: false, error: error.message }
+        }
+
+        return { success: true }
+    } catch (error) {
+        console.error('Update icebreaker error:', error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to update icebreaker',
+        }
+    }
+}
+

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
     Table,
     TableBody,
@@ -30,9 +31,10 @@ import {
     X,
     Building2,
     Phone,
-    Linkedin
+    Linkedin,
+    Save
 } from 'lucide-react'
-import { getLeadsFromJob, getSearchJobStatus, retrySyncFromApify } from '@/server/actions/lead-finder'
+import { getLeadsFromJob, getSearchJobStatus, retrySyncFromApify, updateLeadIcebreaker } from '@/server/actions/lead-finder'
 import { generateIcebreakersForBatch } from '@/server/actions/ai'
 import { addLeadsToInstantlyCampaign, getOrganizationCampaigns } from '@/server/actions/instantly'
 import { toast } from 'sonner'
@@ -51,6 +53,8 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
     const [searchTerm, setSearchTerm] = useState('')
     const [filterStatus, setFilterStatus] = useState<'all' | 'ready' | 'queued' | 'sent'>('all')
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
+    const [editingIcebreaker, setEditingIcebreaker] = useState<string>('')
+    const [isSavingIcebreaker, setIsSavingIcebreaker] = useState(false)
 
     const fetchData = async () => {
         setIsLoading(true)
@@ -172,6 +176,27 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
             toast.error('Failed to sync from Apify')
         } finally {
             setIsSyncing(false)
+        }
+    }
+
+    const handleUpdateIcebreaker = async () => {
+        if (!selectedLead) return
+
+        setIsSavingIcebreaker(true)
+        try {
+            const result = await updateLeadIcebreaker(selectedLead.id, editingIcebreaker)
+            if (result.success) {
+                toast.success('Icebreaker updated successfully')
+                // Update local state
+                setLeads(leads.map(l => l.id === selectedLead.id ? { ...l, icebreaker: editingIcebreaker, icebreaker_status: 'completed' } : l))
+                setSelectedLead({ ...selectedLead, icebreaker: editingIcebreaker, icebreaker_status: 'completed' })
+            } else {
+                toast.error(result.error || 'Failed to update icebreaker')
+            }
+        } catch (error) {
+            toast.error('Error updating icebreaker')
+        } finally {
+            setIsSavingIcebreaker(false)
         }
     }
 
@@ -313,7 +338,10 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                         <TableRow
                                             key={lead.id}
                                             className="border-zinc-900/50 hover:bg-zinc-900/30 transition-colors cursor-pointer"
-                                            onClick={() => setSelectedLead(lead)}
+                                            onClick={() => {
+                                                setSelectedLead(lead)
+                                                setEditingIcebreaker(lead.icebreaker || '')
+                                            }}
                                         >
                                             <TableCell className="pl-6 py-4 max-w-[200px]">
                                                 <div className="flex flex-col">
@@ -501,15 +529,36 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                 </div>
                             </div>
 
-                            {/* Icebreaker */}
-                            {selectedLead.icebreaker && (
-                                <div className="space-y-3">
+                            {/* Icebreaker (Editable) */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
                                     <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">AI Icebreaker</h3>
-                                    <p className="text-sm text-zinc-300 italic bg-zinc-900 p-4 rounded-lg border border-zinc-800">
-                                        "{selectedLead.icebreaker}"
-                                    </p>
+                                    {selectedLead.icebreaker_status === 'completed' && (
+                                        <Badge variant="outline" className="text-[10px] text-emerald-500 border-emerald-500/20 bg-emerald-500/5">
+                                            AI Generated
+                                        </Badge>
+                                    )}
                                 </div>
-                            )}
+                                <div className="space-y-4">
+                                    <Textarea
+                                        value={editingIcebreaker}
+                                        onChange={(e) => setEditingIcebreaker(e.target.value)}
+                                        placeholder="No icebreaker generated yet..."
+                                        className="min-h-[120px] bg-zinc-900 border-zinc-800 text-sm text-zinc-300 italic resize-none focus:ring-1 focus:ring-primary"
+                                    />
+                                    <div className="flex justify-end">
+                                        <Button
+                                            size="sm"
+                                            onClick={handleUpdateIcebreaker}
+                                            disabled={isSavingIcebreaker || editingIcebreaker === (selectedLead.icebreaker || '')}
+                                            className="bg-primary hover:bg-primary/90 text-white text-xs font-bold"
+                                        >
+                                            {isSavingIcebreaker ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Save className="h-3 w-3 mr-2" />}
+                                            Save Changes
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
 
                             {/* Raw Apify Data */}
                             <div className="space-y-3">
