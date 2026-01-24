@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Bell, ChevronDown, Check } from 'lucide-react'
+import { Bell, ChevronDown, Check, LogOut, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -28,6 +28,8 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { OperatorMobileSidebar } from './sidebar'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 import type { UserWithRole } from '@/server/actions/roles'
 
 interface OperatorHeaderProps {
@@ -45,6 +47,7 @@ const mockCustomers = [
 export function OperatorHeader({ user }: OperatorHeaderProps) {
     const [open, setOpen] = useState(false)
     const [selectedCustomer, setSelectedCustomer] = useState(mockCustomers[0])
+    const [isLoading, setIsLoading] = useState(false)
 
     const initials = user.fullName
         ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase()
@@ -54,6 +57,31 @@ export function OperatorHeader({ user }: OperatorHeaderProps) {
         if (score >= 90) return 'bg-green-500'
         if (score >= 70) return 'bg-yellow-500'
         return 'bg-red-500'
+    }
+
+    const handleSignOut = async () => {
+        setIsLoading(true)
+        try {
+            const supabase = createClient()
+            await supabase.auth.signOut()
+
+            // Clear all admin/operator cookies
+            document.cookie = "admin_access=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
+            document.cookie = "admin_name=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
+            document.cookie = "admin_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
+            document.cookie = "admin_email=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
+
+            toast.success('Signed out successfully')
+
+            // Force redirect to admin login
+            window.location.href = '/admin'
+        } catch (error) {
+            console.error('Sign out failed:', error)
+            toast.error('Failed to sign out')
+            window.location.reload()
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     return (
@@ -183,8 +211,22 @@ export function OperatorHeader({ user }: OperatorHeaderProps) {
                             <DropdownMenuItem>My Profile</DropdownMenuItem>
                             <DropdownMenuItem>Preferences</DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600">
-                                Sign out
+                            <DropdownMenuItem
+                                onClick={handleSignOut}
+                                disabled={isLoading}
+                                className="text-red-600 cursor-pointer"
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Signing out...
+                                    </>
+                                ) : (
+                                    <>
+                                        <LogOut className="mr-2 h-4 w-4" />
+                                        Sign out
+                                    </>
+                                )}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -193,3 +235,4 @@ export function OperatorHeader({ user }: OperatorHeaderProps) {
         </header>
     )
 }
+

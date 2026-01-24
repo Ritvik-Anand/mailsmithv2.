@@ -1,6 +1,7 @@
 'use client'
 
-import { Bell } from 'lucide-react'
+import { useState } from 'react'
+import { Bell, LogOut, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -12,6 +13,8 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { CustomerMobileSidebar } from './sidebar'
+import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 import type { UserWithRole } from '@/server/actions/roles'
 
 interface CustomerHeaderProps {
@@ -19,9 +22,36 @@ interface CustomerHeaderProps {
 }
 
 export function CustomerHeader({ user }: CustomerHeaderProps) {
+    const [isLoading, setIsLoading] = useState(false)
+
     const initials = user.fullName
         ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase()
         : user.email?.substring(0, 2).toUpperCase() || 'U'
+
+    const handleSignOut = async () => {
+        setIsLoading(true)
+        try {
+            const supabase = createClient()
+            await supabase.auth.signOut()
+
+            // Clear any admin cookies too
+            document.cookie = "admin_access=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
+            document.cookie = "admin_name=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
+            document.cookie = "admin_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
+            document.cookie = "admin_email=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
+
+            toast.success('Signed out successfully')
+
+            // Force hard redirect to login
+            window.location.href = '/login'
+        } catch (error) {
+            console.error('Sign out failed:', error)
+            toast.error('Failed to sign out')
+            window.location.reload()
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
     return (
         <header className="sticky top-0 z-40 border-b border-white/5 bg-black/50 backdrop-blur-xl">
@@ -80,8 +110,22 @@ export function CustomerHeader({ user }: CustomerHeaderProps) {
                                 Notification Preferences
                             </DropdownMenuItem>
                             <DropdownMenuSeparator className="bg-white/10" />
-                            <DropdownMenuItem className="text-red-400 focus:bg-red-950/50 focus:text-red-300 cursor-pointer">
-                                Sign out
+                            <DropdownMenuItem
+                                onClick={handleSignOut}
+                                disabled={isLoading}
+                                className="text-red-400 focus:bg-red-950/50 focus:text-red-300 cursor-pointer"
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Signing out...
+                                    </>
+                                ) : (
+                                    <>
+                                        <LogOut className="mr-2 h-4 w-4" />
+                                        Sign out
+                                    </>
+                                )}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
