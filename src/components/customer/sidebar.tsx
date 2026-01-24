@@ -17,6 +17,7 @@ import {
     ChevronLeft,
     Sparkles,
     TrendingUp,
+    Users,
 } from 'lucide-react'
 import type { UserWithRole } from '@/server/actions/roles'
 
@@ -38,16 +39,16 @@ const navItems = [
         description: 'View your active campaigns',
     },
     {
+        title: 'Leads',
+        href: '/portal/leads',
+        icon: Users,
+        description: 'View your leads',
+    },
+    {
         title: 'Analytics',
         href: '/portal/analytics',
         icon: BarChart3,
         description: 'Performance insights',
-    },
-    {
-        title: 'Reports',
-        href: '/portal/reports',
-        icon: FileText,
-        description: 'Download reports',
     },
     {
         title: 'AI Assistant',
