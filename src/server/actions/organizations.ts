@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { Organization, OrganizationWithStats } from '@/types'
 
@@ -198,4 +199,83 @@ export async function updateOrganizationIcebreakerContext(
     revalidatePath(`/operator/customers/${organizationId}`)
     revalidatePath(`/operator/customers/${organizationId}/icebreaker`)
     return { success: true }
+}
+
+/**
+ * Manually onboards a new customer.
+ * Creates an organization and an auth user for the primary contact.
+ */
+export async function onboardCustomer(data: {
+    name: string;
+    email: string;
+    password?: string;
+    plan?: 'free' | 'starter' | 'pro' | 'enterprise';
+    industry?: string;
+    monthly_lead_limit?: number;
+}) {
+    const adminSupabase = createAdminClient()
+
+    try {
+        // 1. Create Organization
+        const slug = data.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')
+        const { data: org, error: orgError } = await adminSupabase
+            .from('organizations')
+            .insert({
+                name: data.name,
+                slug: slug,
+                plan: data.plan || 'starter',
+                status: 'active',
+                monthly_lead_limit: data.monthly_lead_limit || 1000,
+                settings: {
+                    industry: data.industry || 'other'
+                }
+            })
+            .select()
+            .single()
+
+        if (orgError) throw orgError
+
+        // 2. Create Auth User
+        const { data: authUser, error: authError } = await adminSupabase.auth.admin.createUser({
+            email: data.email,
+            password: data.password || Math.random().toString(36).slice(-12),
+            email_confirm: true,
+            user_metadata: {
+                full_name: data.name,
+                role: 'owner',
+                organization_id: org.id
+            }
+        })
+
+        if (authError) {
+            // Rollback org creation if auth fails
+            await adminSupabase.from('organizations').delete().eq('id', org.id)
+            throw authError
+        }
+
+        // 3. Create Public User record
+        const { error: profileError } = await adminSupabase
+            .from('users')
+            .insert({
+                id: authUser.user.id,
+                organization_id: org.id,
+                email: data.email,
+                full_name: data.name,
+                role: 'owner',
+                status: 'active'
+            })
+
+        if (profileError) {
+            // Rollback auth user and org if profile fails
+            await adminSupabase.auth.admin.deleteUser(authUser.user.id)
+            await adminSupabase.from('organizations').delete().eq('id', org.id)
+            throw profileError
+        }
+
+        revalidatePath('/admin-console/customers')
+        return { success: true, organizationId: org.id }
+    } catch (error: any) {
+        console.error('Customer onboarding failed:', error)
+        return { success: false, error: error.message }
+    }
 }

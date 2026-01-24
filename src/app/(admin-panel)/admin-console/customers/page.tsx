@@ -22,20 +22,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-    Search,
-    MoreHorizontal,
-    UserCog,
-    Mail,
-    Ban,
-    Eye,
-    Users,
-    RefreshCw,
-    AlertCircle,
-    Target,
-} from 'lucide-react'
+import { Plus, Search, MoreHorizontal, UserCog, Mail, Ban, Eye, Users, RefreshCw, AlertCircle, Target } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { getOrganizations, toggleOrganizationStatus, updateOrganization } from '@/server/actions/organizations'
+import { getOrganizations, toggleOrganizationStatus, updateOrganization, onboardCustomer } from '@/server/actions/organizations'
 import {
     Dialog,
     DialogContent,
@@ -71,6 +60,7 @@ export default function AdminCustomersPage() {
     const [editingOrg, setEditingOrg] = useState<OrganizationWithStats | null>(null)
     const [newLimit, setNewLimit] = useState<number>(1000)
     const [isUpdating, setIsUpdating] = useState(false)
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
     const fetchCustomers = async () => {
         setIsLoading(true)
@@ -93,6 +83,34 @@ export default function AdminCustomersPage() {
             toast.success('Limit updated successfully')
             setEditingOrg(null)
             fetchCustomers()
+        } catch (error: any) {
+            toast.error(error.message)
+        } finally {
+            setIsUpdating(false)
+        }
+    }
+
+    const handleOnboardCustomer = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setIsUpdating(true)
+        const formData = new FormData(e.currentTarget)
+
+        try {
+            const result = await onboardCustomer({
+                name: formData.get('name') as string,
+                email: formData.get('email') as string,
+                password: formData.get('password') as string,
+                plan: formData.get('plan') as any,
+                monthly_lead_limit: parseInt(formData.get('limit') as string) || 1000
+            })
+
+            if (result.success) {
+                toast.success('Customer onboarded successfully')
+                setIsCreateDialogOpen(false)
+                fetchCustomers()
+            } else {
+                toast.error(result.error || 'Failed to onboard customer')
+            }
         } catch (error: any) {
             toast.error(error.message)
         } finally {
@@ -135,10 +153,70 @@ export default function AdminCustomersPage() {
                         Manage and monitor all organizations on the platform
                     </p>
                 </div>
-                <Button variant="outline" size="icon" onClick={fetchCustomers}>
-                    <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon" onClick={fetchCustomers}>
+                        <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+                    </Button>
+                    <Button onClick={() => setIsCreateDialogOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Customer
+                    </Button>
+                </div>
             </div>
+
+            {/* CREATE CUSTOMER DIALOG */}
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogContent className="max-w-md">
+                    <form onSubmit={handleOnboardCustomer}>
+                        <DialogHeader>
+                            <DialogTitle>Onboard New Customer</DialogTitle>
+                            <DialogDescription>
+                                Create a new organization and primary customer account.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4 space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Company Name</label>
+                                <Input name="name" placeholder="Acme Corp" required />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Primary Contact Email</label>
+                                <Input name="email" type="email" placeholder="owner@acme.com" required />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Initial Password</label>
+                                <Input name="password" type="text" placeholder="Password123!" required />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Plan</label>
+                                    <Select name="plan" defaultValue="starter">
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="free">Free</SelectItem>
+                                            <SelectItem value="starter">Starter</SelectItem>
+                                            <SelectItem value="pro">Pro</SelectItem>
+                                            <SelectItem value="enterprise">Enterprise</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Lead Limit</label>
+                                    <Input name="limit" type="number" defaultValue={1000} />
+                                </div>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="ghost" type="button" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
+                            <Button type="submit" disabled={isUpdating}>
+                                {isUpdating ? 'Creating...' : 'Create Customer'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
             {/* Stats Cards */}
             <div className="grid gap-4 md:grid-cols-4">
