@@ -204,23 +204,52 @@ export default function CustomerIcebreakerSettingsPage({ params }: { params: Pro
                 </CardContent>
             </Card>
 
-            {/* Preview Card */}
+            {/* Preview Card - Dynamic based on context */}
             <Card className="bg-zinc-950 border-zinc-800">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Sparkles className="h-5 w-5 text-amber-500" />
-                        Example Output
+                        Prompt Preview
                     </CardTitle>
                     <CardDescription>
-                        This is how your icebreakers will look with this configuration.
+                        This shows what the AI will receive about your customer when generating icebreakers.
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
-                        <p className="text-sm text-zinc-300 italic">
-                            "Hey Brock,
-                            <br /><br />
-                            really respect what you're building at Grow Ecommerce and how you help manufacturers unlock major distribution channels. Also working with businesses scaling online, wanted to run something by you."
+                <CardContent className="space-y-4">
+                    {/* Customer Context Preview */}
+                    <div>
+                        <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-2 font-bold">
+                            Customer Context (Injected into AI Prompt)
+                        </p>
+                        <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
+                            {context.description ? (
+                                <p className="text-sm text-zinc-300">
+                                    <span className="text-primary">Here is information about me:</span><br /><br />
+                                    "{context.description}"
+                                </p>
+                            ) : (
+                                <p className="text-sm text-zinc-600 italic">
+                                    No context configured yet. Fill in the "Customer Description" above.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Example Output */}
+                    <div>
+                        <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-2 font-bold">
+                            Example Output Format
+                        </p>
+                        <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
+                            <p className="text-sm text-zinc-300 italic">
+                                "Hey [Prospect Name],<br /><br />
+                                really respect what you're building at [Company] and how you [specific achievement].
+                                {context.description && <span className="text-primary"> Also working in {context.industry_focus || 'the same space'},</span>}
+                                {' '}wanted to run something by you."
+                            </p>
+                        </div>
+                        <p className="text-[10px] text-zinc-600 mt-2">
+                            The actual icebreaker will be personalized for each prospect using their scraped data.
                         </p>
                     </div>
                 </CardContent>
