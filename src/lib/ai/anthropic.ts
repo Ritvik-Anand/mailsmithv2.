@@ -60,7 +60,7 @@ function buildProspectInfo(leadData: any): string {
 /**
  * Get customer context for icebreaker personalization
  */
-async function getCustomerContext(organizationId: string): Promise<string> {
+async function getCustomerContext(organizationId: string): Promise<any> {
     try {
         const supabase = createAdminClient();
 
@@ -72,23 +72,14 @@ async function getCustomerContext(organizationId: string): Promise<string> {
 
         // If error (including column not existing) or no context, return empty
         if (error || !org?.icebreaker_context) {
-            return '';
+            return null;
         }
 
-        const ctx = org.icebreaker_context;
-
-        // Build context string from stored config
-        const contextParts = [];
-
-        if (ctx.description) {
-            contextParts.push(ctx.description);
-        }
-
-        return contextParts.join(' ');
+        return org.icebreaker_context;
     } catch (error) {
         // If any error (including column not existing), just return empty
         console.warn('Could not fetch customer context:', error);
-        return '';
+        return null;
     }
 }
 
@@ -100,10 +91,13 @@ export async function generateIcebreaker(leadData: any): Promise<string | null> 
     const prospectInfo = buildProspectInfo(leadData);
 
     // Get customer context if available
-    let customerContext = '';
+    let customerContextObj: any = null;
     if (leadData.organization_id) {
-        customerContext = await getCustomerContext(leadData.organization_id);
+        customerContextObj = await getCustomerContext(leadData.organization_id);
     }
+
+    const customerContext = customerContextObj?.description || '';
+    const exampleFormat = customerContextObj?.example_format || '{"icebreaker":"Hey {name}, \\n\\n really respect X and love that you\'re doing Y. Wanted to run something by you"}';
 
     // Build the customer context section
     const customerContextSection = customerContext
@@ -118,7 +112,7 @@ export async function generateIcebreaker(leadData: any): Promise<string | null> 
 
 You'll return this icebreaker in JSON using this format:
 
-{"icebreaker":"Hey {name}, \\n\\n really respect X and love that you're doing Y. Wanted to run something by you"}
+${exampleFormat}
 
 ${customerContextSection}
 

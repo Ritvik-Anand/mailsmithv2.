@@ -30,6 +30,7 @@ export default function CustomerIcebreakerSettingsPage({ params }: { params: Pro
         industry_focus: '',
         services: '',
         experience: '',
+        example_format: '{"icebreaker":"Hey {name}, \\n\\n really respect X and love that you\'re doing Y. Wanted to run something by you"}'
     })
 
     useEffect(() => {
@@ -46,6 +47,7 @@ export default function CustomerIcebreakerSettingsPage({ params }: { params: Pro
                             industry_focus: result.organization.icebreaker_context.industry_focus || '',
                             services: result.organization.icebreaker_context.services || '',
                             experience: result.organization.icebreaker_context.experience || '',
+                            example_format: result.organization.icebreaker_context.example_format || '{"icebreaker":"Hey {name}, \\n\\n really respect X and love that you\'re doing Y. Wanted to run something by you"}'
                         })
                     }
                 }
@@ -186,6 +188,23 @@ export default function CustomerIcebreakerSettingsPage({ params }: { params: Pro
                         />
                     </div>
 
+                    {/* Example Format */}
+                    <div className="space-y-2">
+                        <Label htmlFor="example_format" className="text-zinc-200">
+                            Desired JSON Brand/Format <span className="text-primary">*</span>
+                        </Label>
+                        <Textarea
+                            id="example_format"
+                            placeholder='{"icebreaker":"Hey {name}, \n\n really respect X and love that you’re doing Y. Wanted to run something by you"}'
+                            className="min-h-[80px] bg-zinc-900 border-zinc-800 font-mono text-xs"
+                            value={context.example_format}
+                            onChange={(e) => setContext({ ...context, example_format: e.target.value })}
+                        />
+                        <p className="text-[10px] text-zinc-600">
+                            The exact JSON structure the AI should return. Use this to control the "vibe" and structure of all icebreakers.
+                        </p>
+                    </div>
+
                     {/* Save Button */}
                     <div className="pt-4 border-t border-zinc-800">
                         <Button
@@ -238,18 +257,13 @@ export default function CustomerIcebreakerSettingsPage({ params }: { params: Pro
                     {/* Example Output */}
                     <div>
                         <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-2 font-bold">
-                            Example Output Format
+                            Active Format Template
                         </p>
-                        <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
-                            <p className="text-sm text-zinc-300 italic">
-                                "Hey [Prospect Name],<br /><br />
-                                really respect what you're building at [Company] and how you [specific achievement].
-                                {context.description && <span className="text-primary"> Also working in {context.industry_focus || 'the same space'},</span>}
-                                {' '}wanted to run something by you."
-                            </p>
+                        <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800 font-mono text-xs text-primary">
+                            {context.example_format}
                         </div>
                         <p className="text-[10px] text-zinc-600 mt-2">
-                            The actual icebreaker will be personalized for each prospect using their scraped data.
+                            The AI will use this exact structure, replacing X and Y with personalized context from the prospect's data.
                         </p>
                     </div>
                 </CardContent>
