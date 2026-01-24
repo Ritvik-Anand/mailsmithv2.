@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { Zap, ArrowRight, Mail, Users, TrendingUp, Sparkles } from 'lucide-react'
+import { ArrowRight, Mail, Users, Sparkles, CheckCircle2, Shield, Clock, Target, Rocket, BarChart3, Calendar } from 'lucide-react'
 import * as motion from "framer-motion/client"
 
 export default function HomePage() {
@@ -31,11 +31,14 @@ export default function HomePage() {
             <span className="font-bold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">MailSmith</span>
           </Link>
           <div className="flex items-center gap-6">
+            <Link href="/how-it-works" className="text-sm font-medium text-white/70 hover:text-white transition-colors hidden md:block">
+              How It Works
+            </Link>
             <Link href="/login" className="text-sm font-medium text-white/70 hover:text-white transition-colors">
-              Sign in
+              Client Login
             </Link>
             <Button asChild className="rounded-full px-6 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all hover:-translate-y-0.5">
-              <Link href="/signup">Get Started</Link>
+              <Link href="/request-demo">Request Demo</Link>
             </Button>
           </div>
         </div>
@@ -51,8 +54,8 @@ export default function HomePage() {
               transition={{ duration: 0.5 }}
               className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary backdrop-blur-sm"
             >
-              <Sparkles className="h-4 w-4 animate-pulse" />
-              <span>New: Ultra-accurate lead scraping enabled</span>
+              <Shield className="h-4 w-4" />
+              <span>Fully Managed Service • Done-for-You Outreach</span>
             </motion.div>
 
             <motion.h1
@@ -61,9 +64,9 @@ export default function HomePage() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-5xl md:text-8xl font-bold tracking-tight leading-[1.1]"
             >
-              Turn cold leads into
+              Your dedicated
               <br />
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-blue-400 to-primary"> warm conversations</span>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-blue-400 to-primary">outreach team</span>
             </motion.h1>
 
             <motion.p
@@ -72,8 +75,8 @@ export default function HomePage() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-xl md:text-2xl text-white/50 max-w-2xl mx-auto leading-relaxed"
             >
-              MailSmith scrapes, nurtures, and engages your prospects with personalized
-              AI-generated icebreakers. Scale your outreach without losing the human touch.
+              MailSmith is a white-glove cold email service. We handle lead sourcing,
+              AI personalization, campaign execution, and deliverability—so you can focus on closing deals.
             </motion.p>
 
             <motion.div
@@ -83,14 +86,35 @@ export default function HomePage() {
               className="flex flex-col sm:flex-row items-center justify-center gap-5 pt-4"
             >
               <Button size="lg" asChild className="h-14 px-10 rounded-full text-lg shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all hover:-translate-y-1 group">
-                <Link href="/signup">
-                  Start Free Trial
+                <Link href="/request-demo">
+                  Request a Demo
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild className="h-14 px-10 rounded-full text-lg border-white/10 hover:bg-white/5 backdrop-blur-sm transition-all hover:-translate-y-1">
-                <Link href="/login">View Demo</Link>
+                <Link href="/how-it-works">Learn More</Link>
               </Button>
+            </motion.div>
+
+            {/* Trust indicators */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="flex items-center justify-center gap-8 pt-8 text-sm text-white/40"
+            >
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <span>No contracts</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <span>Dedicated team</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <span>Results in 2 weeks</span>
+              </div>
             </motion.div>
           </div>
         </div>
@@ -102,13 +126,52 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* How It Works */}
+      <section className="relative py-24 border-t border-white/5">
+        <div className="container">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-3xl md:text-4xl font-bold">How MailSmith Works</h2>
+            <p className="text-white/50 max-w-xl mx-auto">
+              We take care of everything so you can focus on what you do best—closing deals.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-6">
+            {[
+              { step: '01', icon: Calendar, title: 'Book a Demo', desc: 'Tell us about your ideal customer profile and goals' },
+              { step: '02', icon: Users, title: 'We Source Leads', desc: 'Our team finds and verifies your perfect prospects' },
+              { step: '03', icon: Sparkles, title: 'AI Personalization', desc: 'Every email is crafted with relevant, personal context' },
+              { step: '04', icon: Rocket, title: 'Results Delivered', desc: 'You get warm conversations and qualified meetings' },
+            ].map((item, i) => (
+              <motion.div
+                key={item.step}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="relative"
+              >
+                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-8 h-full hover:border-primary/20 transition-colors">
+                  <div className="text-primary/30 text-5xl font-bold mb-4">{item.step}</div>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 mb-4 border border-primary/20">
+                    <item.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+                  <p className="text-white/50 text-sm">{item.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Features Grid */}
       <section className="relative py-32 border-t border-white/5 bg-white/[0.01]">
         <div className="container relative z-10">
           <div className="text-center mb-20 space-y-4">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">Everything you need to scale outreach</h2>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">What's Included</h2>
             <p className="text-white/50 max-w-2xl mx-auto text-lg leading-relaxed">
-              From lead generation to campaign analytics, MailSmith handles it all with precision and intelligence.
+              A complete outreach system managed by experts—not software you have to figure out.
             </p>
           </div>
 
@@ -122,10 +185,10 @@ export default function HomePage() {
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mb-8 border border-primary/20">
                   <Users className="h-7 w-7 text-primary" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">Smart Lead Scraping</h3>
+                <h3 className="text-2xl font-bold mb-4">Targeted Lead Sourcing</h3>
                 <p className="text-white/50 leading-relaxed">
-                  Connect to LinkedIn, Apollo, and more. Scrape thousands of qualified
-                  leads with advanced filters and real-time verification.
+                  We find and verify leads matching your ICP using LinkedIn, Apollo,
+                  and proprietary data sources. No bad emails, no wasted time.
                 </p>
               </div>
             </motion.div>
@@ -139,10 +202,10 @@ export default function HomePage() {
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mb-8 border border-primary/20">
                   <Sparkles className="h-7 w-7 text-primary" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">AI Icebreakers</h3>
+                <h3 className="text-2xl font-bold mb-4">AI-Powered Personalization</h3>
                 <p className="text-white/50 leading-relaxed">
-                  Every lead gets a personalized, AI-crafted opening line that
-                  references their specific work, achievements, and interests.
+                  Every email includes a unique icebreaker tailored to the prospect's
+                  role, company news, or recent activity. No templates.
                 </p>
               </div>
             </motion.div>
@@ -156,11 +219,53 @@ export default function HomePage() {
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mb-8 border border-primary/20">
                   <Mail className="h-7 w-7 text-primary" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">Campaign Automation</h3>
+                <h3 className="text-2xl font-bold mb-4">Managed Campaigns</h3>
                 <p className="text-white/50 leading-relaxed">
-                  Launch multi-step sequences with automated follow-ups.
-                  Track metrics and optimize your performance in real-time.
+                  We write, schedule, and optimize your sequences. Deliverability,
+                  domain warming, and inbox management included.
                 </p>
+              </div>
+            </motion.div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 mt-8">
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="relative group"
+            >
+              <div className="relative bg-white/[0.03] border border-white/10 rounded-3xl p-10 backdrop-blur-sm transition-colors group-hover:border-primary/20">
+                <div className="flex items-start gap-6">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 shrink-0">
+                    <BarChart3 className="h-7 w-7 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold mb-4">Real-Time Dashboard</h3>
+                    <p className="text-white/50 leading-relaxed">
+                      Track opens, replies, and meetings in your client portal.
+                      See exactly how your campaigns are performing without any guesswork.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="relative group"
+            >
+              <div className="relative bg-white/[0.03] border border-white/10 rounded-3xl p-10 backdrop-blur-sm transition-colors group-hover:border-primary/20">
+                <div className="flex items-start gap-6">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 shrink-0">
+                    <Target className="h-7 w-7 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold mb-4">Dedicated Account Manager</h3>
+                    <p className="text-white/50 leading-relaxed">
+                      You get a dedicated human who knows your business. Weekly calls,
+                      strategy sessions, and continuous optimization.
+                    </p>
+                  </div>
+                </div>
               </div>
             </motion.div>
           </div>
@@ -177,14 +282,14 @@ export default function HomePage() {
 
             <div className="relative z-10 max-w-3xl mx-auto space-y-8">
               <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight">
-                Ready to transform your outreach?
+                Ready to fill your pipeline?
               </h2>
               <p className="text-xl text-white/80 leading-relaxed">
-                Join hundreds of high-performing teams using MailSmith to scale personalized outreach and close more deals.
+                Book a demo to see how MailSmith can generate qualified meetings for your sales team.
               </p>
               <Button size="lg" variant="secondary" asChild className="h-16 px-12 rounded-full text-xl font-bold bg-white text-primary hover:bg-white/90 shadow-2xl transition-all hover:-translate-y-1">
-                <Link href="/signup">
-                  Get Started Free
+                <Link href="/request-demo">
+                  Book Your Demo
                   <ArrowRight className="ml-2 h-6 w-6" />
                 </Link>
               </Button>
@@ -210,10 +315,10 @@ export default function HomePage() {
               <span className="font-bold text-xl tracking-tight">MailSmith</span>
             </div>
             <div className="flex items-center gap-8 text-sm text-white/50">
+              <Link href="/how-it-works" className="hover:text-white transition-colors">How It Works</Link>
               <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
               <Link href="#" className="hover:text-white transition-colors">Terms</Link>
-              <Link href="/admin" className="hover:text-white transition-colors italic opacity-50 hover:opacity-100">Team Login</Link>
-              <Link href="#" className="hover:text-white transition-colors">Contact</Link>
+              <Link href="/admin" className="hover:text-white transition-colors italic opacity-50 hover:opacity-100">Team</Link>
             </div>
             <p className="text-sm text-white/30">
               © 2026 MailSmith. All rights reserved.
@@ -224,4 +329,3 @@ export default function HomePage() {
     </div>
   )
 }
-

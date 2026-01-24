@@ -3,18 +3,15 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Zap, Loader2, Mail, Lock } from 'lucide-react'
-
+import { Loader2, Mail, Lock, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { getRedirectPath } from '@/server/actions/roles'
+import { toast } from 'sonner'
 
 export default function LoginPage() {
-    const router = useRouter()
     const supabase = createClient()
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
@@ -44,18 +41,32 @@ export default function LoginPage() {
             if (signInError) throw signInError
 
             // Fetch role to redirect correctly
-            const { data: userData } = await supabase
+            const { data: userData, error: userError } = await supabase
                 .from('users')
                 .select('role')
                 .eq('id', authData.user.id)
                 .single()
 
+            if (userError) {
+                console.error('User lookup error:', userError)
+            }
+
             const role = userData?.role || 'customer'
-            const redirectPath = await getRedirectPath(role as any)
-            router.push(redirectPath)
-            router.refresh()
+
+            toast.success('Signed in successfully!')
+
+            // Determine redirect path based on role
+            let redirectPath = '/portal'
+            if (role === 'super_admin') {
+                redirectPath = '/admin-console'
+            } else if (role === 'operator') {
+                redirectPath = '/operator'
+            }
+
+            // Use window.location for reliable redirect
+            window.location.href = redirectPath
         } catch (err: any) {
-            console.error('CUSTOMER AUTH FAILURE:', err);
+            console.error('Login failed:', err);
             setError(err.message || 'Invalid email or password')
             setIsLoading(false)
         }
@@ -139,15 +150,21 @@ export default function LoginPage() {
                     <CardFooter className="flex flex-col space-y-4">
                         <Button type="submit" className="w-full" disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Sign in
+                            {isLoading ? 'Signing in...' : 'Sign in'}
                         </Button>
 
-                        <p className="text-sm text-center text-muted-foreground">
-                            Don't have an account?{' '}
-                            <Link href="/signup" className="text-primary hover:underline font-medium">
-                                Sign up
+                        <div className="text-center space-y-2">
+                            <p className="text-xs text-muted-foreground">
+                                Don't have an account? MailSmith is invite-only.
+                            </p>
+                            <Link
+                                href="/"
+                                className="text-xs text-primary hover:underline font-medium inline-flex items-center gap-1"
+                            >
+                                <ArrowLeft className="h-3 w-3" />
+                                Back to homepage
                             </Link>
-                        </p>
+                        </div>
                     </CardFooter>
                 </form>
             </Card>
