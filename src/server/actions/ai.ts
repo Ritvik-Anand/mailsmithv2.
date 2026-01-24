@@ -68,3 +68,58 @@ export async function generateIcebreakersForBatch(leadIds: string[]) {
     revalidatePath('/operator/leads')
     return { success: true, successCount, failureCount }
 }
+
+/**
+ * Generates a single icebreaker for a lead
+ */
+export async function generateSingleIcebreaker(leadId: string) {
+    const supabaseAdmin = createAdminClient()
+
+    try {
+        // 1. Get lead data
+        const { data: lead, error: fetchError } = await supabaseAdmin
+            .from('leads')
+            .select('*')
+            .eq('id', leadId)
+            .single()
+
+        if (fetchError || !lead) {
+            return { success: false, error: 'Lead not found' }
+        }
+
+        // 2. Update status to generating
+        await supabaseAdmin
+            .from('leads')
+            .update({ icebreaker_status: 'generating' })
+            .eq('id', leadId)
+
+        // 3. Generate icebreaker
+        const icebreaker = await generateIcebreaker(lead)
+
+        if (icebreaker) {
+            // 4. Update lead with icebreaker
+            const { error: updateError } = await supabaseAdmin
+                .from('leads')
+                .update({
+                    icebreaker,
+                    icebreaker_status: 'completed',
+                    icebreaker_generated_at: new Date().toISOString()
+                })
+                .eq('id', leadId)
+
+            if (updateError) throw updateError
+            return { success: true, icebreaker }
+        } else {
+            throw new Error('No icebreaker generated')
+        }
+
+    } catch (error: any) {
+        console.error(`Icebreaker generation failed for lead ${leadId}:`, error)
+        await supabaseAdmin
+            .from('leads')
+            .update({ icebreaker_status: 'failed' })
+            .eq('id', leadId)
+        return { success: false, error: error.message }
+    }
+}
+

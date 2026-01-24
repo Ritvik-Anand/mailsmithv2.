@@ -35,7 +35,7 @@ import {
     Save
 } from 'lucide-react'
 import { getLeadsFromJob, getSearchJobStatus, retrySyncFromApify, updateLeadIcebreaker } from '@/server/actions/lead-finder'
-import { generateIcebreakersForBatch } from '@/server/actions/ai'
+import { generateSingleIcebreaker } from '@/server/actions/ai'
 import { addLeadsToInstantlyCampaign, getOrganizationCampaigns } from '@/server/actions/instantly'
 import { toast } from 'sonner'
 import { Lead, ScrapeJob } from '@/types'
@@ -118,17 +118,45 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
         }
 
         setIsGenerating(true)
+        let successCount = 0
+        let failureCount = 0
+
         try {
-            const leadIds = pendingLeads.map(l => l.id)
-            const result = await generateIcebreakersForBatch(leadIds)
-            if (result.success) {
-                toast.success(`Successfully generated ${result.successCount} icebreakers`)
-                fetchData()
-            } else {
-                toast.error('Failed to generate icebreakers')
+            // Process icebreakers one by one for "live" UI updates
+            for (const lead of pendingLeads) {
+                // Update local status to "generating" immediately
+                setLeads(prev => prev.map(l =>
+                    l.id === lead.id ? { ...l, icebreaker_status: 'generating' } : l
+                ))
+
+                const result = await generateSingleIcebreaker(lead.id)
+
+                if (result.success) {
+                    successCount++
+                    // Update local state incrementally - this triggers the "Ready" count to update live!
+                    setLeads(prev => prev.map(l =>
+                        l.id === lead.id ? {
+                            ...l,
+                            icebreaker: result.icebreaker ?? null,
+                            icebreaker_status: 'completed'
+                        } : l
+                    ))
+                } else {
+                    failureCount++
+                    setLeads(prev => prev.map(l =>
+                        l.id === lead.id ? { ...l, icebreaker_status: 'failed' } : l
+                    ))
+                }
+            }
+
+            if (successCount > 0) {
+                toast.success(`Successfully generated ${successCount} icebreakers`)
+            }
+            if (failureCount > 0) {
+                toast.error(`Failed to generate ${failureCount} icebreakers`)
             }
         } catch (error) {
-            toast.error('AI Service unavailable')
+            toast.error('Error during icebreaker generation')
         } finally {
             setIsGenerating(false)
         }
