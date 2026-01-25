@@ -1,7 +1,6 @@
 import { requireCustomer } from '@/server/actions/roles'
 import { CustomerSidebar } from '@/components/customer/sidebar'
 import { CustomerHeader } from '@/components/customer/header'
-import { AiAssistantWidget } from '@/components/customer/ai-assistant-widget'
 
 export default async function CustomerPortalLayout({
     children,
@@ -28,9 +27,6 @@ export default async function CustomerPortalLayout({
                     </div>
                 </main>
             </div>
-
-            {/* Floating AI Assistant Widget */}
-            <AiAssistantWidget />
         </div>
     )
 }

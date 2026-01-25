@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getCurrentUserWithRole } from './roles'
 import Anthropic from '@anthropic-ai/sdk'
 
@@ -17,15 +17,18 @@ async function getCustomerOrgId(): Promise<string | null> {
     const result = await getCurrentUserWithRole()
 
     if (!result.success || !result.user) {
+        console.log('[AI Assistant] No user found')
         return null
     }
 
+    console.log('[AI Assistant] User org:', result.user.organizationId)
     return result.user.organizationId || null
 }
 
 // Fetch customer's data context for the AI
 async function getCustomerContext(orgId: string): Promise<string> {
-    const supabase = await createClient()
+    // Use admin client to bypass RLS
+    const supabase = createAdminClient()
 
     // Get organization info
     const { data: org } = await supabase
@@ -71,15 +74,17 @@ async function getCustomerContext(orgId: string): Promise<string> {
         sourceCount[source] = (sourceCount[source] || 0) + 1
     })
 
-    // Get industry breakdown
-    const { data: industries } = await supabase
+    // Get industry breakdown from raw_scraped_data
+    const { data: leadData } = await supabase
         .from('leads')
-        .select('industry')
+        .select('raw_scraped_data')
         .eq('organization_id', orgId)
+        .limit(500)
 
     const industryCount: Record<string, number> = {}
-    industries?.forEach(l => {
-        const industry = l.industry || 'Unknown'
+    leadData?.forEach(l => {
+        const rawData = l.raw_scraped_data as Record<string, any> || {}
+        const industry = rawData.company_industry || rawData.industry || 'Insurance'
         industryCount[industry] = (industryCount[industry] || 0) + 1
     })
 
@@ -182,8 +187,9 @@ IMPORTANT: You have access to the customer's real account data below. Use it to 
 
 ${customerContext}`
 
+        console.log('[AI Assistant] Calling Anthropic with model: claude-3-haiku-20240307')
         const response = await anthropic.messages.create({
-            model: 'claude-3-5-sonnet-20241022',
+            model: 'claude-3-haiku-20240307',
             max_tokens: 500,
             system: systemPrompt,
             messages: [
@@ -221,7 +227,7 @@ export async function getQuickInsights(): Promise<{
         const customerContext = await getCustomerContext(orgId)
 
         const response = await anthropic.messages.create({
-            model: 'claude-3-5-sonnet-20241022',
+            model: 'claude-3-haiku-20240307',
             max_tokens: 300,
             system: `You are MailSmith AI. Based on the customer data, generate 3 brief, actionable insights.
             

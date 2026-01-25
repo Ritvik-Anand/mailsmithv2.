@@ -75,16 +75,16 @@ export default function AIAssistantPage() {
                 role: 'assistant',
                 content: response.success
                     ? response.answer!
-                    : "I'm sorry, I encountered an error processing your request. Please try again.",
+                    : `I encountered an error: ${response.error || 'Failed to get AI response'}. Please try again.`,
                 timestamp: new Date()
             }
 
             setMessages(prev => [...prev, assistantMessage])
-        } catch (error) {
+        } catch (error: any) {
             const errorMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
-                content: "I'm sorry, something went wrong. Please try again later.",
+                content: `Something went wrong: ${error.message || 'Unknown error'}. Please try again later.`,
                 timestamp: new Date()
             }
             setMessages(prev => [...prev, errorMessage])
@@ -139,9 +139,9 @@ export default function AIAssistantPage() {
             </div>
 
             {/* Chat Container */}
-            <Card className="bg-white/[0.02] border-white/5 min-h-[500px] flex flex-col">
+            <Card className="bg-white/[0.02] border-white/5 flex-1 flex flex-col min-h-[600px] lg:min-h-[700px]">
                 {/* Messages */}
-                <CardContent className="flex-1 p-4 overflow-y-auto max-h-[500px]">
+                <CardContent className="flex-1 p-6 overflow-y-auto">
                     <div className="space-y-4">
                         {messages.map((message) => (
                             <div
@@ -155,8 +155,8 @@ export default function AIAssistantPage() {
                                 )}
                                 <div
                                     className={`max-w-[80%] rounded-2xl px-4 py-3 ${message.role === 'user'
-                                            ? 'bg-primary text-white'
-                                            : 'bg-white/5 text-white/90'
+                                        ? 'bg-primary text-white'
+                                        : 'bg-white/5 text-white/90'
                                         }`}
                                 >
                                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>

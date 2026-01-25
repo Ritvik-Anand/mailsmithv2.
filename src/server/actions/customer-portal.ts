@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getCurrentUserWithRole } from './roles'
 
 // =============================================================================
@@ -342,7 +343,8 @@ export async function getPortalLeadsSummary(): Promise<{
     }
     error?: string
 }> {
-    const supabase = await createClient()
+    // Use admin client to bypass RLS and get accurate counts
+    const supabase = createAdminClient()
     const orgId = await getCustomerOrgId()
 
     if (!orgId) {
@@ -379,17 +381,39 @@ export async function getPortalLeadsSummary(): Promise<{
             .eq('organization_id', orgId)
             .not('campaign_id', 'is', null)
 
-        // Get leads by campaign status
-        const { data: statusData } = await supabase
+        // Get counts by specific campaign statuses directly (more reliable than fetching all rows)
+        const { count: repliedCount } = await supabase
             .from('leads')
-            .select('campaign_status')
+            .select('*', { count: 'exact', head: true })
             .eq('organization_id', orgId)
+            .eq('campaign_status', 'replied')
 
-        const byStatus: Record<string, number> = {}
-        statusData?.forEach(lead => {
-            const status = lead.campaign_status || 'not_added'
-            byStatus[status] = (byStatus[status] || 0) + 1
-        })
+        const { count: sentCount } = await supabase
+            .from('leads')
+            .select('*', { count: 'exact', head: true })
+            .eq('organization_id', orgId)
+            .eq('campaign_status', 'sent')
+
+        const { count: bouncedCount } = await supabase
+            .from('leads')
+            .select('*', { count: 'exact', head: true })
+            .eq('organization_id', orgId)
+            .eq('campaign_status', 'bounced')
+
+        const { count: queuedCount } = await supabase
+            .from('leads')
+            .select('*', { count: 'exact', head: true })
+            .eq('organization_id', orgId)
+            .eq('campaign_status', 'queued')
+
+        // Build byStatus from direct counts
+        const byStatus: Record<string, number> = {
+            replied: repliedCount || 0,
+            sent: sentCount || 0,
+            bounced: bouncedCount || 0,
+            queued: queuedCount || 0,
+            not_added: (total || 0) - (inCampaign || 0)
+        }
 
         return {
             success: true,
