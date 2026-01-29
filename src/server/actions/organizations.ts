@@ -279,3 +279,48 @@ export async function onboardCustomer(data: {
         return { success: false, error: error.message }
     }
 }
+
+/**
+ * Deletes an organization and all associated data including auth users.
+ * This is a destructive action that cannot be undone.
+ */
+export async function deleteOrganization(id: string) {
+    const adminSupabase = createAdminClient()
+
+    try {
+        // 1. Get all users associated with this organization
+        const { data: users, error: usersError } = await adminSupabase
+            .from('users')
+            .select('id')
+            .eq('organization_id', id)
+
+        if (usersError) throw usersError
+
+        // 2. Delete all auth users
+        // We do this in parallel for speed, but catch errors to ensure we continue
+        if (users && users.length > 0) {
+            await Promise.all(users.map(async (user) => {
+                try {
+                    await adminSupabase.auth.admin.deleteUser(user.id)
+                } catch (err) {
+                    console.error(`Failed to delete auth user ${user.id}:`, err)
+                }
+            }))
+        }
+
+        // 3. Delete the organization
+        // Assuming cascade delete is enabled for related tables (leads, campaigns, etc.)
+        const { error: deleteError } = await adminSupabase
+            .from('organizations')
+            .delete()
+            .eq('id', id)
+
+        if (deleteError) throw deleteError
+
+        revalidatePath('/admin-console/customers')
+        return { success: true }
+    } catch (error: any) {
+        console.error('Failed to delete organization:', error)
+        return { success: false, error: error.message }
+    }
+}

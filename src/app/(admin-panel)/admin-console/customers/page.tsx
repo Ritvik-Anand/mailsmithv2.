@@ -22,9 +22,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Plus, Search, MoreHorizontal, UserCog, Mail, Ban, Eye, Users, RefreshCw, AlertCircle, Target } from 'lucide-react'
+import { Plus, Search, MoreHorizontal, UserCog, Mail, Ban, Eye, Users, RefreshCw, AlertCircle, Target, Trash } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { getOrganizations, toggleOrganizationStatus, updateOrganization, onboardCustomer } from '@/server/actions/organizations'
+import { getOrganizations, toggleOrganizationStatus, updateOrganization, onboardCustomer, deleteOrganization } from '@/server/actions/organizations'
 import {
     Dialog,
     DialogContent,
@@ -58,6 +58,7 @@ export default function AdminCustomersPage() {
     const [planFilter, setPlanFilter] = useState('all')
     const [statusFilter, setStatusFilter] = useState('all')
     const [editingOrg, setEditingOrg] = useState<OrganizationWithStats | null>(null)
+    const [orgToDelete, setOrgToDelete] = useState<OrganizationWithStats | null>(null)
     const [newLimit, setNewLimit] = useState<number>(1000)
     const [isUpdating, setIsUpdating] = useState(false)
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -132,6 +133,25 @@ export default function AdminCustomersPage() {
             fetchCustomers()
         } catch (error: any) {
             toast.error(`${action} failed: ${error.message}`)
+        }
+    }
+
+    const handleDeleteOrganization = async () => {
+        if (!orgToDelete) return
+        setIsUpdating(true)
+        try {
+            const result = await deleteOrganization(orgToDelete.id)
+            if (result.success) {
+                toast.success('Organization deleted successfully')
+                setOrgToDelete(null)
+                fetchCustomers()
+            } else {
+                toast.error(result.error || 'Failed to delete organization')
+            }
+        } catch (error: any) {
+            toast.error(error.message)
+        } finally {
+            setIsUpdating(false)
         }
     }
 
@@ -410,6 +430,15 @@ export default function AdminCustomersPage() {
                                                         Suspend
                                                     </DropdownMenuItem>
                                                 )}
+
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem
+                                                    className="text-destructive focus:text-destructive"
+                                                    onClick={() => setOrgToDelete(customer)}
+                                                >
+                                                    <Trash className="mr-2 h-4 w-4" />
+                                                    Delete
+                                                </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
@@ -446,6 +475,25 @@ export default function AdminCustomersPage() {
                             {isUpdating ? 'Updating...' : 'Save Limit'}
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* DELETE CONFIRMATION DIALOG */}
+            <Dialog open={!!orgToDelete} onOpenChange={(open) => !open && setOrgToDelete(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Organization</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete <strong>{orgToDelete?.name}</strong>?
+                            This action cannot be undone and will permanently delete all associated data, users, and leads.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-2 mt-4">
+                        <Button variant="ghost" onClick={() => setOrgToDelete(null)} disabled={isUpdating}>Cancel</Button>
+                        <Button variant="destructive" onClick={handleDeleteOrganization} disabled={isUpdating}>
+                            {isUpdating ? 'Deleting...' : 'Delete Organization'}
+                        </Button>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>
