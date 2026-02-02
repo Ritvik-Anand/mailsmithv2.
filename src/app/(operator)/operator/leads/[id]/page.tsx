@@ -188,38 +188,56 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
     }, [job?.status])
 
     const handleGenerateIcebreakers = async () => {
-        // In regenerate mode, target ALL leads. Otherwise, only pending/failed
-        const targetLeads = regenerateMode
-            ? leads
-            : leads.filter(l => l.icebreaker_status === 'pending' || l.icebreaker_status === 'failed')
-
-        // Apply limit if specified
-        const leadsToProcess = generateLimit && generateLimit > 0
-            ? targetLeads.slice(0, generateLimit)
-            : targetLeads
-
-        if (leadsToProcess.length === 0) {
-            toast.info('No leads to generate icebreakers for.')
-            return
-        }
-
-        const confirmMessage = regenerateMode
-            ? `Generate icebreakers for ${leadsToProcess.length} leads (including ${targetLeads.filter(l => l.icebreaker_status === 'completed').length} with existing icebreakers)?`
-            : `Generate icebreakers for ${leadsToProcess.length} leads?`
-
-        if (regenerateMode && !confirm(confirmMessage)) {
-            return
-        }
-
         setIsGenerating(true)
-        setCancelGeneration(false)
-        let successCount = 0
-        let failureCount = 0
-        let skippedCount = 0
+        toast.info('Loading all leads from job...')
 
         try {
-            // Process icebreakers one by one for "live" UI updates
-            for (const lead of leadsToProcess) {
+            // First, fetch ALL leads from the job (not just current page)
+            const allLeadsRes = await getLeadsFromJob(jobId, { pageSize: -1 })
+            if (!allLeadsRes.success || !allLeadsRes.leads) {
+                toast.error('Failed to load leads')
+                setIsGenerating(false)
+                return
+            }
+
+            const allLeads = allLeadsRes.leads
+
+            // In regenerate mode, target ALL leads. Otherwise, only pending/failed
+            const targetLeads = regenerateMode
+                ? allLeads
+                : allLeads.filter(l => l.icebreaker_status === 'pending' || l.icebreaker_status === 'failed')
+
+            // Apply limit if specified
+            const leadsToProcess = generateLimit && generateLimit > 0
+                ? targetLeads.slice(0, generateLimit)
+                : targetLeads
+
+            if (leadsToProcess.length === 0) {
+                toast.info('No leads to generate icebreakers for.')
+                setIsGenerating(false)
+                return
+            }
+
+            const confirmMessage = regenerateMode
+                ? `Generate icebreakers for ${leadsToProcess.length} leads (including ${targetLeads.filter(l => l.icebreaker_status === 'completed').length} with existing icebreakers)?`
+                : `Generate icebreakers for ${leadsToProcess.length} leads?`
+
+            if (regenerateMode && !confirm(confirmMessage)) {
+                setIsGenerating(false)
+                return
+            }
+
+            setCancelGeneration(false)
+            let successCount = 0
+            let failureCount = 0
+            let skippedCount = 0
+
+            toast.info(`Generating icebreakers for ${leadsToProcess.length} leads...`)
+
+            // Process icebreakers one by one
+            for (let i = 0; i < leadsToProcess.length; i++) {
+                const lead = leadsToProcess[i]
+
                 // Check if user cancelled
                 if (cancelGeneration) {
                     const processed = successCount + failureCount + skippedCount
@@ -227,7 +245,12 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     break
                 }
 
-                // Update local status to "generating" immediately
+                // Update progress toast every 10 leads
+                if (i > 0 && i % 10 === 0) {
+                    toast.info(`Progress: ${i}/${leadsToProcess.length} leads processed...`)
+                }
+
+                // Update local status to "generating" if lead is visible on current page
                 setLeads(prev => prev.map(l =>
                     l.id === lead.id ? { ...l, icebreaker_status: 'generating' } : l
                 ))
@@ -236,7 +259,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
 
                 if (result.success) {
                     successCount++
-                    // Update local state incrementally - this triggers the "Ready" count to update live!
+                    // Update local state incrementally if lead is visible
                     setLeads(prev => prev.map(l =>
                         l.id === lead.id ? {
                             ...l,
