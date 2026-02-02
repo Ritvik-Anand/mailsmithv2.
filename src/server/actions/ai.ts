@@ -71,8 +71,10 @@ export async function generateIcebreakersForBatch(leadIds: string[]) {
 
 /**
  * Generates a single icebreaker for a lead
+ * @param leadId - ID of the lead
+ * @param configOrgId - Optional organization ID to use for icebreaker config (overrides lead's org)
  */
-export async function generateSingleIcebreaker(leadId: string) {
+export async function generateSingleIcebreaker(leadId: string, configOrgId?: string) {
     const supabaseAdmin = createAdminClient()
 
     try {
@@ -94,7 +96,10 @@ export async function generateSingleIcebreaker(leadId: string) {
             .eq('id', leadId)
 
         // 3. Generate icebreaker
-        const icebreaker = await generateIcebreaker(lead)
+        // If configOrgId is provided, use it for icebreaker config lookup
+        const icebreaker = configOrgId
+            ? await generateIcebreaker({ ...lead, organization_id: configOrgId })
+            : await generateIcebreaker(lead)
 
         if (icebreaker) {
             // 4. Update lead with icebreaker

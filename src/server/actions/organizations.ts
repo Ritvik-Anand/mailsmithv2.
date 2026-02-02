@@ -202,6 +202,39 @@ export async function updateOrganizationIcebreakerContext(
 }
 
 /**
+ * Get all organizations that have icebreaker configurations
+ * Used for selecting which config to use when generating icebreakers
+ */
+export async function getOrganizationsWithIcebreakerConfigs(): Promise<{
+    success: boolean
+    organizations?: Array<{ id: string; name: string }>
+    error?: string
+}> {
+    const supabase = await createClient()
+
+    try {
+        const { data: orgs, error } = await supabase
+            .from('organizations')
+            .select('id, name, icebreaker_context')
+            .not('icebreaker_context', 'is', null)
+            .order('name')
+
+        if (error) throw error
+
+        return {
+            success: true,
+            organizations: (orgs || []).map(org => ({
+                id: org.id,
+                name: org.name
+            }))
+        }
+    } catch (error: any) {
+        console.error('Error fetching organizations with icebreaker configs:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+/**
  * Manually onboards a new customer.
  * Creates an organization and an auth user for the primary contact.
  */

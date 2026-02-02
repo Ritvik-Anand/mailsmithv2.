@@ -40,6 +40,7 @@ import {
 import { getLeadsFromJob, getSearchJobStatus, retrySyncFromApify, updateLeadIcebreaker, exportLeadsToCSV } from '@/server/actions/lead-finder'
 import { generateSingleIcebreaker } from '@/server/actions/ai'
 import { addLeadsToInstantlyCampaign, getOrganizationCampaigns } from '@/server/actions/instantly'
+import { getOrganizationsWithIcebreakerConfigs } from '@/server/actions/organizations'
 import { toast } from 'sonner'
 import { Lead, ScrapeJob } from '@/types'
 
@@ -79,6 +80,8 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
         failed: 0,
         readyToPush: 0
     })
+    const [icebreakerConfigs, setIcebreakerConfigs] = useState<Array<{ id: string; name: string }>>([])
+    const [selectedConfigOrgId, setSelectedConfigOrgId] = useState<string>('')
 
     const fetchData = async (resetPage = false) => {
         setIsLoading(true)
@@ -152,7 +155,23 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
 
     useEffect(() => {
         fetchData()
+        // Also fetch icebreaker configs
+        fetchIcebreakerConfigs()
     }, [jobId, currentPage, loadAll])
+
+    const fetchIcebreakerConfigs = async () => {
+        const result = await getOrganizationsWithIcebreakerConfigs()
+        if (result.success && result.organizations) {
+            setIcebreakerConfigs(result.organizations)
+            // Auto-select the job's organization if it has a config
+            if (job?.organization_id) {
+                const hasConfig = result.organizations.find(org => org.id === job.organization_id)
+                if (hasConfig) {
+                    setSelectedConfigOrgId(job.organization_id)
+                }
+            }
+        }
+    }
 
     // Auto-poll for running/pending jobs
     useEffect(() => {
@@ -213,7 +232,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     l.id === lead.id ? { ...l, icebreaker_status: 'generating' } : l
                 ))
 
-                const result = await generateSingleIcebreaker(lead.id)
+                const result = await generateSingleIcebreaker(lead.id, selectedConfigOrgId || undefined)
 
                 if (result.success) {
                     successCount++
@@ -449,6 +468,22 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     </Button>
                     {/* Generation Controls */}
                     <div className="flex flex-wrap items-center gap-3">
+                        {/* Icebreaker Config Selector */}
+                        <div className="flex items-center gap-2 bg-zinc-900 px-3 py-2 rounded-lg border border-zinc-800">
+                            <label className="text-xs text-zinc-400 font-medium whitespace-nowrap">Config:</label>
+                            <select
+                                value={selectedConfigOrgId}
+                                onChange={(e) => setSelectedConfigOrgId(e.target.value)}
+                                disabled={isGenerating}
+                                className="bg-zinc-950 border border-zinc-700 rounded px-2 py-1 text-xs text-white focus:ring-1 focus:ring-primary outline-none min-w-[150px]"
+                            >
+                                <option value="">Default (Job's Org)</option>
+                                {icebreakerConfigs.map(org => (
+                                    <option key={org.id} value={org.id}>{org.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
                         {/* Regenerate Mode Toggle */}
                         <label className="flex items-center gap-2 cursor-pointer bg-zinc-900 px-3 py-2 rounded-lg border border-zinc-800 hover:border-zinc-700">
                             <input
