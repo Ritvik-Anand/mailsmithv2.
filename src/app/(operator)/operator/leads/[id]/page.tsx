@@ -64,6 +64,21 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
     const [pageSize, setPageSize] = useState(100)
     const [loadAll, setLoadAll] = useState(false)
     const [cancelGeneration, setCancelGeneration] = useState(false)
+    const [regenerateMode, setRegenerateMode] = useState(false)
+    const [generateLimit, setGenerateLimit] = useState<number | null>(null)
+    const [allLeadsStats, setAllLeadsStats] = useState<{
+        total: number
+        completed: number
+        pending: number
+        failed: number
+        readyToPush: number
+    }>({
+        total: 0,
+        completed: 0,
+        pending: 0,
+        failed: 0,
+        readyToPush: 0
+    })
 
     const fetchData = async (resetPage = false) => {
         setIsLoading(true)
@@ -98,6 +113,31 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                 console.log('[LeadJobPage] Setting leads:', leadsRes.leads.length)
                 setLeads(leadsRes.leads)
                 setTotalLeads(leadsRes.total || 0)
+
+                // Fetch ALL leads stats if we're on a paginated view
+                if (!loadAll && leadsRes.total && leadsRes.total > pageSize) {
+                    // Fetch all leads to calculate accurate stats
+                    const allLeadsRes = await getLeadsFromJob(jobId, { pageSize: -1 })
+                    if (allLeadsRes.success && allLeadsRes.leads) {
+                        const all = allLeadsRes.leads
+                        setAllLeadsStats({
+                            total: all.length,
+                            completed: all.filter(l => l.icebreaker_status === 'completed').length,
+                            pending: all.filter(l => l.icebreaker_status === 'pending').length,
+                            failed: all.filter(l => l.icebreaker_status === 'failed').length,
+                            readyToPush: all.filter(l => l.icebreaker_status === 'completed' && l.campaign_status === 'not_added').length
+                        })
+                    }
+                } else {
+                    // Calculate stats from current leads
+                    setAllLeadsStats({
+                        total: leadsRes.leads.length,
+                        completed: leadsRes.leads.filter(l => l.icebreaker_status === 'completed').length,
+                        pending: leadsRes.leads.filter(l => l.icebreaker_status === 'pending').length,
+                        failed: leadsRes.leads.filter(l => l.icebreaker_status === 'failed').length,
+                        readyToPush: leadsRes.leads.filter(l => l.icebreaker_status === 'completed' && l.campaign_status === 'not_added').length
+                    })
+                }
             } else {
                 console.error('[LeadJobPage] Leads fetch error:', leadsRes.error)
                 toast.error(leadsRes.error || 'Failed to fetch leads')
@@ -129,9 +169,26 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
     }, [job?.status])
 
     const handleGenerateIcebreakers = async () => {
-        const pendingLeads = leads.filter(l => l.icebreaker_status === 'pending' || l.icebreaker_status === 'failed')
-        if (pendingLeads.length === 0) {
-            toast.info('All leads already have icebreakers or are in progress.')
+        // In regenerate mode, target ALL leads. Otherwise, only pending/failed
+        const targetLeads = regenerateMode
+            ? leads
+            : leads.filter(l => l.icebreaker_status === 'pending' || l.icebreaker_status === 'failed')
+
+        // Apply limit if specified
+        const leadsToProcess = generateLimit && generateLimit > 0
+            ? targetLeads.slice(0, generateLimit)
+            : targetLeads
+
+        if (leadsToProcess.length === 0) {
+            toast.info('No leads to generate icebreakers for.')
+            return
+        }
+
+        const confirmMessage = regenerateMode
+            ? `Generate icebreakers for ${leadsToProcess.length} leads (including ${targetLeads.filter(l => l.icebreaker_status === 'completed').length} with existing icebreakers)?`
+            : `Generate icebreakers for ${leadsToProcess.length} leads?`
+
+        if (regenerateMode && !confirm(confirmMessage)) {
             return
         }
 
@@ -139,15 +196,15 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
         setCancelGeneration(false)
         let successCount = 0
         let failureCount = 0
-        let cancelledCount = 0
+        let skippedCount = 0
 
         try {
             // Process icebreakers one by one for "live" UI updates
-            for (const lead of pendingLeads) {
+            for (const lead of leadsToProcess) {
                 // Check if user cancelled
                 if (cancelGeneration) {
-                    cancelledCount = pendingLeads.length - (successCount + failureCount)
-                    toast.warning(`Generation stopped. Processed ${successCount + failureCount} of ${pendingLeads.length} leads.`)
+                    const processed = successCount + failureCount + skippedCount
+                    toast.warning(`Generation stopped. Processed ${processed} of ${leadsToProcess.length} leads.`)
                     break
                 }
 
@@ -184,6 +241,9 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     toast.error(`Failed to generate ${failureCount} icebreakers`)
                 }
             }
+
+            // Refresh stats after generation
+            await fetchData()
         } catch (error) {
             toast.error('Error during icebreaker generation')
         } finally {
@@ -357,7 +417,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     </p>
                 </div>
 
-                <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full md:w-auto">
                     {/* Show Retry Sync button if job has apify_run_id but no leads imported */}
                     {job?.apify_run_id && (job?.leads_imported || 0) === 0 && (
                         <Button
@@ -387,25 +447,56 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                         <RefreshCw className="h-4 w-4 mr-2" />
                         Refresh
                     </Button>
-                    {isGenerating ? (
-                        <Button
-                            variant="destructive"
-                            className="bg-red-600 hover:bg-red-500 text-white font-bold shadow-lg shadow-red-500/20"
-                            onClick={handleStopGeneration}
-                        >
-                            <X className="mr-2 h-4 w-4" />
-                            Stop Generation
-                        </Button>
-                    ) : (
-                        <Button
-                            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-500/20"
-                            onClick={handleGenerateIcebreakers}
-                            disabled={leads.length === 0}
-                        >
-                            <Sparkles className="mr-2 h-4 w-4" />
-                            Generate Icebreakers
-                        </Button>
-                    )}
+                    {/* Generation Controls */}
+                    <div className="flex flex-wrap items-center gap-3">
+                        {/* Regenerate Mode Toggle */}
+                        <label className="flex items-center gap-2 cursor-pointer bg-zinc-900 px-3 py-2 rounded-lg border border-zinc-800 hover:border-zinc-700">
+                            <input
+                                type="checkbox"
+                                checked={regenerateMode}
+                                onChange={(e) => setRegenerateMode(e.target.checked)}
+                                disabled={isGenerating}
+                                className="w-4 h-4 rounded border-zinc-700 text-primary focus:ring-primary"
+                            />
+                            <span className="text-xs text-zinc-400 font-medium">Regenerate All</span>
+                        </label>
+
+                        {/* Quantity Limit */}
+                        <div className="flex items-center gap-2 bg-zinc-900 px-3 py-2 rounded-lg border border-zinc-800">
+                            <label className="text-xs text-zinc-400 font-medium">Limit:</label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="1000"
+                                value={generateLimit || ''}
+                                onChange={(e) => setGenerateLimit(e.target.value ? parseInt(e.target.value) : null)}
+                                placeholder="All"
+                                disabled={isGenerating}
+                                className="w-20 bg-zinc-950 border border-zinc-700 rounded px-2 py-1 text-xs text-white focus:ring-1 focus:ring-primary outline-none"
+                            />
+                        </div>
+
+                        {/* Generate/Stop Button */}
+                        {isGenerating ? (
+                            <Button
+                                variant="destructive"
+                                className="bg-red-600 hover:bg-red-500 text-white font-bold shadow-lg shadow-red-500/20"
+                                onClick={handleStopGeneration}
+                            >
+                                <X className="mr-2 h-4 w-4" />
+                                Stop Generation
+                            </Button>
+                        ) : (
+                            <Button
+                                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-500/20"
+                                onClick={handleGenerateIcebreakers}
+                                disabled={leads.length === 0}
+                            >
+                                <Sparkles className="mr-2 h-4 w-4" />
+                                {regenerateMode ? 'Regenerate' : 'Generate'} {generateLimit ? `(${generateLimit})` : ''}
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -586,21 +677,25 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                             <div className="space-y-4 pt-2">
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="text-zinc-500">Total Leads</span>
-                                    <span className="font-bold text-white">{leads.length}</span>
+                                    <span className="font-bold text-white">{allLeadsStats.total}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="text-zinc-500">Icebreakers Ready</span>
-                                    <span className="font-bold text-green-500">{leads.filter(l => l.icebreaker_status === 'completed').length}</span>
+                                    <span className="font-bold text-green-500">{allLeadsStats.completed}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="text-zinc-500">Pending Generation</span>
+                                    <span className="font-bold text-amber-500">{allLeadsStats.pending + allLeadsStats.failed}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs border-t border-zinc-900 pt-3">
                                     <span className="text-zinc-500">Available to push</span>
-                                    <span className="font-bold text-white">{leads.filter(l => l.icebreaker_status === 'completed' && l.campaign_status === 'not_added').length}</span>
+                                    <span className="font-bold text-white">{allLeadsStats.readyToPush}</span>
                                 </div>
                             </div>
 
                             <Button
                                 className="w-full bg-primary hover:bg-primary/90 text-white font-black py-6 shadow-xl shadow-primary/20 transition-all"
-                                disabled={isPushing || leads.filter(l => l.icebreaker_status === 'completed' && l.campaign_status === 'not_added').length === 0}
+                                disabled={isPushing || allLeadsStats.readyToPush === 0}
                                 onClick={handlePushToInstantly}
                             >
                                 {isPushing ? (
@@ -626,11 +721,11 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                             <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-primary transition-all duration-500"
-                                    style={{ width: `${(leads.filter(l => l.icebreaker_status === 'completed').length / (leads.length || 1)) * 100}%` }}
+                                    style={{ width: `${(allLeadsStats.completed / (allLeadsStats.total || 1)) * 100}%` }}
                                 />
                             </div>
                             <p className="text-[10px] text-zinc-500 font-medium">
-                                AI coverage: <span className="text-zinc-200">{(leads.filter(l => l.icebreaker_status === 'completed').length / (leads.length || 1) * 100).toFixed(0)}%</span> of this batch.
+                                AI coverage: <span className="text-zinc-200">{(allLeadsStats.completed / (allLeadsStats.total || 1) * 100).toFixed(0)}%</span> across all {allLeadsStats.total} leads.
                             </p>
                         </CardContent>
                     </Card>
