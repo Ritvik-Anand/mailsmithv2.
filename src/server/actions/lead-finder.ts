@@ -673,13 +673,19 @@ export async function getLeadsFromJob(
             .select('*', { count: 'exact', head: true })
             .eq('scrape_job_id', jobId)
 
-        // Get paginated leads
-        const { data, error } = await supabase
+        // Get leads - if pageSize is -1 or 0, get ALL leads
+        let query = supabase
             .from('leads')
             .select('*')
             .eq('scrape_job_id', jobId)
             .order('created_at', { ascending: false })
-            .range(offset, offset + pageSize - 1)
+
+        // Only apply pagination if pageSize is positive
+        if (pageSize > 0) {
+            query = query.range(offset, offset + pageSize - 1)
+        }
+
+        const { data, error } = await query
 
         if (error) {
             console.error('Get leads error:', error)
@@ -865,6 +871,224 @@ export async function updateLeadIcebreaker(
             success: false,
             error: error instanceof Error ? error.message : 'Failed to update icebreaker',
         }
+    }
+}
+
+/**
+ * Generate CSV content from leads
+ */
+export async function exportLeadsToCSV(jobId: string): Promise<{
+    success: boolean
+    csvContent?: string
+    filename?: string
+    error?: string
+}> {
+    try {
+        const { role } = await getCurrentUserContext()
+
+        // Fetch ALL leads for this job
+        const leadsResult = await getLeadsFromJob(jobId, { pageSize: -1 })
+
+        if (!leadsResult.success || !leadsResult.leads) {
+            return { success: false, error: leadsResult.error || 'Failed to fetch leads' }
+        }
+
+        const leads = leadsResult.leads
+
+        if (leads.length === 0) {
+            return { success: false, error: 'No leads to export' }
+        }
+
+        // CSV Headers
+        const headers = [
+            'First Name',
+            'Last Name',
+            'Email',
+            'Phone',
+            'Job Title',
+            'Company Name',
+            'LinkedIn URL',
+            'Icebreaker',
+            'Icebreaker Status',
+            'Campaign Status',
+            'Created At'
+        ]
+
+        // Build CSV rows
+        const rows = leads.map(lead => [
+            lead.first_name || '',
+            lead.last_name || '',
+            lead.email || '',
+            lead.phone || '',
+            lead.job_title || '',
+            lead.company_name || '',
+            lead.linkedin_url || '',
+            lead.icebreaker || '',
+            lead.icebreaker_status || '',
+            lead.campaign_status || '',
+            lead.created_at || ''
+        ])
+
+        // Escape CSV values
+        const escapeCsvValue = (value: string): string => {
+            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                return `"${value.replace(/"/g, '""')}"`
+            }
+            return value
+        }
+
+        // Build CSV content
+        const csvContent = [
+            headers.map(escapeCsvValue).join(','),
+            ...rows.map(row => row.map(String).map(escapeCsvValue).join(','))
+        ].join('\n')
+
+        // Get job details for filename
+        const supabase = (role === 'super_admin' || role === 'operator')
+            ? createAdminClient()
+            : await createClient()
+
+        const { data: job } = await supabase
+            .from('scrape_jobs')
+            .select('input_params, created_at')
+            .eq('id', jobId)
+            .single()
+
+        const jobTitle = job?.input_params?.contact_job_title?.join('-') || 'leads'
+        const timestamp = new Date().toISOString().split('T')[0]
+        const filename = `mailsmith-${jobTitle}-${timestamp}.csv`
+
+        return {
+            success: true,
+            csvContent,
+            filename
+        }
+    } catch (error) {
+        console.error('Export CSV error:', error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to export CSV'
+        }
+    }
+}
+
+/**
+ * Save a scraping parameter template
+ */
+export async function saveScrapingTemplate(params: {
+    name: string
+    description?: string
+    filters: LeadSearchFilters
+}): Promise<{ success: boolean; templateId?: string; error?: string }> {
+    try {
+        const { organizationId, userId, error: authError } = await getCurrentUserContext()
+
+        if (!userId) {
+            return { success: false, error: authError || 'Not authenticated' }
+        }
+
+        const supabase = await createClient()
+
+        const { data, error } = await supabase
+            .from('scraping_templates')
+            .insert({
+                name: params.name,
+                description: params.description || null,
+                filters: params.filters,
+                created_by: userId,
+                organization_id: organizationId
+            })
+            .select('id')
+            .single()
+
+        if (error) throw error
+
+        revalidatePath('/dashboard/lead-finder')
+
+        return { success: true, templateId: data.id }
+    } catch (error: any) {
+        console.error('Save template error:', error)
+        return { success: false, error: error.message || 'Failed to save template' }
+    }
+}
+
+/**
+ * Get all scraping templates for current user/organization
+ */
+export async function getScrapingTemplates(): Promise<{
+    success: boolean
+    templates?: any[]
+    error?: string
+}> {
+    try {
+        const { organizationId, role, error: authError } = await getCurrentUserContext()
+
+        const supabase = (role === 'super_admin' || role === 'operator')
+            ? createAdminClient()
+            : await createClient()
+
+        let query = supabase
+            .from('scraping_templates')
+            .select('*')
+            .order('created_at', { ascending: false })
+
+        // Regular users see only their org's templates
+        if (role !== 'super_admin' && role !== 'operator') {
+            if (!organizationId) {
+                return { success: false, error: authError || 'Not authenticated' }
+            }
+            query = query.eq('organization_id', organizationId)
+        }
+
+        const { data, error } = await query
+
+        if (error) throw error
+
+        return { success: true, templates: data || [] }
+    } catch (error: any) {
+        console.error('Get templates error:', error)
+        return { success: false, error: error.message || 'Failed to fetch templates' }
+    }
+}
+
+/**
+ * Delete a scraping template
+ */
+export async function deleteScrapingTemplate(templateId: string): Promise<{
+    success: boolean
+    error?: string
+}> {
+    try {
+        const { userId, organizationId, role, error: authError } = await getCurrentUserContext()
+
+        if (!userId) {
+            return { success: false, error: authError || 'Not authenticated' }
+        }
+
+        const supabase = (role === 'super_admin' || role === 'operator')
+            ? createAdminClient()
+            : await createClient()
+
+        // Check ownership or if user is operator/admin
+        let deleteQuery = supabase
+            .from('scraping_templates')
+            .delete()
+            .eq('id', templateId)
+
+        if (role !== 'super_admin' && role !== 'operator') {
+            deleteQuery = deleteQuery.eq('created_by', userId)
+        }
+
+        const { error } = await deleteQuery
+
+        if (error) throw error
+
+        revalidatePath('/dashboard/lead-finder')
+
+        return { success: true }
+    } catch (error: any) {
+        console.error('Delete template error:', error)
+        return { success: false, error: error.message || 'Failed to delete template' }
     }
 }
 

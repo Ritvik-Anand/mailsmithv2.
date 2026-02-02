@@ -32,9 +32,12 @@ import {
     Building2,
     Phone,
     Linkedin,
-    Save
+    Save,
+    Download,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react'
-import { getLeadsFromJob, getSearchJobStatus, retrySyncFromApify, updateLeadIcebreaker } from '@/server/actions/lead-finder'
+import { getLeadsFromJob, getSearchJobStatus, retrySyncFromApify, updateLeadIcebreaker, exportLeadsToCSV } from '@/server/actions/lead-finder'
 import { generateSingleIcebreaker } from '@/server/actions/ai'
 import { addLeadsToInstantlyCampaign, getOrganizationCampaigns } from '@/server/actions/instantly'
 import { toast } from 'sonner'
@@ -44,25 +47,38 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
     const { id: jobId } = use(params)
     const [job, setJob] = useState<ScrapeJob | null>(null)
     const [leads, setLeads] = useState<Lead[]>([])
+    const [totalLeads, setTotalLeads] = useState(0)
     const [campaigns, setCampaigns] = useState<any[]>([])
     const [selectedCampaign, setSelectedCampaign] = useState<string>('')
     const [isLoading, setIsLoading] = useState(true)
     const [isGenerating, setIsGenerating] = useState(false)
     const [isPushing, setIsPushing] = useState(false)
     const [isSyncing, setIsSyncing] = useState(false)
+    const [isExporting, setIsExporting] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [filterStatus, setFilterStatus] = useState<'all' | 'ready' | 'queued' | 'sent'>('all')
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
     const [editingIcebreaker, setEditingIcebreaker] = useState<string>('')
     const [isSavingIcebreaker, setIsSavingIcebreaker] = useState(false)
+    const [currentPage, setCurrentPage] = useState(1)
+    const [pageSize, setPageSize] = useState(100)
+    const [loadAll, setLoadAll] = useState(false)
 
-    const fetchData = async () => {
+    const fetchData = async (resetPage = false) => {
         setIsLoading(true)
         try {
             console.log('[LeadJobPage] Fetching data for job:', jobId)
+
+            // If resetPage is true, reset to page 1
+            const page = resetPage ? 1 : currentPage
+            if (resetPage) setCurrentPage(1)
+
             const [jobRes, leadsRes] = await Promise.all([
                 getSearchJobStatus(jobId),
-                getLeadsFromJob(jobId, { pageSize: 100 })
+                getLeadsFromJob(jobId, {
+                    page: loadAll ? 1 : page,
+                    pageSize: loadAll ? -1 : pageSize
+                })
             ])
 
             console.log('[LeadJobPage] Job response:', jobRes)
@@ -80,6 +96,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
             if (leadsRes.success && leadsRes.leads) {
                 console.log('[LeadJobPage] Setting leads:', leadsRes.leads.length)
                 setLeads(leadsRes.leads)
+                setTotalLeads(leadsRes.total || 0)
             } else {
                 console.error('[LeadJobPage] Leads fetch error:', leadsRes.error)
                 toast.error(leadsRes.error || 'Failed to fetch leads')
@@ -94,7 +111,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
 
     useEffect(() => {
         fetchData()
-    }, [jobId])
+    }, [jobId, currentPage, loadAll])
 
     // Auto-poll for running/pending jobs
     useEffect(() => {
@@ -228,6 +245,49 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
         }
     }
 
+    const handleExportCSV = async () => {
+        setIsExporting(true)
+        try {
+            const result = await exportLeadsToCSV(jobId)
+            if (result.success && result.csvContent && result.filename) {
+                // Create a blob and download
+                const blob = new Blob([result.csvContent], { type: 'text/csv;charset=utf-8;' })
+                const link = document.createElement('a')
+                const url = URL.createObjectURL(blob)
+                link.setAttribute('href', url)
+                link.setAttribute('download', result.filename)
+                link.style.visibility = 'hidden'
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+                toast.success(`Exported ${totalLeads} leads to CSV`)
+            } else {
+                toast.error(result.error || 'Failed to export CSV')
+            }
+        } catch (error) {
+            toast.error('Error exporting CSV')
+        } finally {
+            setIsExporting(false)
+        }
+    }
+
+    const handleLoadAll = () => {
+        setLoadAll(true)
+        setCurrentPage(1)
+    }
+
+    const handleNextPage = () => {
+        if (currentPage * pageSize < totalLeads) {
+            setCurrentPage(prev => prev + 1)
+        }
+    }
+
+    const handlePrevPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage(prev => prev - 1)
+        }
+    }
+
     if (isLoading && !job) {
         return (
             <div className="h-96 flex flex-col items-center justify-center gap-4">
@@ -294,8 +354,17 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     )}
                     <Button
                         variant="outline"
+                        className="bg-emerald-600/10 border-emerald-600/30 text-emerald-500 hover:bg-emerald-600/20 hover:text-emerald-400"
+                        onClick={handleExportCSV}
+                        disabled={isExporting || leads.length === 0}
+                    >
+                        {isExporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                        Export CSV
+                    </Button>
+                    <Button
+                        variant="outline"
                         className="bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white"
-                        onClick={fetchData}
+                        onClick={() => fetchData(true)}
                     >
                         <RefreshCw className="h-4 w-4 mr-2" />
                         Refresh
@@ -342,8 +411,22 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     <Card className="bg-zinc-950 border-zinc-800 rounded-xl overflow-hidden shadow-none">
                         <CardHeader className="border-b border-zinc-900 bg-zinc-900/10 py-3">
                             <div className="flex items-center justify-between">
-                                <CardTitle className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Prospect List</CardTitle>
-                                <span className="text-[10px] text-zinc-500 font-mono">{filteredLeads.length} matches</span>
+                                <div className="flex items-center gap-4">
+                                    <CardTitle className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Prospect List</CardTitle>
+                                    <span className="text-[10px] text-zinc-500 font-mono">
+                                        Showing {leads.length} of {totalLeads} leads {!loadAll && totalLeads > pageSize && `(Page ${currentPage})`}
+                                    </span>
+                                </div>
+                                {!loadAll && totalLeads > pageSize && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 text-[10px] bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
+                                        onClick={handleLoadAll}
+                                    >
+                                        Load All {totalLeads} Leads
+                                    </Button>
+                                )}
                             </div>
                         </CardHeader>
                         <CardContent className="p-0">
@@ -419,6 +502,33 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                 </TableBody>
                             </Table>
                         </CardContent>
+                        {!loadAll && totalLeads > pageSize && (
+                            <div className="border-t border-zinc-900 bg-zinc-900/10 px-6 py-3 flex items-center justify-between">
+                                <span className="text-xs text-zinc-500">
+                                    Page {currentPage} of {Math.ceil(totalLeads / pageSize)}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-8 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white disabled:opacity-50"
+                                        onClick={handlePrevPage}
+                                        disabled={currentPage === 1}
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-8 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white disabled:opacity-50"
+                                        onClick={handleNextPage}
+                                        disabled={currentPage * pageSize >= totalLeads}
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </Card>
                 </div>
 
