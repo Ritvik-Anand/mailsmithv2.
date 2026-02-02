@@ -63,6 +63,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(100)
     const [loadAll, setLoadAll] = useState(false)
+    const [cancelGeneration, setCancelGeneration] = useState(false)
 
     const fetchData = async (resetPage = false) => {
         setIsLoading(true)
@@ -135,12 +136,21 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
         }
 
         setIsGenerating(true)
+        setCancelGeneration(false)
         let successCount = 0
         let failureCount = 0
+        let cancelledCount = 0
 
         try {
             // Process icebreakers one by one for "live" UI updates
             for (const lead of pendingLeads) {
+                // Check if user cancelled
+                if (cancelGeneration) {
+                    cancelledCount = pendingLeads.length - (successCount + failureCount)
+                    toast.warning(`Generation stopped. Processed ${successCount + failureCount} of ${pendingLeads.length} leads.`)
+                    break
+                }
+
                 // Update local status to "generating" immediately
                 setLeads(prev => prev.map(l =>
                     l.id === lead.id ? { ...l, icebreaker_status: 'generating' } : l
@@ -166,17 +176,25 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                 }
             }
 
-            if (successCount > 0) {
-                toast.success(`Successfully generated ${successCount} icebreakers`)
-            }
-            if (failureCount > 0) {
-                toast.error(`Failed to generate ${failureCount} icebreakers`)
+            if (!cancelGeneration) {
+                if (successCount > 0) {
+                    toast.success(`Successfully generated ${successCount} icebreakers`)
+                }
+                if (failureCount > 0) {
+                    toast.error(`Failed to generate ${failureCount} icebreakers`)
+                }
             }
         } catch (error) {
             toast.error('Error during icebreaker generation')
         } finally {
             setIsGenerating(false)
+            setCancelGeneration(false)
         }
+    }
+
+    const handleStopGeneration = () => {
+        setCancelGeneration(true)
+        toast.info('Stopping generation after current lead...')
     }
 
     const handlePushToInstantly = async () => {
@@ -369,14 +387,25 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                         <RefreshCw className="h-4 w-4 mr-2" />
                         Refresh
                     </Button>
-                    <Button
-                        className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-500/20"
-                        onClick={handleGenerateIcebreakers}
-                        disabled={isGenerating || leads.length === 0}
-                    >
-                        {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                        Generate Icebreakers
-                    </Button>
+                    {isGenerating ? (
+                        <Button
+                            variant="destructive"
+                            className="bg-red-600 hover:bg-red-500 text-white font-bold shadow-lg shadow-red-500/20"
+                            onClick={handleStopGeneration}
+                        >
+                            <X className="mr-2 h-4 w-4" />
+                            Stop Generation
+                        </Button>
+                    ) : (
+                        <Button
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-500/20"
+                            onClick={handleGenerateIcebreakers}
+                            disabled={leads.length === 0}
+                        >
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            Generate Icebreakers
+                        </Button>
+                    )}
                 </div>
             </div>
 
