@@ -98,10 +98,22 @@ export async function generateIcebreaker(leadData: any): Promise<string | null> 
 
     const customerContext = customerContextObj?.description || '';
     const exampleFormat = customerContextObj?.example_format || '{"icebreaker":"Hey {name}, \\n\\n really respect X and love that you\'re doing Y. Wanted to run something by you"}';
+    const goodExamples = customerContextObj?.good_examples || [];
+    const badExamples = customerContextObj?.bad_examples || [];
 
     // Build the customer context section
     const customerContextSection = customerContext
         ? `Here is a bunch of information about me so that you can make these icebreakers more personalised:\n\n${customerContext}`
+        : '';
+
+    // Build good examples section
+    const goodExamplesSection = goodExamples.length > 0
+        ? `\n\nHere are examples of GOOD icebreakers (follow this style):\n\n${goodExamples.map((ex: string, i: number) => `Example ${i + 1}:\n${ex}`).join('\n\n')}`
+        : '';
+
+    // Build bad examples section  
+    const badExamplesSection = badExamples.length > 0
+        ? `\n\nHere are examples of BAD icebreakers (avoid this style):\n\n${badExamples.map((ex: string, i: number) => `Bad Example ${i + 1}:\n${ex}`).join('\n\n')}`
         : '';
 
     // System message
@@ -114,7 +126,7 @@ You'll return this icebreaker in JSON using this format:
 
 ${exampleFormat}
 
-${customerContextSection}
+${customerContextSection}${goodExamplesSection}${badExamplesSection}
 
 Rules:
 - Write in a spartan, laconic tone of voice
