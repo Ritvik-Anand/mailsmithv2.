@@ -35,12 +35,13 @@ import {
     Save,
     Download,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    UserPlus
 } from 'lucide-react'
-import { getLeadsFromJob, getSearchJobStatus, retrySyncFromApify, updateLeadIcebreaker, exportLeadsToCSV } from '@/server/actions/lead-finder'
+import { getLeadsFromJob, getSearchJobStatus, retrySyncFromApify, updateLeadIcebreaker, exportLeadsToCSV, assignLeadsToCustomer } from '@/server/actions/lead-finder'
 import { generateSingleIcebreaker } from '@/server/actions/ai'
 import { addLeadsToInstantlyCampaign, getOrganizationCampaigns } from '@/server/actions/instantly'
-import { getOrganizationsWithIcebreakerConfigs } from '@/server/actions/organizations'
+import { getOrganizationsWithIcebreakerConfigs, getOrganizations } from '@/server/actions/organizations'
 import { toast } from 'sonner'
 import { Lead, ScrapeJob } from '@/types'
 
@@ -82,6 +83,9 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
     })
     const [icebreakerConfigs, setIcebreakerConfigs] = useState<Array<{ id: string; name: string }>>([])
     const [selectedConfigOrgId, setSelectedConfigOrgId] = useState<string>('')
+    const [allOrganizations, setAllOrganizations] = useState<any[]>([])
+    const [selectedTargetOrg, setSelectedTargetOrg] = useState('')
+    const [isAssigning, setIsAssigning] = useState(false)
 
     const fetchData = async (resetPage = false) => {
         setIsLoading(true)
@@ -157,7 +161,16 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
         fetchData()
         // Also fetch icebreaker configs
         fetchIcebreakerConfigs()
+        // Fetch all organizations for assignment dropdown
+        fetchAllOrganizations()
     }, [jobId, currentPage, loadAll])
+
+    const fetchAllOrganizations = async () => {
+        const result = await getOrganizations()
+        if (result && Array.isArray(result)) {
+            setAllOrganizations(result)
+        }
+    }
 
     const fetchIcebreakerConfigs = async () => {
         const result = await getOrganizationsWithIcebreakerConfigs()
@@ -326,6 +339,38 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
             setIsPushing(false)
         }
     }
+
+    const handleAssignToCustomer = async () => {
+        if (!selectedTargetOrg) {
+            toast.error('Please select a target customer first')
+            return
+        }
+
+        const confirmMessage = `Assign all ${allLeadsStats.total} leads to the selected customer?`
+        if (!confirm(confirmMessage)) {
+            return
+        }
+
+        setIsAssigning(true)
+        try {
+            const result = await assignLeadsToCustomer({
+                jobId,
+                targetOrganizationId: selectedTargetOrg
+            })
+
+            if (result.success) {
+                toast.success(`Successfully assigned ${result.assignedCount} leads to customer`)
+                await fetchData()
+            } else {
+                toast.error(result.error || 'Failed to assign leads')
+            }
+        } catch (error) {
+            toast.error('Error assigning leads to customer')
+        } finally {
+            setIsAssigning(false)
+        }
+    }
+
 
     const handleRetrySync = async () => {
         setIsSyncing(true)
@@ -765,6 +810,62 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                     <>
                                         <Send className="mr-2 h-4 w-4" />
                                         PUSH TO CAMPAIGN
+                                    </>
+                                )}
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Assign to Customer Card */}
+                    <Card className="bg-zinc-950 border-zinc-800 shadow-none border-t-blue-500/30 border-t-2">
+                        <CardHeader>
+                            <CardTitle className="text-sm font-bold uppercase tracking-widest text-blue-500 flex items-center gap-2">
+                                <UserPlus className="h-4 w-4" />
+                                Assign to Customer
+                            </CardTitle>
+                            <CardDescription className="text-[11px] text-zinc-500">
+                                Transfer these leads to a customer's account without adding to campaign.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-2">
+                                <Label className="text-xs text-zinc-400">Target Customer</Label>
+                                <select
+                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg h-10 px-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none"
+                                    value={selectedTargetOrg}
+                                    onChange={(e) => setSelectedTargetOrg(e.target.value)}
+                                >
+                                    <option value="">Select customer...</option>
+                                    {allOrganizations.map(org => (
+                                        <option key={org.id} value={org.id}>{org.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-2 bg-blue-500/5 border border-blue-500/20 rounded-lg p-3">
+                                <p className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">What This Does:</p>
+                                <ul className="text-[11px] text-zinc-400 space-y-1">
+                                    <li>• Transfers {allLeadsStats.total} leads to customer's account</li>
+                                    <li>• Leads become visible in customer's dashboard</li>
+                                    <li>• Does NOT add to any campaign yet</li>
+                                    <li>• Customer can review and organize leads first</li>
+                                </ul>
+                            </div>
+
+                            <Button
+                                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-6 shadow-xl shadow-blue-500/20 transition-all"
+                                disabled={isAssigning || !selectedTargetOrg || allLeadsStats.total === 0}
+                                onClick={handleAssignToCustomer}
+                            >
+                                {isAssigning ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Assigning...
+                                    </>
+                                ) : (
+                                    <>
+                                        <UserPlus className="mr-2 h-4 w-4" />
+                                        ASSIGN TO CUSTOMER
                                     </>
                                 )}
                             </Button>

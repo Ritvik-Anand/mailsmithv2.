@@ -1,8 +1,9 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
+const deepseek = new OpenAI({
+    apiKey: process.env.DEEPSEEK_API_KEY,
+    baseURL: 'https://api.deepseek.com',
 });
 
 /**
@@ -84,7 +85,7 @@ async function getCustomerContext(organizationId: string): Promise<any> {
 }
 
 /**
- * Generate icebreaker using the exact proven prompt structure
+ * Generate icebreaker using the exact proven prompt structure with DeepSeek
  */
 export async function generateIcebreaker(leadData: any): Promise<string | null> {
     const firstName = leadData.first_name || '';
@@ -97,7 +98,7 @@ export async function generateIcebreaker(leadData: any): Promise<string | null> 
     }
 
     const customerContext = customerContextObj?.description || '';
-    const exampleFormat = customerContextObj?.example_format || '{"icebreaker":"Hey {name}, \\n\\n really respect X and love that you\'re doing Y. Wanted to run something by you"}';
+    const exampleFormat = customerContextObj?.example_format || '{\"icebreaker\":\"Hey {name}, \\n\\n really respect X and love that you\'re doing Y. Wanted to run something by you\"}';
     const goodExamples = customerContextObj?.good_examples || [];
     const badExamples = customerContextObj?.bad_examples || [];
 
@@ -143,18 +144,20 @@ Here is the prospect information:
 ${prospectInfo}`;
 
     try {
-        const message = await anthropic.messages.create({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 200,
+        const completion = await deepseek.chat.completions.create({
+            model: 'deepseek-chat',
             messages: [
-                { role: 'user', content: systemMessage + '\n\n' + userMessage }
+                { role: 'system', content: systemMessage },
+                { role: 'user', content: userMessage }
             ],
+            max_tokens: 200,
+            temperature: 0.7,
         });
 
-        const content = message.content[0];
-        if (content.type === 'text') {
+        const content = completion.choices[0]?.message?.content;
+        if (content) {
             // Parse the JSON response
-            const text = content.text.trim();
+            const text = content.trim();
 
             try {
                 // Try to extract JSON from the response
@@ -165,21 +168,21 @@ ${prospectInfo}`;
                         // Clean up the icebreaker text
                         return parsed.icebreaker
                             .replace(/\\n/g, '\n')
-                            .replace(/^["']|["']$/g, '')
+                            .replace(/^[\"']|[\"']$/g, '')
                             .trim();
                     }
                 }
 
                 // Fallback: if no valid JSON, try to use the text directly
-                return text.replace(/^["']|["']$/g, '').trim();
+                return text.replace(/^[\"']|[\"']$/g, '').trim();
             } catch (parseError) {
                 console.warn('Failed to parse JSON response, using raw text:', parseError);
-                return text.replace(/^["']|["']$/g, '').trim();
+                return text.replace(/^[\"']|[\"']$/g, '').trim();
             }
         }
         return null;
     } catch (error) {
-        console.error('Anthropic API Error:', error);
+        console.error('DeepSeek API Error:', error);
         throw error;
     }
 }

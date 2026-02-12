@@ -1092,3 +1092,72 @@ export async function deleteScrapingTemplate(templateId: string): Promise<{
     }
 }
 
+/**
+ * Assign leads from a scrape job to a specific customer/organization
+ * This transfers ownership without adding them to any campaign yet
+ */
+export async function assignLeadsToCustomer(params: {
+    jobId: string
+    targetOrganizationId: string
+    leadIds?: string[] // Optional: assign specific leads, or all if not provided
+}): Promise<{
+    success: boolean
+    assignedCount?: number
+    error?: string
+}> {
+    try {
+        const { userId, role, error: authError } = await getCurrentUserContext()
+
+        if (!userId) {
+            return { success: false, error: authError || 'Not authenticated' }
+        }
+
+        // Only operators and admins can assign leads to customers
+        if (role !== 'operator' && role !== 'super_admin') {
+            return { success: false, error: 'Insufficient permissions' }
+        }
+
+        const supabase = createAdminClient()
+
+        // Verify target organization exists
+        const { data: targetOrg, error: orgError } = await supabase
+            .from('organizations')
+            .select('id, name')
+            .eq('id', params.targetOrganizationId)
+            .single()
+
+        if (orgError || !targetOrg) {
+            return { success: false, error: 'Target organization not found' }
+        }
+
+        // Build query to update leads
+        let updateQuery = supabase
+            .from('leads')
+            .update({ organization_id: params.targetOrganizationId })
+
+        if (params.leadIds && params.leadIds.length > 0) {
+            // Assign specific leads
+            updateQuery = updateQuery.in('id', params.leadIds)
+        } else {
+            // Assign all leads from the job
+            updateQuery = updateQuery.eq('job_id', params.jobId)
+        }
+
+        const { data, error, count } = await updateQuery
+            .select('id')
+
+        if (error) throw error
+
+        revalidatePath(`/operator/leads/${params.jobId}`)
+        revalidatePath(`/operator/customers/${params.targetOrganizationId}`)
+
+        return {
+            success: true,
+            assignedCount: count || 0
+        }
+    } catch (error: any) {
+        console.error('Assign leads to customer error:', error)
+        return { success: false, error: error.message || 'Failed to assign leads' }
+    }
+}
+

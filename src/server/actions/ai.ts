@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { generateIcebreaker } from '@/lib/ai/anthropic'
+import { generateIcebreaker } from '@/lib/ai/deepseek'
 import { revalidatePath } from 'next/cache'
 
 /**
