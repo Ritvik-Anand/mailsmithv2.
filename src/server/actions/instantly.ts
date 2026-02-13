@@ -284,7 +284,24 @@ export async function addLeadsToInstantlyCampaign(
     campaignId: string, // Internal ID of campaign in our DB
     leadIds: string[]
 ) {
-    const supabase = await createClient()
+    // Check user role to determine which client to use
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+
+    let supabase = supabaseClient
+
+    // Use admin client for operators/admins to bypass RLS
+    if (user) {
+        const { data: userData } = await supabaseClient
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (userData?.role === 'operator' || userData?.role === 'super_admin') {
+            supabase = createAdminClient()
+        }
+    }
 
     try {
         // 1. Get campaign details
