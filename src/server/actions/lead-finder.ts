@@ -1161,3 +1161,125 @@ export async function assignLeadsToCustomer(params: {
     }
 }
 
+/**
+ * Rename a scrape job
+ */
+export async function renameScrapeJob(params: {
+    jobId: string
+    newName: string
+}): Promise<{
+    success: boolean
+    error?: string
+}> {
+    try {
+        const { role, organizationId: userOrgId, error: authError } = await getCurrentUserContext()
+
+        if (authError && authError !== 'User profile not found') {
+            return { success: false, error: authError }
+        }
+
+        // Use admin client for operators/admins
+        const supabase = (role === 'super_admin' || role === 'operator')
+            ? createAdminClient()
+            : await createClient()
+
+        // Verify job exists and user has access
+        let query = supabase
+            .from('scrape_jobs')
+            .select('id, organization_id')
+            .eq('id', params.jobId)
+
+        // Regular users can only rename their own  org's jobs
+        if (role !== 'super_admin' && role !== 'operator') {
+            if (!userOrgId) {
+                return { success: false, error: 'Not authenticated' }
+            }
+            query = query.eq('organization_id', userOrgId)
+        }
+
+        const { data: job, error: jobError } = await query.single()
+
+        if (jobError || !job) {
+            return { success: false, error: 'Job not found or access denied' }
+        }
+
+        // Update the job name
+        const { error: updateError } = await supabase
+            .from('scrape_jobs')
+            .update({ name: params.newName })
+            .eq('id', params.jobId)
+
+        if (updateError) throw updateError
+
+        revalidatePath('/operator/jobs')
+        revalidatePath(`/operator/leads/${params.jobId}`)
+
+        return { success: true }
+    } catch (error: any) {
+        console.error('Rename scrape job error:', error)
+        return { success: false, error: error.message || 'Failed to rename job' }
+    }
+}
+
+/**
+ * Create a new campaign from the push-to-campaign feature
+ */
+export async function createCampaignFromPush(params: {
+    organizationId: string
+    campaignName: string
+}): Promise<{
+    success: boolean
+    campaignId?: string
+    error?: string
+}> {
+    try {
+        const { role, error: authError } = await getCurrentUserContext()
+
+        if (authError && authError !== 'User profile not found') {
+            return { success: false, error: authError }
+        }
+
+        // Use admin client for operators/admins
+        const supabase = (role === 'super_admin' || role === 'operator')
+            ? createAdminClient()
+            : await createClient()
+
+        // Verify organization exists
+        const { data: org, error: orgError } = await supabase
+            .from('organizations')
+            .select('id')
+            .eq('id', params.organizationId)
+            .single()
+
+        if (orgError || !org) {
+            return { success: false, error: 'Organization not found' }
+        }
+
+        // Create the campaign
+        const { data: campaign, error: campaignError } = await supabase
+            .from('campaigns')
+            .insert({
+                organization_id: params.organizationId,
+                name: params.campaignName,
+                status: 'draft',
+                total_leads: 0,
+                emails_sent: 0,
+                emails_opened: 0,
+                emails_replied: 0,
+                emails_bounced: 0,
+            })
+            .select('id')
+            .single()
+
+        if (campaignError) throw campaignError
+
+        revalidatePath('/operator/campaigns')
+        revalidatePath(`/operator/leads`)
+
+        return { success: true, campaignId: campaign.id }
+    } catch (error: any) {
+        console.error('Create campaign error:', error)
+        return { success: false, error: error.message || 'Failed to create campaign' }
+    }
+}
+

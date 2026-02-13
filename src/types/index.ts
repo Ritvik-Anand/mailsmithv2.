@@ -178,6 +178,8 @@ export interface ScrapeJob {
     actor_name: string | null;
     input_params: LeadSearchFilters;
 
+    name: string | null; // Custom name for the job
+
     status: 'pending' | 'running' | 'completed' | 'failed';
     apify_run_id: string | null;
 

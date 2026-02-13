@@ -36,9 +36,12 @@ import {
     Download,
     ChevronLeft,
     ChevronRight,
-    UserPlus
+    UserPlus,
+    Pencil,
+    Check,
+    Plus
 } from 'lucide-react'
-import { getLeadsFromJob, getSearchJobStatus, retrySyncFromApify, updateLeadIcebreaker, exportLeadsToCSV, assignLeadsToCustomer } from '@/server/actions/lead-finder'
+import { getLeadsFromJob, getSearchJobStatus, retrySyncFromApify, updateLeadIcebreaker, exportLeadsToCSV, assignLeadsToCustomer, renameScrapeJob, createCampaignFromPush } from '@/server/actions/lead-finder'
 import { generateSingleIcebreaker } from '@/server/actions/ai'
 import { addLeadsToInstantlyCampaign, getOrganizationCampaigns } from '@/server/actions/instantly'
 import { getOrganizationsWithIcebreakerConfigs, getOrganizations } from '@/server/actions/organizations'
@@ -86,6 +89,14 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
     const [allOrganizations, setAllOrganizations] = useState<any[]>([])
     const [selectedTargetOrg, setSelectedTargetOrg] = useState('')
     const [isAssigning, setIsAssigning] = useState(false)
+
+    // Rename job feature
+    const [isRenamingJob, setIsRenamingJob] = useState(false)
+    const [newJobName, setNewJobName] = useState('')
+
+    // Create campaign feature
+    const [isCreatingCampaign, setIsCreatingCampaign] = useState(false)
+    const [newCampaignName, setNewCampaignName] = useState('')
 
     const fetchData = async (resetPage = false) => {
         setIsLoading(true)
@@ -371,6 +382,71 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
         }
     }
 
+    const handleRenameJob = async () => {
+        if (!newJobName.trim()) {
+            toast.error('Please enter a job name')
+            return
+        }
+
+        setIsRenamingJob(true)
+        try {
+            const result = await renameScrapeJob({
+                jobId,
+                newName: newJobName.trim()
+            })
+
+            if (result.success) {
+                toast.success('Job renamed successfully')
+                setJob(job ? { ...job, name: newJobName.trim() } : null)
+                setIsRenamingJob(false)
+                setNewJobName('')
+            } else {
+                toast.error(result.error || 'Failed to rename job')
+            }
+        } catch (error) {
+            toast.error('Error renaming job')
+        } finally {
+            setIsRenamingJob(false)
+        }
+    }
+
+    const handleCreateCampaign = async () => {
+        if (!newCampaignName.trim()) {
+            toast.error('Please enter a campaign name')
+            return
+        }
+
+        if (!job?.organization_id) {
+            toast.error('Organization not found')
+            return
+        }
+
+        setIsCreatingCampaign(true)
+        try {
+            const result = await createCampaignFromPush({
+                organizationId: job.organization_id,
+                campaignName: newCampaignName.trim()
+            })
+
+            if (result.success && result.campaignId) {
+                toast.success('Campaign created successfully')
+                // Refresh campaigns list
+                const caps = await getOrganizationCampaigns(job.organization_id)
+                setCampaigns(caps)
+                // Auto-select the new campaign
+                setSelectedCampaign(result.campaignId)
+                setIsCreatingCampaign(false)
+                setNewCampaignName('')
+            } else {
+                toast.error(result.error || 'Failed to create campaign')
+            }
+        } catch (error) {
+            toast.error('Error creating campaign')
+        } finally {
+            setIsCreatingCampaign(false)
+        }
+    }
+
 
     const handleRetrySync = async () => {
         setIsSyncing(true)
@@ -493,12 +569,63 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                 rel="noopener noreferrer"
                                 className="text-xs text-blue-500 hover:text-blue-400 font-mono flex items-center gap-1"
                             >
-                                Apify: {job.apify_run_id.slice(0, 8)}
+                                ID: {job.apify_run_id.slice(0, 8)}
                                 <ExternalLink className="h-3 w-3" />
                             </a>
                         )}
                     </div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight">Scrape Results: {job?.input_params.contact_job_title?.join(', ') || 'General Search'}</h1>
+                    {!isRenamingJob ? (
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-2xl font-bold text-white tracking-tight">
+                                {job?.name || `Scrape Results: ${job?.input_params.contact_job_title?.join(', ') || 'General Search'}`}
+                            </h1>
+                            <button
+                                onClick={() => {
+                                    setIsRenamingJob(true)
+                                    setNewJobName(job?.name || job?.input_params.contact_job_title?.join(', ') || 'General Search')
+                                }}
+                                className="p-1.5 rounded hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors"
+                                title="Rename job"
+                            >
+                                <Pencil className="h-4 w-4" />
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <Input
+                                value={newJobName}
+                                onChange={(e) => setNewJobName(e.target.value)}
+                                className="text-xl font-bold bg-zinc-900 border-zinc-700 text-white max-w-md"
+                                placeholder="Enter job name"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleRenameJob()
+                                    if (e.key === 'Escape') {
+                                        setIsRenamingJob(false)
+                                        setNewJobName('')
+                                    }
+                                }}
+                            />
+                            <Button
+                                size="sm"
+                                onClick={handleRenameJob}
+                                className="bg-primary hover:bg-primary/90"
+                            >
+                                <Check className="h-4 w-4 mr-1" />
+                                Save
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                    setIsRenamingJob(false)
+                                    setNewJobName('')
+                                }}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
                     <p className="text-zinc-500 text-sm font-medium">
                         Found {job?.leads_found || 0} potential leads. Imported {job?.leads_imported || 0} to MailSmith.
                     </p>
@@ -765,16 +892,71 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                         <CardContent className="space-y-6">
                             <div className="space-y-2">
                                 <Label className="text-xs text-zinc-400">Target Campaign</Label>
-                                <select
-                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg h-10 px-3 text-sm focus:ring-1 focus:ring-primary outline-none"
-                                    value={selectedCampaign}
-                                    onChange={(e) => setSelectedCampaign(e.target.value)}
-                                >
-                                    <option value="">Select a campaign...</option>
-                                    {campaigns.map(cap => (
-                                        <option key={cap.id} value={cap.id}>{cap.name}</option>
-                                    ))}
-                                </select>
+                                {!isCreatingCampaign ? (
+                                    <>
+                                        <select
+                                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg h-10 px-3 text-sm focus:ring-1 focus:ring-primary outline-none"
+                                            value={selectedCampaign}
+                                            onChange={(e) => {
+                                                if (e.target.value === '__create_new__') {
+                                                    setIsCreatingCampaign(true)
+                                                } else {
+                                                    setSelectedCampaign(e.target.value)
+                                                }
+                                            }}
+                                        >
+                                            <option value="">Select a campaign...</option>
+                                            <option value="__create_new__" className="text-primary font-bold">
+                                                ➕ Create New Campaign
+                                            </option>
+                                            {campaigns.map(cap => (
+                                                <option key={cap.id} value={cap.id}>{cap.name}</option>
+                                            ))}
+                                        </select>
+                                    </>
+                                ) : (
+                                    <div className="space-y-2 p-3 bg-zinc-900/50 border border-primary/20 rounded-lg">
+                                        <div className="flex items-center gap-2 text-xs text-primary font-bold mb-2">
+                                            <Plus className="h-3 w-3" />
+                                            Create New Campaign
+                                        </div>
+                                        <Input
+                                            value={newCampaignName}
+                                            onChange={(e) => setNewCampaignName(e.target.value)}
+                                            className="bg-zinc-950 border-zinc-700 text-sm"
+                                            placeholder="Enter campaign name"
+                                            autoFocus
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') handleCreateCampaign()
+                                                if (e.key === 'Escape') {
+                                                    setIsCreatingCampaign(false)
+                                                    setNewCampaignName('')
+                                                }
+                                            }}
+                                        />
+                                        <div className="flex gap-2">
+                                            <Button
+                                                size="sm"
+                                                onClick={handleCreateCampaign}
+                                                className="flex-1 bg-primary hover:bg-primary/90"
+                                            >
+                                                <Check className="h-3 w-3 mr-1" />
+                                                Create
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                    setIsCreatingCampaign(false)
+                                                    setNewCampaignName('')
+                                                }}
+                                                className="border-zinc-700"
+                                            >
+                                                Cancel
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-4 pt-2">
