@@ -1223,6 +1223,7 @@ export async function renameScrapeJob(params: {
 
 /**
  * Create a new campaign from the push-to-campaign feature
+ * Creates campaign in BOTH Instantly and our database for backup and immediate readiness
  */
 export async function createCampaignFromPush(params: {
     organizationId: string
@@ -1255,13 +1256,29 @@ export async function createCampaignFromPush(params: {
             return { success: false, error: 'Organization not found' }
         }
 
-        // Create the campaign
+        // Import instantly client
+        const { instantly } = await import('@/lib/instantly/client')
+
+        // 1. Create campaign in Instantly first
+        let instantlyCampaignId: string | null = null
+        try {
+            const instantlyResponse = await instantly.createCampaign(params.campaignName)
+            instantlyCampaignId = instantlyResponse.id
+            console.log('[CreateCampaign] Created in Instantly:', instantlyCampaignId)
+        } catch (instantlyError: any) {
+            console.error('[CreateCampaign] Instantly API error:', instantlyError)
+            // Continue anyway - we'll create a draft campaign in our DB
+            console.warn('[CreateCampaign] Creating draft campaign without Instantly link')
+        }
+
+        // 2. Create campaign in our database
         const { data: campaign, error: campaignError } = await supabase
             .from('campaigns')
             .insert({
                 organization_id: params.organizationId,
                 name: params.campaignName,
-                status: 'draft',
+                status: instantlyCampaignId ? 'active' : 'draft',
+                instantly_campaign_id: instantlyCampaignId,
                 total_leads: 0,
                 emails_sent: 0,
                 emails_opened: 0,
@@ -1276,10 +1293,12 @@ export async function createCampaignFromPush(params: {
         revalidatePath('/operator/campaigns')
         revalidatePath(`/operator/leads`)
 
-        return { success: true, campaignId: campaign.id }
+        return {
+            success: true,
+            campaignId: campaign.id
+        }
     } catch (error: any) {
         console.error('Create campaign error:', error)
         return { success: false, error: error.message || 'Failed to create campaign' }
     }
 }
-
