@@ -1140,7 +1140,7 @@ export async function assignLeadsToCustomer(params: {
             updateQuery = updateQuery.in('id', params.leadIds)
         } else {
             // Assign all leads from the job
-            updateQuery = updateQuery.eq('job_id', params.jobId)
+            updateQuery = updateQuery.eq('scrape_job_id', params.jobId)
         }
 
         const { data, error, count } = await updateQuery
