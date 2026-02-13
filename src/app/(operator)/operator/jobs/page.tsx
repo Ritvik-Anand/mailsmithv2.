@@ -186,7 +186,7 @@ export default function OperatorJobsPage() {
                                     <div className="flex items-center gap-4">
                                         {/* Status Icon */}
                                         <div className={`h-12 w-12 rounded-lg flex items-center justify-center ${job.status === 'running' || job.status === 'pending' ? 'bg-amber-500/10' :
-                                                job.status === 'completed' ? 'bg-emerald-500/10' : 'bg-red-500/10'
+                                            job.status === 'completed' ? 'bg-emerald-500/10' : 'bg-red-500/10'
                                             }`}>
                                             {getStatusIcon(job.status)}
                                         </div>
@@ -202,7 +202,7 @@ export default function OperatorJobsPage() {
                                                 </span>
                                             </div>
                                             <p className="text-sm font-bold text-white truncate">
-                                                {job.input_params.contact_job_title?.join(', ') || 'General Search'}
+                                                {job.name || job.input_params.contact_job_title?.join(', ') || 'General Search'}
                                             </p>
                                             <p className="text-xs text-zinc-500 mt-1">
                                                 {new Date(job.created_at).toLocaleString()}

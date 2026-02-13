@@ -177,7 +177,26 @@ export async function launchCampaign(data: {
  * Fetches campaigns for a specific organization.
  */
 export async function getOrganizationCampaigns(organizationId: string) {
-    const supabase = await createClient()
+    // Check if the current user is an operator/admin
+    // This is a simple check - we can improve it later with proper auth context
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+
+    let supabase = supabaseClient
+
+    // If user exists, check their role
+    if (user) {
+        const { data: userData } = await supabaseClient
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        // Use admin client for operators and super_admins to bypass RLS
+        if (userData?.role === 'operator' || userData?.role === 'super_admin') {
+            supabase = createAdminClient()
+        }
+    }
 
     const { data, error } = await supabase
         .from('campaigns')
