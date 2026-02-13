@@ -339,7 +339,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
         try {
             const result = await addLeadsToInstantlyCampaign(selectedCampaign, readyLeads.map(l => l.id))
             if (result.success) {
-                toast.success(`Successfully pushed ${result.count} leads to Instantly`)
+                toast.success(result.message || `Successfully pushed ${result.count} leads to campaign`)
                 fetchData()
             } else {
                 toast.error(result.error || 'Failed to push leads')

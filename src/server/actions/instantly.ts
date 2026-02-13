@@ -290,12 +290,12 @@ export async function addLeadsToInstantlyCampaign(
         // 1. Get campaign details
         const { data: campaign, error: campaignError } = await supabase
             .from('campaigns')
-            .select('instantly_campaign_id')
+            .select('instantly_campaign_id, name')
             .eq('id', campaignId)
             .single()
 
-        if (campaignError || !campaign?.instantly_campaign_id) {
-            throw new Error('Campaign not found or not linked to Instantly')
+        if (campaignError || !campaign) {
+            throw new Error('Campaign not found')
         }
 
         // 2. Get lead details
@@ -308,35 +308,44 @@ export async function addLeadsToInstantlyCampaign(
             throw new Error('No leads found to add')
         }
 
-        // 3. Format leads for Instantly
-        const formattedLeads = leads.map(lead => ({
-            email: lead.email,
-            first_name: lead.first_name,
-            last_name: lead.last_name,
-            company_name: lead.company_name,
-            job_title: lead.job_title,
-            linkedin_url: lead.linkedin_url,
-            custom_variables: {
-                icebreaker: lead.icebreaker || '',
-                // Add any other custom variables here
-                ...(lead.enrichment_data || {})
-            }
-        }))
+        // 3. If campaign is linked to Instantly, push leads there
+        if (campaign.instantly_campaign_id) {
+            // Format leads for Instantly
+            const formattedLeads = leads.map(lead => ({
+                email: lead.email,
+                first_name: lead.first_name,
+                last_name: lead.last_name,
+                company_name: lead.company_name,
+                job_title: lead.job_title,
+                linkedin_url: lead.linkedin_url,
+                custom_variables: {
+                    icebreaker: lead.icebreaker || '',
+                    // Add any other custom variables here
+                    ...(lead.enrichment_data || {})
+                }
+            }))
 
-        // 4. Call Instantly API
-        await instantly.addLeadsToCampaign(campaign.instantly_campaign_id, formattedLeads)
+            // Call Instantly API
+            await instantly.addLeadsToCampaign(campaign.instantly_campaign_id, formattedLeads)
+        }
 
-        // 5. Update lead status in our DB
+        // 4. Update lead status in our DB (whether or not it's linked to Instantly)
         await supabase
             .from('leads')
             .update({
                 campaign_id: campaignId,
-                campaign_status: 'queued'
+                campaign_status: campaign.instantly_campaign_id ? 'queued' : 'not_added'
             })
             .in('id', leadIds)
 
         revalidatePath('/operator/leads')
-        return { success: true, count: leads.length }
+        return {
+            success: true,
+            count: leads.length,
+            message: campaign.instantly_campaign_id
+                ? `Added ${leads.length} leads to campaign`
+                : `Assigned ${leads.length} leads to draft campaign. Link to Instantly to send emails.`
+        }
     } catch (error: any) {
         console.error('Error adding leads to campaign:', error)
         return { success: false, error: error.message }
