@@ -213,6 +213,49 @@ export async function getOrganizationCampaigns(organizationId: string) {
 }
 
 /**
+ * Deletes a campaign
+ */
+export async function deleteCampaign(campaignId: string) {
+    // Check if the current user is an operator/admin
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+
+    let supabase = supabaseClient
+
+    // If user exists, check their role
+    if (user) {
+        const { data: userData } = await supabaseClient
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        // Use admin client for operators and super_admins to bypass RLS
+        if (userData?.role === 'operator' || userData?.role === 'super_admin') {
+            supabase = createAdminClient()
+        }
+    }
+
+    try {
+        const { error } = await supabase
+            .from('campaigns')
+            .delete()
+            .eq('id', campaignId)
+
+        if (error) throw error
+
+        revalidatePath('/operator/campaigns')
+        revalidatePath('/portal/campaigns')
+
+        return { success: true }
+    } catch (error: any) {
+        console.error('Error deleting campaign:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+
+/**
  * Fetches all outreach nodes from the local database.
  * Usually called by super admins to see system-wide capacity.
  */

@@ -20,7 +20,7 @@ import {
     ChevronRight
 } from 'lucide-react'
 import { getOrganizations } from '@/server/actions/organizations'
-import { getOrganizationCampaigns } from '@/server/actions/instantly'
+import { getOrganizationCampaigns, deleteCampaign } from '@/server/actions/instantly'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -144,59 +144,81 @@ export default function OperatorCampaignsPage() {
                     </Link>
                 </div>
             ) : (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="space-y-3">
                     {campaigns.map((campaign) => (
                         <Card
                             key={campaign.id}
-                            className="bg-zinc-950 border-zinc-800 hover:border-zinc-700 transition-all group overflow-hidden shadow-none cursor-pointer"
-                            onClick={() => window.location.href = `/operator/campaigns/${campaign.id}`}
+                            className="bg-zinc-950 border-zinc-800 hover:border-zinc-700 transition-all group overflow-hidden shadow-none"
                         >
-                            <CardHeader className="p-5 pb-2">
-                                <div className="flex items-start justify-between">
-                                    <Badge variant="outline" className={cn("text-[10px] font-black uppercase tracking-tighter px-2", getStatusStyle(campaign.status))}>
-                                        {campaign.status}
-                                    </Badge>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500">
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="bg-zinc-950 border-zinc-900">
-                                            <DropdownMenuItem className="text-xs font-bold text-zinc-400">View Logs</DropdownMenuItem>
-                                            <DropdownMenuItem className="text-xs font-bold text-zinc-400">Edit Template</DropdownMenuItem>
-                                            <DropdownMenuItem className="text-xs font-bold text-amber-500">Pause Campaign</DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                                <CardTitle className="text-base font-bold text-zinc-200 mt-3 truncate">{campaign.name}</CardTitle>
-                                <CardDescription className="text-[11px] text-zinc-600 font-mono">ID: {campaign.instantly_campaign_id}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-5 pt-4 space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Sent</p>
-                                        <p className="text-sm font-bold text-zinc-300">{campaign.emails_sent || 0}</p>
+                            <CardContent className="p-5">
+                                <div className="flex items-center gap-6">
+                                    {/* Status Badge */}
+                                    <div className="flex-shrink-0">
+                                        <Badge variant="outline" className={cn("text-[10px] font-black uppercase tracking-tighter px-2.5 py-1", getStatusStyle(campaign.status))}>
+                                            {campaign.status}
+                                        </Badge>
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Replies</p>
-                                        <p className="text-sm font-bold text-emerald-500">{campaign.emails_replied || 0}</p>
-                                    </div>
-                                </div>
 
-                                <div className="pt-4 border-t border-zinc-900 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <div className="h-6 w-6 rounded flex items-center justify-center bg-zinc-900">
-                                            <TrendingUp className="h-3 w-3 text-zinc-500" />
-                                        </div>
-                                        <span className="text-[10px] font-bold text-zinc-500">{campaign.emails_opened || 0}% Open Rate</span>
+                                    {/* Campaign Info */}
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-base font-bold text-zinc-200 truncate">{campaign.name}</h3>
+                                        <p className="text-[11px] text-zinc-600 font-mono mt-0.5">ID: {campaign.id.slice(0, 13)}...</p>
                                     </div>
-                                    <Link href={`/operator/campaigns/${campaign.id}`} onClick={(e) => e.stopPropagation()}>
-                                        <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] font-bold text-zinc-600 hover:text-white uppercase tracking-wider">
-                                            View Details
-                                            <ChevronRight className="ml-1 h-3 w-3" />
+
+                                    {/* Stats */}
+                                    <div className="hidden md:flex items-center gap-8">
+                                        <div className="text-center">
+                                            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Sent</p>
+                                            <p className="text-sm font-bold text-zinc-300 mt-1">{campaign.emails_sent || 0}</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Replies</p>
+                                            <p className="text-sm font-bold text-emerald-500 mt-1">{campaign.emails_replied || 0}</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Open Rate</p>
+                                            <p className="text-sm font-bold text-blue-500 mt-1">{campaign.emails_opened || 0}%</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex items-center gap-2">
+                                        <Link href={`/operator/campaigns/${campaign.id}`}>
+                                            <Button variant="outline" size="sm" className="h-8 px-3 text-[10px] font-bold border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900 uppercase tracking-wider">
+                                                View Details
+                                                <ChevronRight className="ml-1 h-3 w-3" />
+                                            </Button>
+                                        </Link>
+
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 w-8 p-0 text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                                            onClick={async (e) => {
+                                                e.stopPropagation()
+                                                if (confirm(`Are you sure you want to delete "${campaign.name}"? This action cannot be undone.`)) {
+                                                    try {
+                                                        const result = await deleteCampaign(campaign.id)
+                                                        if (result.success) {
+                                                            toast.success('Campaign deleted successfully')
+                                                            // Refresh campaigns list
+                                                            const data = await getOrganizationCampaigns(selectedOrgId)
+                                                            setCampaigns(data)
+                                                        } else {
+                                                            toast.error(result.error || 'Failed to delete campaign')
+                                                        }
+                                                    } catch (error) {
+                                                        toast.error('Failed to delete campaign')
+                                                    }
+                                                }
+                                            }}
+                                            title="Delete campaign"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
                                         </Button>
-                                    </Link>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
