@@ -4,6 +4,13 @@ import { useState, useEffect, use, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -596,6 +603,24 @@ Best,
     ])
     const [selectedStep, setSelectedStep] = useState(sequences[0])
     const bodyRef = useRef<HTMLTextAreaElement>(null)
+    const [showPreview, setShowPreview] = useState(false)
+
+    const SAMPLE_VARIABLES: Record<string, string> = {
+        '{{firstName}}': 'Alex',
+        '{{lastName}}': 'Johnson',
+        '{{companyName}}': 'Acme Corp',
+        '{{jobTitle}}': 'Head of Marketing',
+        '{{personalization}}': 'Saw your recent post on LinkedIn about scaling content ops — really resonated with some of the challenges we help teams solve.',
+        '{{sendingAccountFirstName}}': 'Ritvik',
+    }
+
+    const replaceVariables = (text: string) => {
+        let result = text
+        for (const [key, value] of Object.entries(SAMPLE_VARIABLES)) {
+            result = result.replaceAll(key, value)
+        }
+        return result
+    }
 
     const addStep = () => {
         const newStep = {
@@ -716,7 +741,12 @@ Best,
                                     placeholder="Enter subject line..."
                                 />
                             </div>
-                            <Button variant="outline" size="sm" className="gap-2 border-zinc-800">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2 border-zinc-800"
+                                onClick={() => setShowPreview(true)}
+                            >
                                 <Eye className="h-4 w-4" />
                                 Preview
                             </Button>
@@ -772,6 +802,47 @@ Best,
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Preview Dialog */}
+            <Dialog open={showPreview} onOpenChange={setShowPreview}>
+                <DialogContent className="sm:max-w-2xl bg-zinc-950 border-zinc-800 max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="text-white">Email Preview</DialogTitle>
+                        <DialogDescription className="text-zinc-500">
+                            Preview with sample data — variables are replaced with example values.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-2">
+                        {/* Subject */}
+                        <div className="space-y-1">
+                            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Subject</span>
+                            <div className="p-3 bg-zinc-900 rounded-lg border border-zinc-800 text-sm text-white font-medium">
+                                {replaceVariables(selectedStep.subject) || <span className="text-zinc-600 italic">No subject</span>}
+                            </div>
+                        </div>
+                        {/* Body */}
+                        <div className="space-y-1">
+                            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Body</span>
+                            <div className="p-4 bg-white rounded-lg text-zinc-900 text-sm leading-relaxed whitespace-pre-wrap min-h-[200px]">
+                                {replaceVariables(selectedStep.body) || <span className="text-zinc-400 italic">No body content</span>}
+                            </div>
+                        </div>
+                        {/* Variable mapping reference */}
+                        <div className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-800">
+                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Sample values used</p>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                                {Object.entries(SAMPLE_VARIABLES).map(([key, value]) => (
+                                    <div key={key} className="flex items-center gap-2 text-[11px]">
+                                        <code className="text-amber-400 bg-zinc-800 px-1.5 py-0.5 rounded">{key}</code>
+                                        <span className="text-zinc-600">→</span>
+                                        <span className="text-zinc-400 truncate">{value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
