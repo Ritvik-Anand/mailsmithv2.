@@ -43,7 +43,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { getCampaignById } from '@/server/actions/campaigns'
+import { getCampaignById, getCampaignLeads } from '@/server/actions/campaigns'
 
 const TABS = [
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
@@ -390,26 +390,48 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
     const [leads, setLeads] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
+    const [totalLeads, setTotalLeads] = useState(0)
+    const [currentPage, setCurrentPage] = useState(1)
+    const pageSize = 50
 
     useEffect(() => {
-        // TODO: Fetch leads attached to this campaign
-        setLeads([
-            { id: '1', email: 'brock@growecommerce.com', first_name: 'Brock', last_name: 'Bogenschutz', company: 'Grow Ecommerce', status: 'Email opened', provider: 'Microsoft' },
-            { id: '2', email: 'saqib@sacareconsultancy.com', first_name: 'Saqib', last_name: 'Cpcs', company: 'Sa Care Consultancy', status: 'Email opened', provider: 'Other' },
-            { id: '3', email: 'ridham@highen.com', first_name: 'Trent', last_name: 'Mclaren', company: 'Highen Inc.', status: 'Email opened', provider: 'Google' },
-            { id: '4', email: 'bijan@zadvancedcomputing.com', first_name: 'Bijan', last_name: 'Tadayon', company: 'Z Advanced Computing', status: 'Email opened', provider: 'Microsoft' },
-        ])
-        setIsLoading(false)
-    }, [campaignId])
+        async function loadLeads() {
+            setIsLoading(true)
+            try {
+                const result = await getCampaignLeads(campaignId, currentPage, pageSize)
+                setLeads(result.leads || [])
+                setTotalLeads(result.total || 0)
+            } catch (error) {
+                console.error('Error loading leads:', error)
+                toast.error('Failed to load leads')
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        loadLeads()
+    }, [campaignId, currentPage])
 
-    const getProviderIcon = (provider: string) => {
-        switch (provider.toLowerCase()) {
-            case 'google':
-                return <span className="text-blue-400 font-bold text-xs">G</span>
-            case 'microsoft':
-                return <span className="text-blue-500 font-bold text-xs">M</span>
+    const filteredLeads = searchQuery
+        ? leads.filter(lead =>
+            (lead.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (lead.first_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (lead.last_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (lead.company_name || '').toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        : leads
+
+    const getStatusBadge = (status: string) => {
+        switch (status) {
+            case 'sent':
+                return <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[10px]"><Send className="h-3 w-3 mr-1" />{status}</Badge>
+            case 'opened':
+                return <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px]"><Eye className="h-3 w-3 mr-1" />{status}</Badge>
+            case 'replied':
+                return <Badge variant="outline" className="bg-amber-500/10 text-amber-400 border-amber-500/20 text-[10px]"><Reply className="h-3 w-3 mr-1" />{status}</Badge>
+            case 'bounced':
+                return <Badge variant="outline" className="bg-red-500/10 text-red-400 border-red-500/20 text-[10px]"><XCircle className="h-3 w-3 mr-1" />{status}</Badge>
             default:
-                return <span className="text-zinc-500 font-bold text-xs">?</span>
+                return <Badge variant="outline" className="bg-zinc-500/10 text-zinc-400 border-zinc-500/20 text-[10px]">{status || 'queued'}</Badge>
         }
     }
 
@@ -426,16 +448,8 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
                     />
                     <div className="flex items-center gap-4 text-xs text-zinc-500">
                         <span className="flex items-center gap-1">
-                            <Send className="h-3 w-3" />
-                            6.2K
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <Mail className="h-3 w-3" />
-                            3K
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <XCircle className="h-3 w-3" />
-                            1
+                            <Users className="h-3 w-3" />
+                            {totalLeads.toLocaleString()} total
                         </span>
                     </div>
                 </div>
@@ -462,50 +476,78 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
                                         <Checkbox />
                                     </th>
                                     <th className="text-left p-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Email</th>
-                                    <th className="text-left p-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Provider</th>
-                                    <th className="text-left p-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Status</th>
                                     <th className="text-left p-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Contact</th>
                                     <th className="text-left p-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Company</th>
+                                    <th className="text-left p-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Job Title</th>
+                                    <th className="text-left p-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {leads.map((lead, idx) => (
-                                    <tr
-                                        key={lead.id}
-                                        className="border-b border-zinc-900 hover:bg-zinc-900/30 transition-colors cursor-pointer"
-                                    >
-                                        <td className="p-3 text-zinc-500">{idx + 1}</td>
-                                        <td className="p-3">
-                                            <span className="text-blue-400 hover:underline">{lead.email}</span>
+                                {isLoading ? (
+                                    <tr>
+                                        <td colSpan={6} className="p-8 text-center">
+                                            <Loader2 className="h-5 w-5 animate-spin text-amber-500 mx-auto" />
+                                            <p className="text-xs text-zinc-500 mt-2">Loading leads...</p>
                                         </td>
-                                        <td className="p-3">
-                                            <div className="flex items-center gap-2">
-                                                {getProviderIcon(lead.provider)}
-                                                <span className="text-zinc-400">{lead.provider}</span>
-                                            </div>
-                                        </td>
-                                        <td className="p-3">
-                                            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px]">
-                                                <Eye className="h-3 w-3 mr-1" />
-                                                {lead.status}
-                                            </Badge>
-                                        </td>
-                                        <td className="p-3 text-zinc-300">{lead.first_name} {lead.last_name}</td>
-                                        <td className="p-3 text-zinc-300">{lead.company}</td>
                                     </tr>
-                                ))}
+                                ) : filteredLeads.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="p-8 text-center text-zinc-500 text-sm">
+                                            {searchQuery ? 'No leads match your search' : 'No leads assigned to this campaign'}
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    filteredLeads.map((lead, idx) => (
+                                        <tr
+                                            key={lead.id}
+                                            className="border-b border-zinc-900 hover:bg-zinc-900/30 transition-colors cursor-pointer"
+                                        >
+                                            <td className="p-3 text-zinc-500">{(currentPage - 1) * pageSize + idx + 1}</td>
+                                            <td className="p-3">
+                                                <span className="text-blue-400 hover:underline">{lead.email}</span>
+                                            </td>
+                                            <td className="p-3 text-zinc-300">{lead.first_name} {lead.last_name}</td>
+                                            <td className="p-3 text-zinc-300">{lead.company_name || '—'}</td>
+                                            <td className="p-3 text-zinc-400">{lead.job_title || '—'}</td>
+                                            <td className="p-3">
+                                                {getStatusBadge(lead.campaign_status)}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
                 </CardContent>
             </Card>
 
-            <div className="flex items-center justify-center gap-4">
-                <span className="text-xs text-zinc-500">Showing {leads.length} of 6,200</span>
-                <Button variant="outline" size="sm" className="border-zinc-800">
-                    Load More
-                </Button>
-            </div>
+            {totalLeads > pageSize && (
+                <div className="flex items-center justify-center gap-4">
+                    <span className="text-xs text-zinc-500">
+                        Showing {((currentPage - 1) * pageSize) + 1}–{Math.min(currentPage * pageSize, totalLeads)} of {totalLeads.toLocaleString()}
+                    </span>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-zinc-800"
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(p => p - 1)}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-zinc-800"
+                            disabled={currentPage * pageSize >= totalLeads}
+                            onClick={() => setCurrentPage(p => p + 1)}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

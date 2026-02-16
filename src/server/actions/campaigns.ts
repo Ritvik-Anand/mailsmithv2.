@@ -332,7 +332,23 @@ export async function upsertSchedule(
  * Get leads attached to a campaign
  */
 export async function getCampaignLeads(campaignId: string, page: number = 1, limit: number = 50) {
-    const supabase = await createClient()
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+
+    let supabase = supabaseClient
+
+    // Use admin client for operators and super_admins to bypass RLS
+    if (user) {
+        const { data: userData } = await supabaseClient
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (userData?.role === 'operator' || userData?.role === 'super_admin') {
+            supabase = createAdminClient()
+        }
+    }
 
     const from = (page - 1) * limit
     const to = from + limit - 1
