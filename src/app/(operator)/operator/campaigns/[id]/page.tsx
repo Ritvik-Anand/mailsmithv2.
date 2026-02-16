@@ -604,6 +604,9 @@ Best,
     const [selectedStep, setSelectedStep] = useState(sequences[0])
     const bodyRef = useRef<HTMLTextAreaElement>(null)
     const [showPreview, setShowPreview] = useState(false)
+    const [previewLeads, setPreviewLeads] = useState<any[]>([])
+    const [selectedLeadId, setSelectedLeadId] = useState<string>('sample')
+    const [loadingPreviewLeads, setLoadingPreviewLeads] = useState(false)
 
     const SAMPLE_VARIABLES: Record<string, string> = {
         '{{firstName}}': 'Alex',
@@ -614,12 +617,40 @@ Best,
         '{{sendingAccountFirstName}}': 'Ritvik',
     }
 
+    const getActiveVariables = (): Record<string, string> => {
+        if (selectedLeadId === 'sample') return SAMPLE_VARIABLES
+        const lead = previewLeads.find(l => l.id === selectedLeadId)
+        if (!lead) return SAMPLE_VARIABLES
+        return {
+            '{{firstName}}': lead.first_name || '',
+            '{{lastName}}': lead.last_name || '',
+            '{{companyName}}': lead.company_name || '',
+            '{{jobTitle}}': lead.job_title || '',
+            '{{personalization}}': lead.icebreaker || '(No icebreaker generated)',
+            '{{sendingAccountFirstName}}': 'Ritvik',
+        }
+    }
+
     const replaceVariables = (text: string) => {
         let result = text
-        for (const [key, value] of Object.entries(SAMPLE_VARIABLES)) {
+        const vars = getActiveVariables()
+        for (const [key, value] of Object.entries(vars)) {
             result = result.replaceAll(key, value)
         }
         return result
+    }
+
+    const openPreview = async () => {
+        setShowPreview(true)
+        setLoadingPreviewLeads(true)
+        try {
+            const result = await getCampaignLeads(campaignId, 1, 20)
+            setPreviewLeads(result.leads || [])
+        } catch (error) {
+            console.error('Error loading preview leads:', error)
+        } finally {
+            setLoadingPreviewLeads(false)
+        }
     }
 
     const addStep = () => {
@@ -745,7 +776,7 @@ Best,
                                 variant="outline"
                                 size="sm"
                                 className="gap-2 border-zinc-800"
-                                onClick={() => setShowPreview(true)}
+                                onClick={openPreview}
                             >
                                 <Eye className="h-4 w-4" />
                                 Preview
@@ -804,15 +835,35 @@ Best,
             </div>
 
             {/* Preview Dialog */}
-            <Dialog open={showPreview} onOpenChange={setShowPreview}>
+            <Dialog open={showPreview} onOpenChange={(open) => { setShowPreview(open); if (!open) setSelectedLeadId('sample') }}>
                 <DialogContent className="sm:max-w-2xl bg-zinc-950 border-zinc-800 max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="text-white">Email Preview</DialogTitle>
                         <DialogDescription className="text-zinc-500">
-                            Preview with sample data — variables are replaced with example values.
+                            See how this email will look for a specific lead.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 mt-2">
+                        {/* Lead Selector */}
+                        <div className="space-y-1">
+                            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Preview as</span>
+                            <select
+                                value={selectedLeadId}
+                                onChange={(e) => setSelectedLeadId(e.target.value)}
+                                className="w-full h-9 px-3 text-sm bg-zinc-900 border border-zinc-800 rounded-md text-white focus:border-primary focus:outline-none"
+                            >
+                                <option value="sample">📋 Sample Data (Alex Johnson)</option>
+                                {loadingPreviewLeads ? (
+                                    <option disabled>Loading leads...</option>
+                                ) : (
+                                    previewLeads.map((lead) => (
+                                        <option key={lead.id} value={lead.id}>
+                                            {lead.first_name} {lead.last_name} — {lead.email}
+                                        </option>
+                                    ))
+                                )}
+                            </select>
+                        </div>
                         {/* Subject */}
                         <div className="space-y-1">
                             <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Subject</span>
@@ -829,13 +880,15 @@ Best,
                         </div>
                         {/* Variable mapping reference */}
                         <div className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-800">
-                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Sample values used</p>
+                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">
+                                {selectedLeadId === 'sample' ? 'Sample values used' : 'Lead data used'}
+                            </p>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                                {Object.entries(SAMPLE_VARIABLES).map(([key, value]) => (
+                                {Object.entries(getActiveVariables()).map(([key, value]) => (
                                     <div key={key} className="flex items-center gap-2 text-[11px]">
                                         <code className="text-amber-400 bg-zinc-800 px-1.5 py-0.5 rounded">{key}</code>
                                         <span className="text-zinc-600">→</span>
-                                        <span className="text-zinc-400 truncate">{value}</span>
+                                        <span className="text-zinc-400 truncate">{value || <span className="italic text-zinc-600">(empty)</span>}</span>
                                     </div>
                                 ))}
                             </div>
