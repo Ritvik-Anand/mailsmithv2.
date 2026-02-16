@@ -13,7 +13,23 @@ import { revalidatePath } from 'next/cache'
  * Get a single campaign by ID with all related data
  */
 export async function getCampaignById(campaignId: string) {
-    const supabase = await createClient()
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+
+    let supabase = supabaseClient
+
+    // Use admin client for operators and super_admins to bypass RLS
+    if (user) {
+        const { data: userData } = await supabaseClient
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (userData?.role === 'operator' || userData?.role === 'super_admin') {
+            supabase = createAdminClient()
+        }
+    }
 
     const { data: campaign, error } = await supabase
         .from('campaigns')

@@ -43,25 +43,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
-
-// Placeholder data - will be replaced with real API calls
-const MOCK_CAMPAIGN = {
-    id: 'demo',
-    name: 'Q1 SaaS Founders Outreach',
-    status: 'active',
-    instantly_status: 'active',
-    organization_id: 'org-1',
-    total_leads: 1290,
-    emails_sent: 1290,
-    emails_opened: 943,
-    emails_replied: 12,
-    emails_bounced: 3,
-    daily_limit: 450,
-    stop_on_reply: true,
-    open_tracking: true,
-    link_tracking: false,
-    send_as_text: false,
-}
+import { getCampaignById } from '@/server/actions/campaigns'
 
 const TABS = [
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
@@ -75,14 +57,30 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     const resolvedParams = use(params)
     const router = useRouter()
     const [activeTab, setActiveTab] = useState('analytics')
-    const [campaign, setCampaign] = useState<any>(MOCK_CAMPAIGN)
+    const [campaign, setCampaign] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [isPausing, setIsPausing] = useState(false)
 
     useEffect(() => {
-        // TODO: Fetch campaign data from API
-        setIsLoading(false)
-    }, [resolvedParams.id])
+        async function loadCampaign() {
+            setIsLoading(true)
+            try {
+                const result = await getCampaignById(resolvedParams.id)
+                if (result.success && result.campaign) {
+                    setCampaign(result.campaign)
+                } else {
+                    toast.error('Campaign not found')
+                    router.push('/operator/campaigns')
+                }
+            } catch (error) {
+                console.error('Error loading campaign:', error)
+                toast.error('Failed to load campaign')
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        loadCampaign()
+    }, [resolvedParams.id, router])
 
     const handleStatusToggle = async () => {
         setIsPausing(true)
@@ -114,6 +112,14 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         return (
             <div className="flex items-center justify-center h-96">
                 <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+            </div>
+        )
+    }
+
+    if (!campaign) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <p className="text-zinc-500">Campaign not found</p>
             </div>
         )
     }
@@ -219,24 +225,29 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 // ANALYTICS TAB
 // ============================================================================
 function AnalyticsTab({ campaign }: { campaign: any }) {
-    const openRate = campaign.emails_sent > 0
-        ? ((campaign.emails_opened / campaign.emails_sent) * 100).toFixed(1)
+    const emailsSent = campaign.emails_sent || 0
+    const emailsOpened = campaign.emails_opened || 0
+    const emailsReplied = campaign.emails_replied || 0
+    const emailsBounced = campaign.emails_bounced || 0
+
+    const openRate = emailsSent > 0
+        ? ((emailsOpened / emailsSent) * 100).toFixed(1)
         : '0'
-    const replyRate = campaign.emails_sent > 0
-        ? ((campaign.emails_replied / campaign.emails_sent) * 100).toFixed(2)
+    const replyRate = emailsSent > 0
+        ? ((emailsReplied / emailsSent) * 100).toFixed(2)
         : '0'
 
     const metrics = [
         {
             label: 'Sequence Started',
-            value: campaign.emails_sent.toLocaleString(),
+            value: emailsSent.toLocaleString(),
             icon: Send,
             color: 'text-blue-400'
         },
         {
             label: 'Open Rate',
             value: `${openRate}%`,
-            subValue: campaign.emails_opened.toLocaleString(),
+            subValue: emailsOpened.toLocaleString(),
             icon: Eye,
             color: 'text-emerald-400'
         },
@@ -248,14 +259,14 @@ function AnalyticsTab({ campaign }: { campaign: any }) {
         },
         {
             label: 'Replies',
-            value: campaign.emails_replied.toString(),
+            value: emailsReplied.toString(),
             subValue: `${replyRate}%`,
             icon: Reply,
             color: 'text-amber-400'
         },
         {
             label: 'Bounced',
-            value: campaign.emails_bounced.toString(),
+            value: emailsBounced.toString(),
             icon: XCircle,
             color: 'text-red-400'
         },
@@ -352,14 +363,14 @@ function AnalyticsTab({ campaign }: { campaign: any }) {
                             <tbody>
                                 <tr className="border-b border-zinc-900">
                                     <td className="py-3 font-medium text-white">Step 1</td>
-                                    <td className="py-3 text-zinc-300">{campaign.emails_sent.toLocaleString()}</td>
+                                    <td className="py-3 text-zinc-300">{emailsSent.toLocaleString()}</td>
                                     <td className="py-3">
-                                        <span className="text-zinc-300">{campaign.emails_opened.toLocaleString()}</span>
+                                        <span className="text-zinc-300">{emailsOpened.toLocaleString()}</span>
                                         <span className="text-zinc-500 ml-2">| {openRate}%</span>
                                     </td>
                                     <td className="py-3">
-                                        <span className="text-zinc-300">{campaign.emails_replied}</span>
-                                        <span className="text-zinc-500 ml-2">| {((campaign.emails_replied / campaign.emails_sent) * 100).toFixed(2)}%</span>
+                                        <span className="text-zinc-300">{emailsReplied}</span>
+                                        <span className="text-zinc-500 ml-2">| {replyRate}%</span>
                                     </td>
                                     <td className="py-3 text-zinc-500">0 | 0%</td>
                                 </tr>
