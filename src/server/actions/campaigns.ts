@@ -139,7 +139,23 @@ export async function toggleCampaignStatus(campaignId: string) {
  * Get sequences for a campaign
  */
 export async function getCampaignSequences(campaignId: string) {
-    const supabase = await createClient()
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+
+    let supabase = supabaseClient
+
+    // Use admin client for operators and super_admins to bypass RLS
+    if (user) {
+        const { data: userData } = await supabaseClient
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (userData?.role === 'operator' || userData?.role === 'super_admin') {
+            supabase = createAdminClient()
+        }
+    }
 
     const { data, error } = await supabase
         .from('campaign_sequences')
@@ -169,11 +185,27 @@ export async function upsertSequenceStep(
         variant_label?: string
     }
 ) {
-    const supabase = await createClient()
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+
+    let supabase = supabaseClient
+
+    // Use admin client for operators and super_admins to bypass RLS
+    if (user) {
+        const { data: userData } = await supabaseClient
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (userData?.role === 'operator' || userData?.role === 'super_admin') {
+            supabase = createAdminClient()
+        }
+    }
 
     if (step.id) {
         // Update existing
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('campaign_sequences')
             .update({
                 subject: step.subject,
@@ -183,14 +215,19 @@ export async function upsertSequenceStep(
                 updated_at: new Date().toISOString()
             })
             .eq('id', step.id)
+            .select()
+            .single()
 
         if (error) {
             console.error('Error updating sequence:', error)
             return { success: false, error: error.message }
         }
+
+        revalidatePath(`/operator/campaigns/${campaignId}`)
+        return { success: true, data }
     } else {
         // Create new
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('campaign_sequences')
             .insert({
                 campaign_id: campaignId,
@@ -200,22 +237,40 @@ export async function upsertSequenceStep(
                 delay_days: step.delay_days,
                 variant_label: step.variant_label || 'A'
             })
+            .select()
+            .single()
 
         if (error) {
             console.error('Error creating sequence:', error)
             return { success: false, error: error.message }
         }
-    }
 
-    revalidatePath(`/operator/campaigns/${campaignId}`)
-    return { success: true }
+        revalidatePath(`/operator/campaigns/${campaignId}`)
+        return { success: true, data }
+    }
 }
 
 /**
  * Delete a sequence step
  */
 export async function deleteSequenceStep(stepId: string, campaignId: string) {
-    const supabase = await createClient()
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+
+    let supabase = supabaseClient
+
+    // Use admin client for operators and super_admins to bypass RLS
+    if (user) {
+        const { data: userData } = await supabaseClient
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (userData?.role === 'operator' || userData?.role === 'super_admin') {
+            supabase = createAdminClient()
+        }
+    }
 
     const { error } = await supabase
         .from('campaign_sequences')

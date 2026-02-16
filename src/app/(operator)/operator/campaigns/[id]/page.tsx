@@ -50,7 +50,8 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { getCampaignById, getCampaignLeads } from '@/server/actions/campaigns'
+import { getCampaignById, getCampaignLeads, getCampaignSequences, upsertSequenceStep, deleteSequenceStep } from '@/server/actions/campaigns'
+import { cn } from '@/lib/utils'
 
 const TABS = [
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
@@ -563,50 +564,81 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
 // SEQUENCES TAB
 // ============================================================================
 function SequencesTab({ campaignId }: { campaignId: string }) {
-    const [sequences, setSequences] = useState([
-        {
-            id: '1',
-            step: 1,
-            subject: '{{firstName}}, quick question',
-            body: `{{personalization}}
-
-This might be a long shot, but teams with complex offerings often run into the same issue:
-
-The product is strong, but the way it's explained publicly doesn't make the value obvious — which quietly hurts inbound demand and trust.
-
-We help teams fix that by building simple content systems that make complex products easy to understand and easy to buy.
-
-We've done this for 40+ tech-led businesses — one example is Plena, where content-driven distribution helped grow ~300k followers and drive a 125% increase in active users.
-
-Just curious if this is something you're actively thinking about right now, or not a focus this quarter.
-
-Thanks,
-{{sendingAccountFirstName}}`,
-            delayDays: 1,
-            variants: [{ id: '1a', label: 'A', subject: '{{firstName}}, quick question' }]
-        },
-        {
-            id: '2',
-            step: 2,
-            subject: 'One more thought',
-            body: `Hey {{firstName}},
-
-Just wanted to follow up on my last note. Didn't want it to get buried.
-
-Happy to share a few examples if helpful - no pressure either way.
-
-Best,
-{{sendingAccountFirstName}}`,
-            delayDays: 2,
-            variants: []
-        },
-    ])
-    const [selectedStep, setSelectedStep] = useState(sequences[0])
+    const [sequences, setSequences] = useState<any[]>([])
+    const [selectedStep, setSelectedStep] = useState<any>(null)
+    const [activeVariantId, setActiveVariantId] = useState<string | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
+    const [isSaving, setIsSaving] = useState(false)
     const bodyRef = useRef<HTMLTextAreaElement>(null)
     const [showPreview, setShowPreview] = useState(false)
     const [previewLeads, setPreviewLeads] = useState<any[]>([])
     const [selectedLeadId, setSelectedLeadId] = useState<string>('sample')
     const [loadingPreviewLeads, setLoadingPreviewLeads] = useState(false)
+
+    // Load sequences on mount
+    useEffect(() => {
+        loadSequences()
+    }, [campaignId])
+
+    async function loadSequences() {
+        setIsLoading(true)
+        try {
+            const data = await getCampaignSequences(campaignId)
+            if (data && data.length > 0) {
+                // Group by step_number
+                const grouped = new Map()
+                data.forEach((s: any) => {
+                    if (!grouped.has(s.step_number)) {
+                        grouped.set(s.step_number, {
+                            step: s.step_number,
+                            delayDays: s.delay_days || 2, // Use delay from first variant found
+                            variants: []
+                        })
+                    }
+                    grouped.get(s.step_number).variants.push({
+                        id: s.id,
+                        label: s.variant_label || 'A',
+                        subject: s.subject || '',
+                        body: s.body || '',
+                        delayDays: s.delay_days // Keep reference if needed
+                    })
+                })
+
+                // Sort steps by number, and variants by label (A, B, C)
+                const mapped = Array.from(grouped.values())
+                    .sort((a: any, b: any) => a.step - b.step)
+                    .map((step: any) => ({
+                        ...step,
+                        variants: step.variants.sort((a: any, b: any) => a.label.localeCompare(b.label))
+                    }))
+
+                setSequences(mapped)
+
+                // Restore selection logic
+                if (!selectedStep || !mapped.find((s: any) => s.step === selectedStep.step)) {
+                    const first = mapped[0]
+                    setSelectedStep(first)
+                    if (first?.variants[0]) setActiveVariantId(first.variants[0].id)
+                } else {
+                    const current = mapped.find((s: any) => s.step === selectedStep.step)
+                    setSelectedStep(current)
+                    // Ensure active variant is valid for this step
+                    if (!activeVariantId || !current.variants.find((v: any) => v.id === activeVariantId)) {
+                        setActiveVariantId(current.variants[0]?.id)
+                    }
+                }
+            } else {
+                setSequences([])
+                setSelectedStep(null)
+                setActiveVariantId(null)
+            }
+        } catch (error) {
+            console.error('Error loading sequences:', error)
+            toast.error('Failed to load sequences')
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
     const SAMPLE_VARIABLES: Record<string, string> = {
         '{{firstName}}': 'Alex',
@@ -631,6 +663,11 @@ Best,
         }
     }
 
+    const getActiveVariant = () => {
+        if (!selectedStep || !activeVariantId) return null
+        return selectedStep.variants.find((v: any) => v.id === activeVariantId)
+    }
+
     const replaceVariables = (text: string) => {
         let result = text
         const vars = getActiveVariables()
@@ -653,47 +690,127 @@ Best,
         }
     }
 
-    const addStep = () => {
-        const newStep = {
-            id: `${Date.now()}`,
-            step: sequences.length + 1,
+    const addStep = async () => {
+        const maxStep = sequences.length > 0 ? Math.max(...sequences.map(s => s.step)) : 0
+        const newStepNumber = maxStep + 1
+        // Create on server immediately (Variant A)
+        const newStepData = {
+            step_number: newStepNumber,
             subject: '',
             body: '',
-            delayDays: 2,
-            variants: []
+            delay_days: 2,
+            variant_label: 'A'
         }
-        setSequences([...sequences, newStep])
+
+        try {
+            const result = await upsertSequenceStep(campaignId, newStepData)
+            if (result.success && result.data) {
+                const newVariant = {
+                    id: result.data.id,
+                    label: 'A',
+                    subject: '',
+                    body: '',
+                    delayDays: 2
+                }
+                const newStep = {
+                    step: newStepNumber,
+                    delayDays: 2,
+                    variants: [newVariant]
+                }
+                const updated = [...sequences, newStep]
+                setSequences(updated)
+                setSelectedStep(newStep)
+                setActiveVariantId(newVariant.id)
+                toast.success('Step added')
+            } else {
+                toast.error('Failed to add step')
+            }
+        } catch (error) {
+            console.error('Error adding step:', error)
+            toast.error('Failed to add step')
+        }
     }
 
-    const deleteStep = (e: React.MouseEvent, stepId: string) => {
+    const addVariant = async (e: React.MouseEvent, stepGroup: any) => {
         e.stopPropagation()
-        if (sequences.length <= 1) {
-            toast.error('Campaign must have at least one step')
+        // Calculate next label
+        const labels = stepGroup.variants.map((v: any) => v.label)
+        const maxCharCode = Math.max(...labels.map((l: string) => l.charCodeAt(0)), 'A'.charCodeAt(0) - 1)
+        const nextLabel = String.fromCharCode(maxCharCode + 1)
+
+        if (labels.length >= 26) {
+            toast.error('Max variants reached (Z)')
             return
         }
-        const updated = sequences
-            .filter(s => s.id !== stepId)
-            .map((s, idx) => ({ ...s, step: idx + 1 }))
-        setSequences(updated)
-        // If the deleted step was selected, select the first remaining step
-        if (selectedStep.id === stepId) {
-            setSelectedStep(updated[0])
+
+        const newVariantData = {
+            step_number: stepGroup.step,
+            variant_label: nextLabel,
+            subject: '',
+            body: '',
+            delay_days: stepGroup.delayDays // Use step's current delay
         }
+
+        try {
+            const result = await upsertSequenceStep(campaignId, newVariantData)
+            if (result.success && result.data) {
+                loadSequences() // Reload to simplify state update logic for nested structure
+                toast.success(`Variant ${nextLabel} added`)
+            } else {
+                toast.error('Failed to add variant')
+            }
+        } catch (error) {
+            console.error('Error adding variant:', error)
+            toast.error('Failed to add variant')
+        }
+    }
+
+    const deleteStep = async (e: React.MouseEvent, step: any) => {
+        e.stopPropagation()
+        if (sequences.length <= 1) {
+            toast.warning('Campaign must have at least one step')
+            return
+        }
+        if (!confirm(`Delete Step ${step.step} and all its variants?`)) return
+
+        try {
+            // Delete all variants for this step
+            await Promise.all(step.variants.map((v: any) => deleteSequenceStep(v.id, campaignId)))
+
+            // Reload to sync step numbers and removing the step
+            loadSequences()
+            toast.success('Step deleted')
+        } catch (error) {
+            console.error('Error deleting step:', error)
+            toast.error('Failed to delete step')
+        }
+    }
+
+    const updateVariantContent = (newContent: Partial<{ subject: string, body: string }>) => {
+        // Optimistic update locally
+        if (!selectedStep || !activeVariantId) return
+
+        const updatedVariants = selectedStep.variants.map((v: any) =>
+            v.id === activeVariantId ? { ...v, ...newContent } : v
+        )
+        const updatedStep = { ...selectedStep, variants: updatedVariants }
+
+        setSelectedStep(updatedStep)
+        setSequences(sequences.map(s => s.step === selectedStep.step ? updatedStep : s))
     }
 
     const insertVariable = (variable: string) => {
         const textarea = bodyRef.current
-        if (!textarea) {
-            // Fallback: append to end
-            setSelectedStep(prev => ({ ...prev, body: prev.body + variable }))
-            return
-        }
+        const variant = getActiveVariant()
+        if (!textarea || !variant) return
+
         const start = textarea.selectionStart
         const end = textarea.selectionEnd
-        const currentBody = selectedStep.body
+        const currentBody = variant.body || ''
         const newBody = currentBody.substring(0, start) + variable + currentBody.substring(end)
-        setSelectedStep(prev => ({ ...prev, body: newBody }))
-        // Restore cursor position after the inserted variable
+
+        updateVariantContent({ body: newBody })
+
         requestAnimationFrame(() => {
             textarea.focus()
             const newCursorPos = start + variable.length
@@ -701,17 +818,98 @@ Best,
         })
     }
 
+    const saveStep = async () => {
+        const variant = getActiveVariant()
+        if (!selectedStep || !variant) return
+
+        setIsSaving(true)
+        try {
+            const result = await upsertSequenceStep(campaignId, {
+                id: variant.id,
+                step_number: selectedStep.step,
+                subject: variant.subject,
+                body: variant.body,
+                delay_days: selectedStep.delayDays,
+                variant_label: variant.label
+            })
+
+            if (result.success) {
+                toast.success(`Variant ${variant.label} saved`)
+            } else {
+                toast.error('Failed to save: ' + result.error)
+            }
+        } catch (error) {
+            console.error('Error saving step:', error)
+            toast.error('Failed to save step')
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    const handleDelayUpdate = async (stepNumber: number, days: number) => {
+        const step = sequences.find(s => s.step === stepNumber)
+        if (!step) return
+
+        // Update local UI
+        const updatedStep = { ...step, delayDays: days }
+        setSequences(sequences.map(s => s.step === stepNumber ? updatedStep : s))
+
+        // Update ALL variants for this step on server
+        try {
+            await Promise.all(step.variants.map((v: any) =>
+                upsertSequenceStep(campaignId, {
+                    id: v.id,
+                    step_number: stepNumber,
+                    subject: v.subject,
+                    body: v.body,
+                    delay_days: days,
+                    variant_label: v.label
+                })
+            ))
+        } catch (error) {
+            console.error('Error updating delay', error)
+            toast.error('Failed to update delay')
+        }
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center p-12">
+                <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+            </div>
+        )
+    }
+
+    if (sequences.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 border border-dashed border-zinc-800 rounded-lg">
+                <p className="text-zinc-500 mb-4">No steps in this campaign yet</p>
+                <Button onClick={addStep}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add First Step
+                </Button>
+            </div>
+        )
+    }
+
+    const activeVariant = getActiveVariant()
+
     return (
         <div className="grid grid-cols-12 gap-6">
             {/* Left Sidebar - Steps */}
             <div className="col-span-3 space-y-4">
                 {sequences.map((seq, idx) => (
-                    <div key={seq.id}>
+                    <div key={seq.step}>
                         <div
-                            onClick={() => setSelectedStep(seq)}
+                            onClick={() => {
+                                setSelectedStep(seq)
+                                if (!seq.variants.find((v: any) => v.id === activeVariantId)) {
+                                    setActiveVariantId(seq.variants[0]?.id)
+                                }
+                            }}
                             className={cn(
                                 "p-4 rounded-lg border cursor-pointer transition-all",
-                                selectedStep.id === seq.id
+                                selectedStep?.step === seq.step
                                     ? "bg-zinc-900 border-primary"
                                     : "bg-zinc-950 border-zinc-800 hover:border-zinc-700"
                             )}
@@ -720,18 +918,33 @@ Best,
                                 <h4 className="font-bold text-white">Step {seq.step}</h4>
                                 <Trash2
                                     className="h-4 w-4 text-zinc-600 hover:text-red-400 cursor-pointer transition-colors"
-                                    onClick={(e) => deleteStep(e, seq.id)}
+                                    onClick={(e) => deleteStep(e, seq)}
                                 />
                             </div>
-                            <div className="text-xs text-zinc-500 truncate">{seq.subject || 'No subject'}</div>
+                            <div className="text-xs text-zinc-500 truncate">
+                                {seq.variants.length > 1
+                                    ? `${seq.variants.length} variants`
+                                    : (seq.variants[0]?.subject || 'No subject')}
+                            </div>
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 className="mt-2 h-7 text-[10px] text-primary hover:text-primary/80 p-0"
+                                onClick={(e) => addVariant(e, seq)}
                             >
                                 <Plus className="h-3 w-3 mr-1" />
                                 Add variant
                             </Button>
+                            {/* Variant pills if multiple */}
+                            {seq.variants.length > 1 && (
+                                <div className="flex gap-1 mt-2 flex-wrap">
+                                    {seq.variants.map((v: any) => (
+                                        <div key={v.id} className="text-[10px] px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-400">
+                                            {v.label}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                         {idx < sequences.length - 1 && (
                             <div className="flex items-center gap-2 py-2 px-4">
@@ -739,6 +952,7 @@ Best,
                                 <Input
                                     type="number"
                                     value={sequences[idx + 1]?.delayDays || 1}
+                                    onChange={(e) => handleDelayUpdate(sequences[idx + 1].step, parseInt(e.target.value) || 1)}
                                     className="w-12 h-6 text-xs text-center bg-zinc-950 border-zinc-800"
                                 />
                                 <span className="text-[10px] text-zinc-600">Days</span>
@@ -759,15 +973,32 @@ Best,
             {/* Right Panel - Email Editor */}
             <div className="col-span-9">
                 <Card className="bg-zinc-950 border-zinc-800">
-                    <CardHeader className="border-b border-zinc-800 pb-4">
-                        <div className="flex items-center justify-between">
+                    <CardHeader className="border-b border-zinc-800 pb-0">
+                        {/* Variant Tabs */}
+                        {selectedStep && selectedStep.variants.length > 1 && (
+                            <div className="flex items-center gap-1 mb-4">
+                                {selectedStep.variants.map((v: any) => (
+                                    <button
+                                        key={v.id}
+                                        onClick={() => setActiveVariantId(v.id)}
+                                        className={cn(
+                                            "px-4 py-2 text-xs font-medium border-b-2 transition-colors",
+                                            activeVariantId === v.id
+                                                ? "border-primary text-white"
+                                                : "border-transparent text-zinc-500 hover:text-zinc-300"
+                                        )}
+                                    >
+                                        Variant {v.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <div className="flex items-center justify-between pb-4">
                             <div className="flex items-center gap-4">
                                 <Label className="text-zinc-400">Subject</Label>
                                 <Input
-                                    value={selectedStep.subject}
-                                    onChange={(e) => {
-                                        setSelectedStep({ ...selectedStep, subject: e.target.value })
-                                    }}
+                                    value={activeVariant?.subject || ''}
+                                    onChange={(e) => updateVariantContent({ subject: e.target.value })}
                                     className="flex-1 min-w-[300px] bg-zinc-900 border-zinc-800"
                                     placeholder="Enter subject line..."
                                 />
@@ -786,18 +1017,26 @@ Best,
                     <CardContent className="pt-4">
                         <Textarea
                             ref={bodyRef}
-                            value={selectedStep.body}
-                            onChange={(e) => {
-                                setSelectedStep({ ...selectedStep, body: e.target.value })
-                            }}
+                            value={activeVariant?.body || ''}
+                            onChange={(e) => updateVariantContent({ body: e.target.value })}
                             className="min-h-[400px] bg-zinc-900 border-zinc-800 font-mono text-sm leading-relaxed"
                             placeholder="Write your email body here..."
                         />
 
                         {/* Editor Toolbar */}
                         <div className="flex items-center gap-2 mt-4 pt-4 border-t border-zinc-800">
-                            <Button size="sm" className="bg-primary hover:bg-primary/90">
-                                Save
+                            <Button
+                                size="sm"
+                                className="bg-primary hover:bg-primary/90"
+                                onClick={saveStep}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? (
+                                    <>
+                                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : 'Save'}
                             </Button>
                             <Button variant="outline" size="sm" className="gap-2 border-zinc-800 text-zinc-400">
                                 <span className="text-amber-400">✨</span>
@@ -868,14 +1107,14 @@ Best,
                         <div className="space-y-1">
                             <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Subject</span>
                             <div className="p-3 bg-zinc-900 rounded-lg border border-zinc-800 text-sm text-white font-medium">
-                                {replaceVariables(selectedStep.subject) || <span className="text-zinc-600 italic">No subject</span>}
+                                {replaceVariables(activeVariant?.subject || '') || <span className="text-zinc-600 italic">No subject</span>}
                             </div>
                         </div>
                         {/* Body */}
                         <div className="space-y-1">
                             <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Body</span>
                             <div className="p-4 bg-white rounded-lg text-zinc-900 text-sm leading-relaxed whitespace-pre-wrap min-h-[200px]">
-                                {replaceVariables(selectedStep.body) || <span className="text-zinc-400 italic">No body content</span>}
+                                {replaceVariables(activeVariant?.body || '') || <span className="text-zinc-400 italic">No body content</span>}
                             </div>
                         </div>
                         {/* Variable mapping reference */}
@@ -977,7 +1216,7 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="space-y-1">
                                     <span className="text-[10px] text-zinc-600">From</span>
-                                    <Select value={`${schedule.fromHour}:${schedule.fromMinute}`}>
+                                    <Select value={`${schedule.fromHour}:${schedule.fromMinute} `}>
                                         <SelectTrigger className="bg-zinc-900 border-zinc-800">
                                             <SelectValue />
                                         </SelectTrigger>
@@ -992,7 +1231,7 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                                 </div>
                                 <div className="space-y-1">
                                     <span className="text-[10px] text-zinc-600">To</span>
-                                    <Select value={`${schedule.toHour}:${schedule.toMinute}`}>
+                                    <Select value={`${schedule.toHour}:${schedule.toMinute} `}>
                                         <SelectTrigger className="bg-zinc-900 border-zinc-800">
                                             <SelectValue />
                                         </SelectTrigger>
@@ -1231,7 +1470,3 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
     )
 }
 
-// Helper function
-function cn(...inputs: any[]) {
-    return inputs.filter(Boolean).join(' ')
-}
