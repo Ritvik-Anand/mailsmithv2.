@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -595,10 +595,11 @@ Best,
         },
     ])
     const [selectedStep, setSelectedStep] = useState(sequences[0])
+    const bodyRef = useRef<HTMLTextAreaElement>(null)
 
     const addStep = () => {
         const newStep = {
-            id: `${sequences.length + 1}`,
+            id: `${Date.now()}`,
             step: sequences.length + 1,
             subject: '',
             body: '',
@@ -606,6 +607,42 @@ Best,
             variants: []
         }
         setSequences([...sequences, newStep])
+    }
+
+    const deleteStep = (e: React.MouseEvent, stepId: string) => {
+        e.stopPropagation()
+        if (sequences.length <= 1) {
+            toast.error('Campaign must have at least one step')
+            return
+        }
+        const updated = sequences
+            .filter(s => s.id !== stepId)
+            .map((s, idx) => ({ ...s, step: idx + 1 }))
+        setSequences(updated)
+        // If the deleted step was selected, select the first remaining step
+        if (selectedStep.id === stepId) {
+            setSelectedStep(updated[0])
+        }
+    }
+
+    const insertVariable = (variable: string) => {
+        const textarea = bodyRef.current
+        if (!textarea) {
+            // Fallback: append to end
+            setSelectedStep(prev => ({ ...prev, body: prev.body + variable }))
+            return
+        }
+        const start = textarea.selectionStart
+        const end = textarea.selectionEnd
+        const currentBody = selectedStep.body
+        const newBody = currentBody.substring(0, start) + variable + currentBody.substring(end)
+        setSelectedStep(prev => ({ ...prev, body: newBody }))
+        // Restore cursor position after the inserted variable
+        requestAnimationFrame(() => {
+            textarea.focus()
+            const newCursorPos = start + variable.length
+            textarea.setSelectionRange(newCursorPos, newCursorPos)
+        })
     }
 
     return (
@@ -625,7 +662,10 @@ Best,
                         >
                             <div className="flex items-center justify-between mb-2">
                                 <h4 className="font-bold text-white">Step {seq.step}</h4>
-                                <Trash2 className="h-4 w-4 text-zinc-600 hover:text-red-400 cursor-pointer" />
+                                <Trash2
+                                    className="h-4 w-4 text-zinc-600 hover:text-red-400 cursor-pointer transition-colors"
+                                    onClick={(e) => deleteStep(e, seq.id)}
+                                />
                             </div>
                             <div className="text-xs text-zinc-500 truncate">{seq.subject || 'No subject'}</div>
                             <Button
@@ -684,6 +724,7 @@ Best,
                     </CardHeader>
                     <CardContent className="pt-4">
                         <Textarea
+                            ref={bodyRef}
                             value={selectedStep.body}
                             onChange={(e) => {
                                 setSelectedStep({ ...selectedStep, body: e.target.value })
@@ -712,10 +753,16 @@ Best,
 
                         {/* Variables Reference */}
                         <div className="mt-4 p-3 bg-zinc-900/50 rounded-lg border border-zinc-800">
-                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Available Variables</p>
+                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Available Variables — click to insert</p>
                             <div className="flex flex-wrap gap-2">
                                 {['{{firstName}}', '{{lastName}}', '{{companyName}}', '{{jobTitle}}', '{{personalization}}', '{{sendingAccountFirstName}}'].map((v) => (
-                                    <code key={v} className="text-[10px] bg-zinc-800 px-2 py-1 rounded text-amber-400">{v}</code>
+                                    <code
+                                        key={v}
+                                        className="text-[10px] bg-zinc-800 px-2 py-1 rounded text-amber-400 cursor-pointer hover:bg-zinc-700 hover:text-amber-300 transition-colors select-none"
+                                        onClick={() => insertVariable(v)}
+                                    >
+                                        {v}
+                                    </code>
                                 ))}
                             </div>
                             <p className="text-[10px] text-zinc-600 mt-2">
