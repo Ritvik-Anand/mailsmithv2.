@@ -51,7 +51,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { getCampaignById, getCampaignLeads, getCampaignSequences, upsertSequenceStep, deleteSequenceStep, getCampaignSchedules, upsertSchedule, updateCampaign } from '@/server/actions/campaigns'
+import { getCampaignById, getCampaignLeads, getCampaignSequences, upsertSequenceStep, deleteSequenceStep, getCampaignSchedules, upsertSchedule, updateCampaign, syncCampaignStats } from '@/server/actions/campaigns'
 import { getOrganizationNodes, getCampaignAccountsFromInstantly, updateCampaignAccountsInInstantly, getCampaignAdvancedOptionsFromInstantly, updateCampaignAdvancedOptionsInInstantly, toggleCampaignStatus, syncAllCampaignLeads } from '@/server/actions/instantly'
 import { cn } from '@/lib/utils'
 
@@ -70,6 +70,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     const [campaign, setCampaign] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [isPausing, setIsPausing] = useState(false)
+    const [isSyncingStat, setIsSyncingStat] = useState(false)
 
     useEffect(() => {
         async function loadCampaign() {
@@ -118,6 +119,28 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             toast.error('Failed to update status')
         } finally {
             setIsPausing(false)
+        }
+    }
+
+    const handleSyncStats = async () => {
+        setIsSyncingStat(true)
+        try {
+            const result = await syncCampaignStats(campaign.id)
+            if (result.success) {
+                toast.success('Campaign statistics synchronized')
+                // Reload campaign to get updated data
+                const refined = await getCampaignById(resolvedParams.id)
+                if (refined.success && refined.campaign) {
+                    setCampaign(refined.campaign)
+                }
+            } else {
+                toast.error(result.error || 'Failed to sync stats')
+            }
+        } catch (error) {
+            console.error('Error syncing stats:', error)
+            toast.error('Error syncing stats')
+        } finally {
+            setIsSyncingStat(false)
         }
     }
 
@@ -182,9 +205,15 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button variant="outline" size="sm" className="gap-2">
-                        <RefreshCw className="h-4 w-4" />
-                        Sync Stats
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 h-9 px-4 border border-zinc-800 bg-zinc-950 text-zinc-300 hover:text-white hover:bg-zinc-900 shadow-sm"
+                        onClick={handleSyncStats}
+                        disabled={isSyncingStat}
+                    >
+                        <RefreshCw className={cn("h-4 w-4", isSyncingStat && "animate-spin")} />
+                        {isSyncingStat ? 'Syncing...' : 'Sync Stats'}
                     </Button>
                     <Button
                         size="sm"
@@ -255,12 +284,20 @@ function AnalyticsTab({ campaign }: { campaign: any }) {
     const emailsOpened = campaign.emails_opened || 0
     const emailsReplied = campaign.emails_replied || 0
     const emailsBounced = campaign.emails_bounced || 0
+    const emailsClicked = campaign.emails_clicked || 0
+    const emailsInterested = campaign.emails_interested || 0
 
     const openRate = emailsSent > 0
         ? ((emailsOpened / emailsSent) * 100).toFixed(1)
         : '0'
     const replyRate = emailsSent > 0
-        ? ((emailsReplied / emailsSent) * 100).toFixed(2)
+        ? ((emailsReplied / emailsSent) * 100).toFixed(1)
+        : '0'
+    const clickRate = emailsSent > 0
+        ? ((emailsClicked / emailsSent) * 100).toFixed(1)
+        : '0'
+    const positiveRate = emailsReplied > 0
+        ? ((emailsInterested / emailsReplied) * 100).toFixed(1)
         : '0'
 
     const metrics = [
@@ -279,9 +316,10 @@ function AnalyticsTab({ campaign }: { campaign: any }) {
         },
         {
             label: 'Click Rate',
-            value: 'Disabled',
+            value: `${clickRate}%`,
+            subValue: emailsClicked.toLocaleString(),
             icon: MousePointer,
-            color: 'text-zinc-500'
+            color: 'text-violet-400'
         },
         {
             label: 'Replies',
@@ -289,6 +327,13 @@ function AnalyticsTab({ campaign }: { campaign: any }) {
             subValue: `${replyRate}%`,
             icon: Reply,
             color: 'text-amber-400'
+        },
+        {
+            label: 'Interested',
+            value: emailsInterested.toString(),
+            subValue: `${positiveRate}% of replies`,
+            icon: TrendingUp,
+            color: 'text-emerald-500'
         },
         {
             label: 'Bounced',

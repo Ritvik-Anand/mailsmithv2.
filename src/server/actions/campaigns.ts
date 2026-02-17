@@ -485,16 +485,85 @@ export async function syncCampaignStats(campaignId: string) {
                 emails_opened: stats.opened || 0,
                 emails_replied: stats.replied || 0,
                 emails_bounced: stats.bounced || 0,
-                last_synced_at: new Date().toISOString()
-            })
+                emails_clicked: stats.clicked || 0,
+                emails_interested: stats.interested || 0,
+                emails_uninterested: stats.uninterested || 0,
+                emails_unsubscribed: stats.unsubscribed || 0,
+                last_synced_at: new Date().toISOString(),
+                last_stats_sync_at: new Date().toISOString()
+            } as any) // Cast as any if columns don't exist yet in types
             .eq('id', campaignId)
 
         if (updateError) throw updateError
 
         revalidatePath(`/operator/campaigns/${campaignId}`)
+        revalidatePath('/operator/campaigns')
         return { success: true, stats }
     } catch (error: any) {
         console.error('Error syncing campaign stats:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+/**
+ * Sync stats for all campaigns across all customers
+ */
+export async function syncAllCampaignsLiveStats() {
+    const supabaseClient = await createClient()
+    const supabase = createAdminClient() // Use admin for bulk update
+
+    try {
+        console.log('Starting bulk campaign stats sync...')
+
+        // Fetch all campaigns from Instantly
+        // V2 /campaigns endpoint often includes stats in the list response
+        const instantlyCampaigns = await instantly.getSummaryStats()
+
+        if (!instantlyCampaigns || !Array.isArray(instantlyCampaigns)) {
+            throw new Error('Failed to fetch campaigns from Instantly')
+        }
+
+        console.log(`Found ${instantlyCampaigns.length} campaigns in Instantly. Updating local database...`)
+
+        // Batch update our DB
+        let successCount = 0
+        const promises = instantlyCampaigns.map(async (instCampaign) => {
+            // Check if we have this campaign
+            const stats = instCampaign.stats || {}
+
+            const { data, error } = await supabase
+                .from('campaigns')
+                .update({
+                    emails_sent: stats.sent || 0,
+                    emails_opened: stats.opened || 0,
+                    emails_replied: stats.replied || 0,
+                    emails_bounced: stats.bounced || 0,
+                    emails_clicked: stats.clicked || 0,
+                    emails_interested: stats.interested || 0,
+                    instantly_status: instCampaign.status === 1 ? 'active' : 'paused',
+                    last_synced_at: new Date().toISOString(),
+                    last_stats_sync_at: new Date().toISOString()
+                } as any)
+                .eq('instantly_campaign_id', instCampaign.id)
+                .select('id')
+
+            if (!error && data && data.length > 0) {
+                successCount++
+            }
+        })
+
+        await Promise.all(promises)
+
+        revalidatePath('/operator/campaigns')
+        console.log(`Bulk sync complete. Updated ${successCount} campaigns.`)
+
+        return {
+            success: true,
+            total: instantlyCampaigns.length,
+            updated: successCount
+        }
+    } catch (error: any) {
+        console.error('Error in syncAllCampaignsLiveStats:', error)
         return { success: false, error: error.message }
     }
 }

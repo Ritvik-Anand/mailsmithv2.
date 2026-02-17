@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { getOrganizations } from '@/server/actions/organizations'
 import { getOrganizationCampaigns, deleteCampaign, assignCampaignToOrganization } from '@/server/actions/instantly'
+import { syncAllCampaignsLiveStats } from '@/server/actions/campaigns'
 import {
     Dialog,
     DialogContent,
@@ -54,6 +55,7 @@ export default function OperatorCampaignsPage() {
     const [campaignToMove, setCampaignToMove] = useState<any>(null)
     const [targetOrgId, setTargetOrgId] = useState<string>('')
     const [isMoving, setIsMoving] = useState(false)
+    const [isSyncing, setIsSyncing] = useState(false)
 
     // Delete Modal State
     const [deleteModalOpen, setDeleteModalOpen] = useState(false)
@@ -99,6 +101,27 @@ export default function OperatorCampaignsPage() {
         loadCampaigns()
     }, [selectedOrgId])
 
+    const handleSyncAll = async () => {
+        setIsSyncing(true)
+        try {
+            const result = await syncAllCampaignsLiveStats()
+            if (result.success) {
+                toast.success(`Successfully updated ${result.updated} campaigns`)
+                // Refresh list
+                if (selectedOrgId !== 'all') {
+                    const data = await getOrganizationCampaigns(selectedOrgId)
+                    setCampaigns(data)
+                }
+            } else {
+                toast.error(result.error || 'Failed to sync stats')
+            }
+        } catch (error) {
+            toast.error('Error syncing campaign stats')
+        } finally {
+            setIsSyncing(false)
+        }
+    }
+
     const getStatusStyle = (status: string) => {
         switch (status) {
             case 'active': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
@@ -116,12 +139,23 @@ export default function OperatorCampaignsPage() {
                     <h1 className="text-3xl font-bold tracking-tight">Campaign Operations</h1>
                     <p className="text-muted-foreground">Manage and monitor outreach campaigns across all customers.</p>
                 </div>
-                <Link href="/operator/campaigns/new">
-                    <Button className="bg-amber-500 hover:bg-amber-600 text-white font-bold h-11 px-6 shadow-lg shadow-amber-500/20">
-                        <Plus className="mr-2 h-5 w-5" />
-                        New Campaign
+                <div className="flex items-center gap-3">
+                    <Button
+                        variant="outline"
+                        onClick={handleSyncAll}
+                        disabled={isSyncing}
+                        className="border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 font-bold h-11 px-5 shadow-sm"
+                    >
+                        <ArrowRightLeft className={cn("mr-2 h-4 w-4", isSyncing && "animate-spin")} />
+                        {isSyncing ? 'Syncing...' : 'Sync Live Stats'}
                     </Button>
-                </Link>
+                    <Link href="/operator/campaigns/new">
+                        <Button className="bg-amber-500 hover:bg-amber-600 text-white font-bold h-11 px-6 shadow-lg shadow-amber-500/20">
+                            <Plus className="mr-2 h-5 w-5" />
+                            New Campaign
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             {/* Filter Bar */}
@@ -177,10 +211,20 @@ export default function OperatorCampaignsPage() {
                                         </Badge>
                                     </div>
 
-                                    {/* Campaign Info */}
                                     <div className="flex-1 min-w-0">
                                         <h3 className="text-base font-bold text-zinc-200 truncate">{campaign.name}</h3>
-                                        <p className="text-[11px] text-zinc-600 font-mono mt-0.5">ID: {campaign.id.slice(0, 13)}...</p>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <p className="text-[11px] text-zinc-600 font-mono">ID: {campaign.id.slice(0, 13)}...</p>
+                                            {campaign.last_synced_at && (
+                                                <>
+                                                    <span className="text-zinc-800 text-[10px]">•</span>
+                                                    <p className="text-[11px] text-zinc-500 flex items-center gap-1">
+                                                        <Clock className="h-2.5 w-2.5" />
+                                                        {new Date(campaign.last_synced_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Stats */}
@@ -194,8 +238,12 @@ export default function OperatorCampaignsPage() {
                                             <p className="text-sm font-bold text-emerald-500 mt-1">{campaign.emails_replied || 0}</p>
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Open Rate</p>
-                                            <p className="text-sm font-bold text-blue-500 mt-1">{campaign.emails_opened || 0}%</p>
+                                            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Rate</p>
+                                            <p className="text-sm font-bold text-blue-500 mt-1">
+                                                {campaign.emails_sent > 0
+                                                    ? Math.round((campaign.emails_opened / campaign.emails_sent) * 100)
+                                                    : 0}%
+                                            </p>
                                         </div>
                                     </div>
 
