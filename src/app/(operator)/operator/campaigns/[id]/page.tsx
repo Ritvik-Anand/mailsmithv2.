@@ -51,6 +51,7 @@ import {
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { getCampaignById, getCampaignLeads, getCampaignSequences, upsertSequenceStep, deleteSequenceStep, getCampaignSchedules, upsertSchedule, updateCampaign } from '@/server/actions/campaigns'
+import { getOrganizationNodes, getCampaignAccountsFromInstantly, updateCampaignAccountsInInstantly } from '@/server/actions/instantly'
 import { cn } from '@/lib/utils'
 
 const TABS = [
@@ -1487,6 +1488,37 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
 // ============================================================================
 function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any }) {
     const [isSaving, setIsSaving] = useState(false)
+    const [availableAccounts, setAvailableAccounts] = useState<any[]>([])
+    const [selectedEmails, setSelectedEmails] = useState<string[]>([])
+    const [isLoadingAccounts, setIsLoadingAccounts] = useState(false)
+
+    useEffect(() => {
+        async function loadAccounts() {
+            if (!campaign?.organization_id) return
+            setIsLoadingAccounts(true)
+            try {
+                // 1. Get all nodes for org
+                const nodes = await getOrganizationNodes(campaign.organization_id)
+                setAvailableAccounts(nodes || [])
+
+                // 2. Get assigned accounts from Instantly
+                // We only do this if we haven't modified the selection locally yet?
+                // Actually, we should load initial state.
+                if (campaign.instantly_campaign_id) {
+                    const assigned = await getCampaignAccountsFromInstantly(campaign.id)
+                    if (assigned.success && Array.isArray(assigned.emails)) {
+                        setSelectedEmails(assigned.emails)
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading accounts:', error)
+                toast.error('Failed to load accounts')
+            } finally {
+                setIsLoadingAccounts(false)
+            }
+        }
+        loadAccounts()
+    }, [campaign?.id, campaign?.organization_id])
 
     const handleSaveOptions = async () => {
         setIsSaving(true)
@@ -1498,6 +1530,14 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                 link_tracking: campaign.link_tracking,
                 send_as_text: campaign.send_as_text
             })
+
+            // Update assigned accounts
+            if (campaign.instantly_campaign_id) {
+                const accResult = await updateCampaignAccountsInInstantly(campaign.id, selectedEmails)
+                if (!accResult.success) {
+                    toast.error('Failed to update accounts: ' + accResult.error)
+                }
+            }
 
             if (result.success) {
                 toast.success('Campaign options saved')
@@ -1512,37 +1552,68 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
         }
     }
 
-    // Mock accounts
-    const accounts = [
-        { id: '1', email: 'amanda@equityscale.org' },
-        { id: '2', email: 'audrey@masterapexes.com' },
-        { id: '3', email: 'bruce@masterapexes.com' },
-        { id: '4', email: 'christian@masterapexes.com' },
-        { id: '5', email: 'christopher@masterapexes.com' },
-        { id: '6', email: 'claire@octafieldunit.org' },
-    ]
+    const toggleEmail = (email: string, checked: boolean) => {
+        if (checked) {
+            setSelectedEmails(prev => [...prev, email])
+        } else {
+            setSelectedEmails(prev => prev.filter(e => e !== email))
+        }
+    }
 
     return (
         <div className="max-w-3xl space-y-6">
             {/* Accounts */}
             <Card className="bg-zinc-950 border-zinc-800">
                 <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <h3 className="font-bold text-white">Accounts to use</h3>
-                            <p className="text-sm text-zinc-500 mt-1">Select one or more accounts to send emails from</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2 max-w-md justify-end">
-                            {accounts.slice(0, 4).map((acc) => (
-                                <Badge key={acc.id} variant="outline" className="bg-zinc-900 border-zinc-800 text-zinc-300 text-xs">
-                                    {acc.email}
-                                    <XCircle className="h-3 w-3 ml-1 cursor-pointer hover:text-red-400" />
-                                </Badge>
-                            ))}
+                    <div className="flex flex-col gap-4">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <h3 className="font-bold text-white">Accounts to use</h3>
+                                <p className="text-sm text-zinc-500 mt-1">Select accounts to send emails from</p>
+                            </div>
                             <Badge variant="outline" className="bg-zinc-900 border-zinc-800 text-zinc-500 text-xs">
-                                +{accounts.length - 4} more
+                                {selectedEmails.length} selected
                             </Badge>
                         </div>
+
+                        {isLoadingAccounts ? (
+                            <div className="flex items-center justify-center py-8">
+                                <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+                            </div>
+                        ) : availableAccounts.length === 0 ? (
+                            <p className="text-sm text-zinc-500 italic">No email accounts found for this organization.</p>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto p-1 custom-scrollbar">
+                                {availableAccounts.map((acc) => {
+                                    const isSelected = selectedEmails.includes(acc.email_address)
+                                    return (
+                                        <label
+                                            key={acc.id}
+                                            className={cn(
+                                                "flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                                                isSelected
+                                                    ? "bg-primary/10 border-primary/50"
+                                                    : "bg-zinc-900/50 border-zinc-800 hover:border-zinc-700"
+                                            )}
+                                        >
+                                            <Checkbox
+                                                checked={isSelected}
+                                                onCheckedChange={(checked) => toggleEmail(acc.email_address, !!checked)}
+                                            />
+                                            <div className="flex flex-col overflow-hidden">
+                                                <span className={cn("text-xs font-medium truncate", isSelected ? "text-primary" : "text-zinc-300")}>
+                                                    {acc.email_address}
+                                                </span>
+                                                <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+                                                    Score: {acc.reputation_score || 0}
+                                                    {acc.status === 'paused' && <span className="text-amber-500">• Paused</span>}
+                                                </span>
+                                            </div>
+                                        </label>
+                                    )
+                                })}
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>

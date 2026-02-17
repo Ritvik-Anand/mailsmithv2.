@@ -405,3 +405,67 @@ export async function addLeadsToInstantlyCampaign(
         return { success: false, error: error.message }
     }
 }
+
+/**
+ * Get accounts assigned to a campaign in Instantly
+ */
+export async function getCampaignAccountsFromInstantly(campaignId: string) {
+    const supabase = await createClient()
+
+    try {
+        // Get local campaign to find Instantly ID
+        const { data: campaign, error: fetchError } = await supabase
+            .from('campaigns')
+            .select('instantly_campaign_id')
+            .eq('id', campaignId)
+            .single()
+
+        if (fetchError || !campaign?.instantly_campaign_id) {
+            return { success: false, error: 'Campaign not linked to Instantly' }
+        }
+
+        // Fetch from Instantly
+        const remoteCampaign: any = await instantly.getCampaign(campaign.instantly_campaign_id)
+
+        // V2 API structure needs to be checked, but typically it returns 'accounts' or 'email_list'
+        // Based on client usage, we look for accounts
+        const accounts = remoteCampaign.accounts || remoteCampaign.email_list || []
+
+        // Return email addresses
+        const emails = accounts.map((acc: any) => typeof acc === 'string' ? acc : acc.email)
+
+        return { success: true, emails }
+    } catch (error: any) {
+        console.error('Error fetching campaign accounts:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+/**
+ * Update assigned accounts for a campaign in Instantly
+ */
+export async function updateCampaignAccountsInInstantly(campaignId: string, emails: string[]) {
+    const supabase = await createClient()
+
+    try {
+        // Get local campaign to find Instantly ID
+        const { data: campaign, error: fetchError } = await supabase
+            .from('campaigns')
+            .select('instantly_campaign_id')
+            .eq('id', campaignId)
+            .single()
+
+        if (fetchError || !campaign?.instantly_campaign_id) {
+            return { success: false, error: 'Campaign not linked to Instantly' }
+        }
+
+        // Update in Instantly
+        await instantly.addAccountsToCampaign(campaign.instantly_campaign_id, emails)
+
+        revalidatePath(`/operator/campaigns/${campaignId}`)
+        return { success: true }
+    } catch (error: any) {
+        console.error('Error updating campaign accounts:', error)
+        return { success: false, error: error.message }
+    }
+}
