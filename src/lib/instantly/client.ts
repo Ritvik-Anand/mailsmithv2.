@@ -171,23 +171,29 @@ export class InstantlyClient {
      * Adds leads to a campaign in bulk
      */
     async addLeadsToCampaign(campaignId: string, leads: any[]): Promise<any> {
-        // V2 structure: POST /leads with array of leads
-        const leadsWithCampaign = leads.map(lead => ({
-            campaign: campaignId,
+        // V2 structure: POST /leads with { campaign_id, leads: [...] }
+        const formattedLeads = leads.map(lead => ({
             email: lead.email,
             first_name: lead.first_name,
             last_name: lead.last_name,
             company_name: lead.company_name,
-            title: lead.job_title,
-            linkedin: lead.linkedin_url,
-            custom_variables: lead.custom_variables || {},
-            skip_if_in_workspace: true,
-            skip_if_in_campaign: true
+            personalization: lead.icebreaker, // Map icebreaker to personalization
+            job_title: lead.job_title, // Instantly uses job_title or title? keeping both or standardizing
+            linkedin_url: lead.linkedin_url,
+            custom_variables: {
+                ...lead.custom_variables,
+                phone: lead.phone
+            }
         }))
 
         return this.request('/leads', {
             method: 'POST',
-            body: JSON.stringify(leadsWithCampaign),
+            body: JSON.stringify({
+                campaign_id: campaignId,
+                skip_if_in_workspace: true,
+                skip_if_in_campaign: true,
+                leads: formattedLeads
+            }),
         })
     }
 
