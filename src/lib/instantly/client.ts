@@ -182,21 +182,27 @@ export class InstantlyClient {
             personalization: lead.personalization || lead.icebreaker,
             job_title: lead.job_title,
             linkedin_url: lead.linkedin_url,
-            custom_variables: {
+            custom_variables: lead.enrichment_data ? {
                 ...lead.custom_variables,
                 ...lead.enrichment_data
-            }
+            } : lead.custom_variables
         }))
 
-        // V2 doesn't have bulk endpoint, so adding in parallel
-        const promises = formattedLeads.map(lead =>
+        // Chunking
+        const chunkSize = 100 // Being conservative with 100
+        const chunks = []
+        for (let i = 0; i < formattedLeads.length; i += chunkSize) {
+            chunks.push(formattedLeads.slice(i, i + chunkSize))
+        }
+
+        const promises = chunks.map(chunk =>
             this.request('/leads', {
                 method: 'POST',
                 body: JSON.stringify({
                     campaign_id: campaignId,
                     skip_if_in_workspace: true,
                     skip_if_in_campaign: true,
-                    ...lead
+                    leads: chunk
                 })
             })
         )
