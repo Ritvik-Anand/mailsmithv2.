@@ -126,7 +126,7 @@ export class InstantlyClient {
         days: number[];
     }): Promise<{ id: string }> {
         // Construct default schedule if not provided (e.g. 9-5 EST M-F)
-        const campaignSchedule = schedule ? {
+        const singleSchedule = schedule ? {
             from: `${schedule.from_hour.toString().padStart(2, '0')}:00`,
             to: `${schedule.to_hour.toString().padStart(2, '0')}:00`,
             timezone: schedule.timezone,
@@ -142,7 +142,9 @@ export class InstantlyClient {
             method: 'POST',
             body: JSON.stringify({
                 name,
-                campaign_schedule: campaignSchedule
+                campaign_schedule: {
+                    schedules: [singleSchedule]
+                }
             }),
         })
     }
