@@ -33,7 +33,10 @@ import {
     CheckCircle2,
     Clock,
     Zap,
-    Eye
+    Eye,
+    Phone,
+    Linkedin,
+    X
 } from 'lucide-react'
 import { getOrganizations, getSampleLeadForOrganization, getOrganizationLeads } from '@/server/actions/organizations'
 import { getOrganizationNodes, launchCampaign } from '@/server/actions/instantly'
@@ -83,6 +86,7 @@ function NewCampaignContent() {
 
     // Preview
     const [showPreview, setShowPreview] = useState(false)
+    const [detailLead, setDetailLead] = useState<any>(null)
     const [previewLeads, setPreviewLeads] = useState<any[]>([])
     const [selectedPreviewLeadId, setSelectedPreviewLeadId] = useState<string>('sample')
     const [isLoadingPreview, setIsLoadingPreview] = useState(false)
@@ -1071,7 +1075,10 @@ function NewCampaignContent() {
                                 </div>
 
                                 {/* Lead Info Banner */}
-                                <div className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-800 flex items-center justify-between">
+                                <div
+                                    className={`p-3 bg-zinc-900/50 rounded-lg border border-zinc-800 flex items-center justify-between transition-colors ${selectedPreviewLeadId !== 'sample' ? 'cursor-pointer hover:bg-zinc-900' : ''}`}
+                                    onClick={() => selectedPreviewLeadId !== 'sample' && setDetailLead(currentPreviewData)}
+                                >
                                     <div className="flex items-center gap-2">
                                         <div className="h-8 w-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 text-xs font-bold">
                                             {(currentPreviewData?.first_name?.[0] || 'A')}
@@ -1108,6 +1115,122 @@ function NewCampaignContent() {
                     })()}
                 </DialogContent>
             </Dialog>
+
+            {/* Lead Detail Panel (Slide-out) */}
+            {detailLead && (
+                <div className="fixed inset-0 z-[60] flex justify-end">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setDetailLead(null)}
+                    />
+
+                    {/* Panel */}
+                    <div className="relative w-full max-w-xl bg-zinc-950 border-l border-zinc-800 h-full overflow-y-auto animate-in slide-in-from-right duration-300 shadow-2xl">
+                        {/* Header */}
+                        <div className="sticky top-0 bg-zinc-950/80 backdrop-blur border-b border-zinc-800 p-6 flex items-start justify-between z-10">
+                            <div>
+                                <h2 className="text-xl font-bold text-white">
+                                    {detailLead.first_name} {detailLead.last_name}
+                                </h2>
+                                <p className="text-zinc-500 text-sm">{detailLead.job_title} @ {detailLead.company_name}</p>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setDetailLead(null)}
+                                className="text-zinc-500 hover:text-white"
+                            >
+                                <X className="h-5 w-5" />
+                            </Button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 space-y-6">
+                            {/* Contact Info */}
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Contact Info</h3>
+                                <div className="grid gap-3">
+                                    <div className="flex items-center gap-3 text-sm">
+                                        <Mail className="h-4 w-4 text-zinc-600" />
+                                        <span className="text-zinc-200">{detailLead.email}</span>
+                                    </div>
+                                    {detailLead.phone && (
+                                        <div className="flex items-center gap-3 text-sm">
+                                            <Phone className="h-4 w-4 text-zinc-600" />
+                                            <span className="text-zinc-200">{detailLead.phone}</span>
+                                        </div>
+                                    )}
+                                    {detailLead.linkedin_url && (
+                                        <a
+                                            href={detailLead.linkedin_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-3 text-sm text-amber-500 hover:text-amber-400"
+                                        >
+                                            <Linkedin className="h-4 w-4" />
+                                            View LinkedIn Profile
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Icebreaker (Read Only) */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">AI Icebreaker</h3>
+                                    {detailLead.icebreaker_status === 'completed' && (
+                                        <Badge variant="outline" className="text-[10px] text-emerald-500 border-emerald-500/20 bg-emerald-500/5">
+                                            AI Generated
+                                        </Badge>
+                                    )}
+                                </div>
+                                <div className="p-4 bg-zinc-900/50 rounded-lg border border-zinc-800 text-sm text-zinc-300 italic whitespace-pre-wrap">
+                                    {detailLead.icebreaker || 'No icebreaker generated.'}
+                                </div>
+                            </div>
+
+                            {/* Raw Apify Data */}
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                                    Full Scraped Data
+                                </h3>
+                                <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800 max-h-[400px] overflow-y-auto">
+                                    {detailLead.raw_scraped_data && typeof detailLead.raw_scraped_data === 'object' ? (
+                                        <div className="space-y-2">
+                                            {Object.entries(detailLead.raw_scraped_data as Record<string, any>).map(([key, value]) => {
+                                                if (value === null || value === undefined || value === '') return null;
+                                                return (
+                                                    <div key={key} className="grid grid-cols-3 gap-2 py-1 border-b border-zinc-800 last:border-0">
+                                                        <span className="text-[10px] text-zinc-500 font-mono uppercase truncate" title={key.replace(/_/g, ' ')}>
+                                                            {key.replace(/_/g, ' ')}
+                                                        </span>
+                                                        <span className="col-span-2 text-xs text-zinc-300 break-words">
+                                                            {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <p className="text-zinc-600 text-sm italic">No raw data available</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Raw JSON */}
+                            <details className="group">
+                                <summary className="text-xs font-bold text-zinc-600 uppercase tracking-widest cursor-pointer hover:text-zinc-400">
+                                    View Raw JSON
+                                </summary>
+                                <pre className="mt-3 bg-black p-4 rounded-lg border border-zinc-800 text-[10px] text-zinc-400 overflow-x-auto max-h-[300px] overflow-y-auto">
+                                    {JSON.stringify(detailLead.raw_scraped_data || detailLead, null, 2)}
+                                </pre>
+                            </details>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     )
