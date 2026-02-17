@@ -392,3 +392,25 @@ export async function getSampleLeadForOrganization(organizationId: string) {
 
     return lead
 }
+
+/**
+ * Get multiple leads for an organization to use in previews
+ */
+export async function getOrganizationLeads(organizationId: string, limit: number = 20) {
+    const supabase = await createClient()
+
+    const { data: leads, error } = await supabase
+        .from('leads')
+        .select('id, first_name, last_name, email, company_name, job_title, icebreaker, linkedin_url')
+        .eq('organization_id', organizationId)
+        .not('email', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+    if (error) {
+        console.error('Error fetching organization leads:', error)
+        return []
+    }
+
+    return leads
+}
