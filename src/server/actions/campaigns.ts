@@ -524,8 +524,20 @@ export async function pushSequencesToInstantly(campaignId: string) {
             return { success: false, error: 'No sequences to push' }
         }
 
+        // Filter valid sequences for Instantly (one variant per step)
+        const uniqueSteps = sequences.reduce((acc: any[], current: any) => {
+            const exists = acc.find(item => item.step_number === current.step_number)
+            if (!exists) {
+                acc.push(current)
+            } else if (current.variant_label === 'A' && exists.variant_label !== 'A') {
+                const index = acc.indexOf(exists)
+                acc[index] = current
+            }
+            return acc
+        }, [])
+
         // Push to Instantly
-        await instantly.updateCampaignSequences(campaign.instantly_campaign_id, sequences)
+        await instantly.updateCampaignSequences(campaign.instantly_campaign_id, uniqueSteps)
 
         return { success: true }
     } catch (error: any) {

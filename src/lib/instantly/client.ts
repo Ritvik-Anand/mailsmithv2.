@@ -215,7 +215,7 @@ export class InstantlyClient {
                 sequences: sequences.map(seq => ({
                     subject: seq.subject,
                     body: seq.body,
-                    delay: seq.delay_days || 1,
+                    delay: seq.delay_days ?? 1,
                 }))
             }),
         })

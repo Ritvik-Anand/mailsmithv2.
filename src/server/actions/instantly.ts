@@ -695,9 +695,24 @@ async function ensureInstantlyCampaignExists(campaignId: string) {
     }
 
     // Sync Sequences
+    // Sync Sequences
     const sequences = await getCampaignSequences(campaignId)
     if (sequences && sequences.length > 0) {
-        await instantly.updateCampaignSequences(instantlyId, sequences)
+        // Filter sequences to only include one variant per step_number (e.g. 'A')
+        // This prevents Instantly from seeing variants as separate steps.
+        const uniqueSteps = sequences.reduce((acc: any[], current) => {
+            const exists = acc.find(item => item.step_number === current.step_number)
+            if (!exists) {
+                acc.push(current)
+            } else if (current.variant_label === 'A' && exists.variant_label !== 'A') {
+                // Replace with variant A if exists wasn't A (though unlikely given sort order usually)
+                const index = acc.indexOf(exists)
+                acc[index] = current
+            }
+            return acc
+        }, [])
+
+        await instantly.updateCampaignSequences(instantlyId, uniqueSteps)
     }
 
     return instantlyId
