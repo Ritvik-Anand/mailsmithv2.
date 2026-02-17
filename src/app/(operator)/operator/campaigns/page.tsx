@@ -17,10 +17,19 @@ import {
     List,
     TrendingUp,
     ExternalLink,
-    ChevronRight
+    ChevronRight,
+    ArrowRightLeft
 } from 'lucide-react'
 import { getOrganizations } from '@/server/actions/organizations'
-import { getOrganizationCampaigns, deleteCampaign } from '@/server/actions/instantly'
+import { getOrganizationCampaigns, deleteCampaign, assignCampaignToOrganization } from '@/server/actions/instantly'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter
+} from '@/components/ui/dialog'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -41,6 +50,10 @@ export default function OperatorCampaignsPage() {
     const [selectedOrgId, setSelectedOrgId] = useState<string>('all')
     const [campaigns, setCampaigns] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
+    const [moveModalOpen, setMoveModalOpen] = useState(false)
+    const [campaignToMove, setCampaignToMove] = useState<any>(null)
+    const [targetOrgId, setTargetOrgId] = useState<string>('')
+    const [isMoving, setIsMoving] = useState(false)
 
     useEffect(() => {
         async function loadData() {
@@ -193,6 +206,21 @@ export default function OperatorCampaignsPage() {
                                         <Button
                                             variant="ghost"
                                             size="sm"
+                                            className="h-8 w-8 p-0 text-zinc-400 hover:text-white hover:bg-zinc-800"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                setCampaignToMove(campaign)
+                                                setTargetOrgId(selectedOrgId !== 'all' ? selectedOrgId : '')
+                                                setMoveModalOpen(true)
+                                            }}
+                                            title="Move to another customer"
+                                        >
+                                            <ArrowRightLeft className="h-4 w-4" />
+                                        </Button>
+
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
                                             className="h-8 w-8 p-0 text-red-500 hover:text-red-400 hover:bg-red-500/10"
                                             onClick={async (e) => {
                                                 e.stopPropagation()
@@ -225,6 +253,73 @@ export default function OperatorCampaignsPage() {
                     ))}
                 </div>
             )}
+
+
+            {/* Move Campaign Dialog */}
+            <Dialog open={moveModalOpen} onOpenChange={setMoveModalOpen}>
+                <DialogContent className="bg-zinc-950 border-zinc-900">
+                    <DialogHeader>
+                        <DialogTitle>Move Campaign</DialogTitle>
+                        <DialogDescription>
+                            Move "{campaignToMove?.name}" to another customer. All data associated with this campaign will be moved.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-zinc-400">Select Target Customer</label>
+                            <Select value={targetOrgId} onValueChange={setTargetOrgId}>
+                                <SelectTrigger className="bg-zinc-900 border-zinc-800">
+                                    <SelectValue placeholder="Select customer..." />
+                                </SelectTrigger>
+                                <SelectContent className="bg-zinc-950 border-zinc-900 max-h-[300px]">
+                                    {organizations.map(org => (
+                                        <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            variant="ghost"
+                            onClick={() => setMoveModalOpen(false)}
+                            disabled={isMoving}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            className="bg-primary hover:bg-primary/90"
+                            onClick={async () => {
+                                if (!targetOrgId || !campaignToMove) return
+                                setIsMoving(true)
+                                try {
+                                    const result = await assignCampaignToOrganization(campaignToMove.id, targetOrgId)
+                                    if (result.success) {
+                                        toast.success(`Moved campaign to customer`)
+                                        setMoveModalOpen(false)
+                                        // Refresh list if we moved it out of the current view
+                                        if (selectedOrgId !== 'all' && selectedOrgId !== targetOrgId) {
+                                            const data = await getOrganizationCampaigns(selectedOrgId)
+                                            setCampaigns(data)
+                                        }
+                                    } else {
+                                        toast.error(result.error || 'Failed to move campaign')
+                                    }
+                                } catch (error) {
+                                    toast.error('Error moving campaign')
+                                } finally {
+                                    setIsMoving(false)
+                                }
+                            }}
+                            disabled={!targetOrgId || isMoving}
+                        >
+                            {isMoving ? 'Moving...' : 'Move Campaign'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

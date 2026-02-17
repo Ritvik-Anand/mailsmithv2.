@@ -213,6 +213,43 @@ export async function getOrganizationCampaigns(organizationId: string) {
 }
 
 /**
+ * Assigns a campaign to a specific organization.
+ */
+export async function assignCampaignToOrganization(campaignId: string, organizationId: string) {
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+
+    let supabase = supabaseClient
+
+    // Use admin client for operators and super_admins to bypass RLS
+    if (user) {
+        const { data: userData } = await supabaseClient
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (userData?.role === 'operator' || userData?.role === 'super_admin') {
+            supabase = createAdminClient()
+        }
+    }
+
+    const { error } = await supabase
+        .from('campaigns')
+        .update({ organization_id: organizationId })
+        .eq('id', campaignId)
+
+    if (error) {
+        console.error('Error assigning campaign:', error)
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath('/operator/campaigns')
+    revalidatePath(`/operator/campaigns/${campaignId}`)
+    return { success: true }
+}
+
+/**
  * Deletes a campaign
  */
 export async function deleteCampaign(campaignId: string) {

@@ -20,10 +20,13 @@ import {
     Send,
     Sparkles,
     Wand2,
-    Settings
+    Settings,
+    ChevronRight,
+    ArrowRight
 } from 'lucide-react'
 import { getOrganizationDetails } from '@/server/actions/organizations'
 import { getSearchJobs, getLeadsForOrganization } from '@/server/actions/lead-finder'
+import { getOrganizationCampaigns } from '@/server/actions/instantly'
 import { ScrapeJob, Lead } from '@/types'
 import { toast } from 'sonner'
 
@@ -32,6 +35,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
     const [organization, setOrganization] = useState<any>(null)
     const [jobs, setJobs] = useState<ScrapeJob[]>([])
     const [leads, setLeads] = useState<Lead[]>([])
+    const [campaigns, setCampaigns] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
 
@@ -55,6 +59,12 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                 const leadsResult = await getLeadsForOrganization(id)
                 if (leadsResult.success && leadsResult.leads) {
                     setLeads(leadsResult.leads)
+                }
+
+                // Fetch campaigns for this organization
+                const campaignsResult = await getOrganizationCampaigns(id)
+                if (campaignsResult) {
+                    setCampaigns(campaignsResult)
                 }
             } catch (error) {
                 toast.error('Failed to load customer data')
@@ -189,6 +199,10 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                     <TabsTrigger value="jobs" className="data-[state=active]:bg-zinc-900">
                         <Target className="h-4 w-4 mr-2" />
                         Scrape Jobs ({jobs.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="campaigns" className="data-[state=active]:bg-zinc-900">
+                        <Mail className="h-4 w-4 mr-2" />
+                        Campaigns ({campaigns.length})
                     </TabsTrigger>
                 </TabsList>
 
@@ -329,6 +343,83 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                                 </Card>
                             </Link>
                         ))
+                    )}
+                </TabsContent>
+
+                {/* Campaigns Tab */}
+                <TabsContent value="campaigns" className="mt-6 space-y-4">
+                    <div className="flex justify-end">
+                        <Link href={`/operator/campaigns/new?orgId=${id}`}>
+                            <Button className="bg-primary hover:bg-primary/90">
+                                <Target className="h-4 w-4 mr-2" />
+                                New Campaign
+                            </Button>
+                        </Link>
+                    </div>
+
+                    {campaigns.length === 0 ? (
+                        <Card className="bg-zinc-950 border-zinc-900">
+                            <CardContent className="py-16 text-center">
+                                <Mail className="h-12 w-12 text-zinc-800 mx-auto mb-4" />
+                                <h3 className="text-zinc-500 font-bold">No campaigns yet</h3>
+                                <p className="text-zinc-700 text-sm mt-2">Create a campaign to start outreach for this customer.</p>
+                                <Link href={`/operator/campaigns/new?orgId=${id}`}>
+                                    <Button className="mt-4" variant="outline">
+                                        Create First Campaign
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <div className="space-y-3">
+                            {campaigns.map((campaign) => (
+                                <Link key={campaign.id} href={`/operator/campaigns/${campaign.id}`}>
+                                    <Card className="bg-zinc-950 border-zinc-900 hover:border-zinc-700 transition-all cursor-pointer group">
+                                        <CardContent className="p-4 flex items-center gap-4">
+                                            <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${campaign.status === 'active' ? 'bg-emerald-500/10' :
+                                                campaign.status === 'paused' ? 'bg-amber-500/10' :
+                                                    'bg-zinc-500/10'
+                                                }`}>
+                                                <Mail className={`h-5 w-5 ${campaign.status === 'active' ? 'text-emerald-500' :
+                                                    campaign.status === 'paused' ? 'text-amber-500' :
+                                                        'text-zinc-500'
+                                                    }`} />
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <Badge variant="outline" className={`text-[10px] uppercase ${campaign.status === 'active' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                                                        campaign.status === 'paused' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                                                            'bg-zinc-500/10 text-zinc-500 border-zinc-500/20'
+                                                        }`}>
+                                                        {campaign.status}
+                                                    </Badge>
+                                                    <span className="text-[10px] text-zinc-600 font-mono">
+                                                        {campaign.id.slice(0, 8)}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm font-medium text-white">
+                                                    {campaign.name}
+                                                </p>
+                                            </div>
+
+                                            {/* Stats */}
+                                            <div className="hidden md:flex items-center gap-6 mr-4">
+                                                <div className="text-center">
+                                                    <p className="text-lg font-bold text-white">{campaign.emails_sent || 0}</p>
+                                                    <p className="text-[10px] text-zinc-500 uppercase">Sent</p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-lg font-bold text-emerald-500">{campaign.emails_replied || 0}</p>
+                                                    <p className="text-[10px] text-zinc-500 uppercase">Replies</p>
+                                                </div>
+                                            </div>
+
+                                            <ChevronRight className="h-5 w-5 text-zinc-700 group-hover:text-primary transition-colors" />
+                                        </CardContent>
+                                    </Card>
+                                </Link>
+                            ))}
+                        </div>
                     )}
                 </TabsContent>
             </Tabs>
