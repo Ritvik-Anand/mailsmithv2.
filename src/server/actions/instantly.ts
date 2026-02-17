@@ -124,7 +124,23 @@ export async function launchCampaign(data: {
     outreachNodeIds: string[]
     startImmediately?: boolean
 }) {
-    const supabase = await createClient()
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+
+    let supabase = supabaseClient
+
+    // Use admin client for operators and super_admins to bypass RLS
+    if (user) {
+        const { data: userData } = await supabaseClient
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (userData?.role === 'operator' || userData?.role === 'super_admin') {
+            supabase = createAdminClient()
+        }
+    }
 
     try {
         // 1. Create Campaign in Local DB
@@ -156,20 +172,45 @@ export async function launchCampaign(data: {
 
         // 2. Save Sequences Locally
         if (data.sequences && data.sequences.length > 0) {
-            const sequenceInserts = data.sequences.map((seq: any, index: number) => ({
-                campaign_id: campaignId,
-                step_number: index + 1,
-                subject: seq.subject,
-                body: seq.body,
-                delay_days: seq.delayDays,
-                order_index: index
-            }))
+            const sequenceInserts = []
 
-            const { error: seqError } = await supabase
-                .from('campaign_sequences')
-                .insert(sequenceInserts)
+            for (let index = 0; index < data.sequences.length; index++) {
+                const seq = data.sequences[index]
 
-            if (seqError) console.error('Error saving sequences:', seqError)
+                // Handle multiple variants structure
+                if (seq.variants && seq.variants.length > 0) {
+                    for (const variant of seq.variants) {
+                        sequenceInserts.push({
+                            campaign_id: campaignId,
+                            step_number: index + 1,
+                            subject: variant.subject,
+                            body: variant.body,
+                            delay_days: seq.delayDays,
+                            variant_label: variant.label || 'A',
+                            // order_index: index // Removed as it might not be in schema
+                        })
+                    }
+                } else {
+                    // Fallback for flat structure (backward compatibility)
+                    sequenceInserts.push({
+                        campaign_id: campaignId,
+                        step_number: index + 1,
+                        subject: seq.subject,
+                        body: seq.body,
+                        delay_days: seq.delayDays,
+                        variant_label: 'A',
+                        // order_index: index
+                    })
+                }
+            }
+
+            if (sequenceInserts.length > 0) {
+                const { error: seqError } = await supabase
+                    .from('campaign_sequences')
+                    .insert(sequenceInserts)
+
+                if (seqError) console.error('Error saving sequences:', seqError)
+            }
         }
 
         // 3. Save Schedule Locally

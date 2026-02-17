@@ -76,7 +76,12 @@ function NewCampaignContent() {
 
     // Sequences (multi-step emails)
     const [sequences, setSequences] = useState([
-        { id: 1, stepNumber: 1, delayDays: 0, subject: '', body: '', variants: [] as any[] }
+        {
+            id: 1,
+            stepNumber: 1,
+            delayDays: 0,
+            variants: [{ label: 'A', subject: '', body: '' }] as any[]
+        }
     ])
 
     // Schedule
@@ -157,9 +162,7 @@ function NewCampaignContent() {
                 id: Math.max(...prev.map(s => s.id)) + 1,
                 stepNumber: prev.length + 1,
                 delayDays: 3,
-                subject: '',
-                body: '',
-                variants: []
+                variants: [{ label: 'A', subject: '', body: '' }]
             }
             return [...prev, newStep]
         })
@@ -177,22 +180,68 @@ function NewCampaignContent() {
 
     const [lastFocusedStepId, setLastFocusedStepId] = useState<number>(1)
     const [lastFocusedField, setLastFocusedField] = useState<'subject' | 'body'>('body')
+    const [activeVariantLabel, setActiveVariantLabel] = useState<string>('A')
 
-    // Update sequence - using functional update to fix stale closure
-    const updateSequence = (id: number, field: string, value: any) => {
-        setSequences(prev => prev.map(s =>
-            s.id === id ? { ...s, [field]: value } : s
-        ))
+    // Update variant content
+    const updateVariant = (stepId: number, variantLabel: string, field: string, value: any) => {
+        setSequences(prev => prev.map(s => {
+            if (s.id === stepId) {
+                // Handle delay update (step level)
+                if (field === 'delayDays') {
+                    return { ...s, delayDays: value }
+                }
+
+                // Handle variant update
+                const updatedVariants = s.variants.map((v: any) =>
+                    v.label === variantLabel ? { ...v, [field]: value } : v
+                )
+                return { ...s, variants: updatedVariants }
+            }
+            return s
+        }))
+    }
+
+    // Add new variant
+    const addVariant = (stepId: number) => {
+        setSequences(prev => prev.map(s => {
+            if (s.id === stepId) {
+                const labels = s.variants.map((v: any) => v.label)
+                const maxCharCode = Math.max(...labels.map((l: string) => l.charCodeAt(0)), 64) // 64 is before 'A'
+                const nextLabel = String.fromCharCode(maxCharCode + 1)
+
+                if (labels.length >= 26) {
+                    toast.error('Max variants reached')
+                    return s
+                }
+
+                // Auto-switch to new variant
+                setActiveVariantLabel(nextLabel)
+                return {
+                    ...s,
+                    variants: [...s.variants, { label: nextLabel, subject: '', body: '' }]
+                }
+            }
+            return s
+        }))
     }
 
     const insertVariable = (variable: string) => {
         setSequences(prev => prev.map(s => {
             if (s.id === lastFocusedStepId) {
-                const currentVal = (s as any)[lastFocusedField] || ''
-                // For simplicity in this non-ref version, we append.
-                // In a perfect world we'd use refs like in the edit page,
-                // but let's at least make it work.
-                return { ...s, [lastFocusedField]: currentVal + variable }
+                const updatedVariants = s.variants.map((v: any) => {
+                    // Only insert into the CURRENTLY active variant for this step if it matches local logic
+                    // OR assume lastFocusedStepId implies we are editing THAT step's active variant.
+                    // Ideally we track lastFocusedVariantLabel too.
+                    // For now, let's assume we insert into 'activeVariantLabel' ONLY IF we are editing the selected step.
+                    // But wait, lastFocusedField helps.
+
+                    if (v.label === activeVariantLabel) {
+                        const currentVal = (v as any)[lastFocusedField] || ''
+                        return { ...v, [lastFocusedField]: currentVal + variable }
+                    }
+                    return v
+                })
+                return { ...s, variants: updatedVariants }
             }
             return s
         }))
@@ -208,7 +257,7 @@ function NewCampaignContent() {
             toast.error('Please enter a campaign name')
             return
         }
-        if (!sequences[0]?.subject || !sequences[0]?.body) {
+        if (!sequences[0]?.variants[0]?.subject || !sequences[0]?.variants[0]?.body) {
             toast.error('Please complete the first email sequence')
             return
         }
@@ -407,18 +456,27 @@ function NewCampaignContent() {
                                         <div className="flex items-center gap-2 mb-3">
                                             <Clock className="h-3 w-3 text-zinc-600" />
                                             <span className="text-xs text-zinc-600">Wait</span>
-                                            <Input
-                                                type="number"
-                                                value={seq.delayDays}
-                                                onChange={(e) => updateSequence(seq.id, 'delayDays', parseInt(e.target.value))}
-                                                className="w-14 h-6 text-xs bg-zinc-950 border-zinc-800 text-center"
-                                            />
+                                            <div className="flex items-center gap-1">
+                                                <Input
+                                                    type="number"
+                                                    value={seq.delayDays}
+                                                    onChange={(e) => updateVariant(seq.id, 'A', 'delayDays', parseInt(e.target.value))}
+                                                    className="w-14 h-6 text-xs bg-zinc-950 border-zinc-800 text-center"
+                                                />
+                                            </div>
                                             <span className="text-xs text-zinc-600">days</span>
                                         </div>
                                     )}
 
-                                    <p className="text-xs text-zinc-500 truncate">
-                                        {seq.subject || 'No subject yet...'}
+                                    <div className="flex flex-wrap gap-1 mt-2">
+                                        {seq.variants.map((v: any) => (
+                                            <span key={v.label} className="text-[10px] px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-400">
+                                                Var {v.label}
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-zinc-500 truncate mt-1">
+                                        {seq.variants[0]?.subject || 'No subject yet...'}
                                     </p>
                                 </div>
                             ))}
@@ -428,11 +486,39 @@ function NewCampaignContent() {
                         <div className="lg:col-span-2">
                             {(() => {
                                 const activeStep = sequences.find(s => s.id === selectedStepId) || sequences[0]
+                                const activeVariant = activeStep.variants.find((v: any) => v.label === activeVariantLabel) || activeStep.variants[0]
+
                                 return (
                                     <Card className="bg-zinc-900/50 border-zinc-800">
                                         <CardHeader className="border-b border-zinc-800">
                                             <div className="flex items-center justify-between">
-                                                <CardTitle className="text-base">Step {activeStep?.stepNumber} Email</CardTitle>
+                                                <div className="flex items-center gap-2">
+                                                    <CardTitle className="text-base">Step {activeStep?.stepNumber} Content</CardTitle>
+
+                                                    {/* Variant Tabs */}
+                                                    <div className="flex items-center bg-zinc-950 rounded-lg p-1 ml-4 border border-zinc-800">
+                                                        {activeStep.variants.map((v: any) => (
+                                                            <button
+                                                                key={v.label}
+                                                                onClick={() => setActiveVariantLabel(v.label)}
+                                                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeVariantLabel === v.label
+                                                                        ? 'bg-zinc-800 text-white shadow-sm'
+                                                                        : 'text-zinc-500 hover:text-zinc-300'
+                                                                    }`}
+                                                            >
+                                                                {v.label}
+                                                            </button>
+                                                        ))}
+                                                        <button
+                                                            onClick={() => addVariant(activeStep.id)}
+                                                            className="px-2 py-1 text-zinc-600 hover:text-amber-500 transition-colors ml-1"
+                                                            title="Add Variant"
+                                                        >
+                                                            <Plus className="h-3 w-3" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
                                                 <Button variant="ghost" size="sm" className="text-zinc-500">
                                                     <Eye className="h-4 w-4 mr-2" />
                                                     Preview
@@ -443,10 +529,10 @@ function NewCampaignContent() {
                                             <div>
                                                 <Label className="text-xs text-zinc-500 mb-2 block">Subject Line</Label>
                                                 <Input
-                                                    value={activeStep?.subject || ''}
-                                                    onChange={(e) => updateSequence(activeStep?.id || 1, 'subject', e.target.value)}
+                                                    value={activeVariant?.subject || ''}
+                                                    onChange={(e) => updateVariant(activeStep?.id || 1, activeVariantLabel, 'subject', e.target.value)}
                                                     onFocus={() => { setLastFocusedStepId(activeStep?.id || 1); setLastFocusedField('subject') }}
-                                                    placeholder="Enter subject line..."
+                                                    placeholder={`Enter subject line for Variant ${activeVariantLabel}...`}
                                                     className="bg-zinc-950 border-zinc-800"
                                                 />
                                             </div>
@@ -454,10 +540,10 @@ function NewCampaignContent() {
                                             <div>
                                                 <Label className="text-xs text-zinc-500 mb-2 block">Email Body</Label>
                                                 <Textarea
-                                                    value={activeStep?.body || ''}
-                                                    onChange={(e) => updateSequence(activeStep?.id || 1, 'body', e.target.value)}
+                                                    value={activeVariant?.body || ''}
+                                                    onChange={(e) => updateVariant(activeStep?.id || 1, activeVariantLabel, 'body', e.target.value)}
                                                     onFocus={() => { setLastFocusedStepId(activeStep?.id || 1); setLastFocusedField('body') }}
-                                                    placeholder="Write your email here..."
+                                                    placeholder={`Write your email for Variant ${activeVariantLabel}...`}
                                                     className="min-h-[300px] bg-zinc-950 border-zinc-800 font-mono text-sm"
                                                 />
                                             </div>
