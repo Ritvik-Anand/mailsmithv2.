@@ -535,23 +535,16 @@ export async function addLeadsToInstantlyCampaign(
 
         // 3. If campaign is linked to Instantly, push leads there
         if (campaign.instantly_campaign_id) {
-            // Format leads for Instantly
-            const formattedLeads = leads.map(lead => ({
-                email: lead.email,
-                first_name: lead.first_name,
-                last_name: lead.last_name,
-                company_name: lead.company_name,
-                job_title: lead.job_title,
-                linkedin_url: lead.linkedin_url,
-                custom_variables: {
-                    icebreaker: lead.icebreaker || '',
-                    // Add any other custom variables here
-                    ...(lead.enrichment_data || {})
-                }
-            }))
+            // Ensure leads have email (Instantly requirement)
+            const validLeads = leads.filter(l => l.email && l.email.trim() !== '')
 
-            // Call Instantly API
-            await instantly.addLeadsToCampaign(campaign.instantly_campaign_id, formattedLeads)
+            if (validLeads.length === 0) {
+                // If we filtered out all leads because of missing emails, throw consistent error
+                throw new Error('No leads with valid emails found')
+            }
+
+            // Call Instantly API with raw DB leads (client handles formatting)
+            await instantly.addLeadsToCampaign(campaign.instantly_campaign_id, validLeads)
         }
 
         // 4. Update lead status in our DB (whether or not it's linked to Instantly)

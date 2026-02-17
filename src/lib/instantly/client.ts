@@ -177,12 +177,14 @@ export class InstantlyClient {
             first_name: lead.first_name,
             last_name: lead.last_name,
             company_name: lead.company_name,
-            personalization: lead.icebreaker, // Map icebreaker to personalization
-            job_title: lead.job_title, // Instantly uses job_title or title? keeping both or standardizing
+            phone: lead.phone,
+            website: lead.website,
+            personalization: lead.personalization || lead.icebreaker,
+            job_title: lead.job_title,
             linkedin_url: lead.linkedin_url,
             custom_variables: {
                 ...lead.custom_variables,
-                phone: lead.phone
+                ...lead.enrichment_data
             }
         }))
 
