@@ -209,11 +209,9 @@ export class InstantlyClient {
      * V2: status 0 = paused, 1 = active
      */
     async updateCampaignStatus(campaignId: string, status: 0 | 1): Promise<any> {
-        return this.request(`/campaigns/${campaignId}`, {
-            method: 'PATCH',
-            body: JSON.stringify({
-                status,
-            }),
+        const action = status === 1 ? 'activate' : 'pause'
+        return this.request(`/campaigns/${campaignId}/${action}`, {
+            method: 'POST',
         })
     }
 
