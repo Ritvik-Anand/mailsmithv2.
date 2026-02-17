@@ -189,34 +189,29 @@ export class InstantlyClient {
             } : lead.custom_variables
         }))
 
-        // Process sequentially to inspect response
-        const batchSize = 1 // Process one by one for debug clarity (or batch 10)
+        // Process sequentially
+        const batchSize = 10
         const results = []
 
-        // Only process the FIRST batch for debugging to avoid spam if it fails/loops
-        // Use batch 5 to get enough data
-        const batch = formattedLeads.slice(0, 5)
-
-        const batchPromises = batch.map(lead =>
-            this.request(`/leads?campaign_id=${campaignId}`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    campaign_id: campaignId,
-                    campaignId: campaignId,
-                    skip_if_in_workspace: false,
-                    skip_if_in_campaign: false, // FORCE ADD
-                    ...lead
+        for (let i = 0; i < formattedLeads.length; i += batchSize) {
+            const batch = formattedLeads.slice(i, i + batchSize)
+            const batchPromises = batch.map(lead =>
+                this.request('/leads', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        campaign: campaignId, // PRIMARY V2 PARAMETER
+                        campaign_id: campaignId, // Legacy backup
+                        skip_if_in_workspace: false,
+                        skip_if_in_campaign: true,
+                        ...lead
+                    })
                 })
-            })
-        )
-        const batchResults = await Promise.all(batchPromises)
-
-        if (batchResults.length > 0) {
-            // THROW DEBUG ERROR TO SHOW RESPONSE
-            throw new Error(`INSTANTLY DEBUG: ${JSON.stringify(batchResults[0])}`)
+            )
+            const batchResults = await Promise.all(batchPromises)
+            results.push(...batchResults)
         }
 
-        return batchResults
+        return results
     }
 
 
