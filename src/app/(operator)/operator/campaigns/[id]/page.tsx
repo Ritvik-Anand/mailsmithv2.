@@ -1488,6 +1488,8 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
 // ============================================================================
 function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any }) {
     const [isSaving, setIsSaving] = useState(false)
+    const [showAdvanced, setShowAdvanced] = useState(false)
+
     const [availableAccounts, setAvailableAccounts] = useState<any[]>([])
     const [selectedEmails, setSelectedEmails] = useState<string[]>([])
     const [isLoadingAccounts, setIsLoadingAccounts] = useState(false)
@@ -1750,9 +1752,16 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
 
             {/* Action Bar */}
             <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
-                <Button variant="ghost" className="text-zinc-500 hover:text-white gap-2">
+                <Button
+                    variant="ghost"
+                    className="text-zinc-500 hover:text-white gap-2"
+                    onClick={() => {
+                        setShowAdvanced(!showAdvanced)
+                        if (!showAdvanced) toast.info('Advanced options expanded')
+                    }}
+                >
                     <Settings className="h-4 w-4" />
-                    Show advanced options
+                    {showAdvanced ? 'Hide advanced options' : 'Show advanced options'}
                 </Button>
 
                 <Button
