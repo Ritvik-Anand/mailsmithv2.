@@ -50,7 +50,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { getCampaignById, getCampaignLeads, getCampaignSequences, upsertSequenceStep, deleteSequenceStep } from '@/server/actions/campaigns'
+import { getCampaignById, getCampaignLeads, getCampaignSequences, upsertSequenceStep, deleteSequenceStep, getCampaignSchedules, upsertSchedule, updateCampaign } from '@/server/actions/campaigns'
 import { cn } from '@/lib/utils'
 
 const TABS = [
@@ -1226,6 +1226,7 @@ const TIMEZONES = [
 
 function ScheduleTab({ campaignId }: { campaignId: string }) {
     const [schedule, setSchedule] = useState({
+        id: '',
         name: 'USA Schedule',
         fromHour: '9',
         fromMinute: '00',
@@ -1242,6 +1243,44 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
             sunday: false,
         }
     })
+    const [isLoading, setIsLoading] = useState(true)
+    const [isSaving, setIsSaving] = useState(false)
+
+    useEffect(() => {
+        async function loadSchedule() {
+            setIsLoading(true)
+            try {
+                const schedules = await getCampaignSchedules(campaignId)
+                if (schedules && schedules.length > 0) {
+                    const s = schedules[0] // Just load the first one for now as per UI
+                    setSchedule({
+                        id: s.id,
+                        name: s.name,
+                        fromHour: s.send_from_hour.toString(),
+                        fromMinute: s.send_from_minute?.toString().padStart(2, '0') || '00',
+                        toHour: s.send_to_hour.toString(),
+                        toMinute: s.send_to_minute?.toString().padStart(2, '0') || '00',
+                        timezone: s.timezone,
+                        days: {
+                            monday: s.monday,
+                            tuesday: s.tuesday,
+                            wednesday: s.wednesday,
+                            thursday: s.thursday,
+                            friday: s.friday,
+                            saturday: s.saturday,
+                            sunday: s.sunday,
+                        }
+                    })
+                }
+            } catch (error) {
+                console.error('Error loading schedules:', error)
+                toast.error('Failed to load schedule')
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        loadSchedule()
+    }, [campaignId])
 
     const dayLabels = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
 
@@ -1249,6 +1288,41 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
         const ampm = h < 12 ? 'AM' : 'PM'
         const hours = h % 12 || 12
         return `${hours}:00 ${ampm}`
+    }
+
+    const handleSave = async () => {
+        setIsSaving(true)
+        try {
+            const result = await upsertSchedule(campaignId, {
+                id: schedule.id || undefined,
+                name: schedule.name,
+                send_from_hour: parseInt(schedule.fromHour),
+                send_from_minute: parseInt(schedule.fromMinute),
+                send_to_hour: parseInt(schedule.toHour),
+                send_to_minute: parseInt(schedule.toMinute),
+                timezone: schedule.timezone,
+                ...schedule.days
+            })
+
+            if (result.success) {
+                toast.success('Schedule saved successfully')
+            } else {
+                toast.error(result.error || 'Failed to save schedule')
+            }
+        } catch (error) {
+            console.error('Error saving schedule:', error)
+            toast.error('Failed to save schedule')
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center p-12">
+                <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+            </div>
+        )
     }
 
     return (
@@ -1375,7 +1449,7 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                                         className="flex items-center gap-2 cursor-pointer"
                                     >
                                         <Checkbox
-                                            checked={schedule.days[day]}
+                                            checked={(schedule.days as any)[day]}
                                             onCheckedChange={(checked) => {
                                                 setSchedule({
                                                     ...schedule,
@@ -1389,8 +1463,17 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                             </div>
                         </div>
 
-                        <Button className="bg-primary hover:bg-primary/90">
-                            Save
+                        <Button
+                            className="bg-primary hover:bg-primary/90"
+                            onClick={handleSave}
+                            disabled={isSaving}
+                        >
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : 'Save Schedule'}
                         </Button>
                     </CardContent>
                 </Card>
@@ -1403,6 +1486,32 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
 // OPTIONS TAB
 // ============================================================================
 function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any }) {
+    const [isSaving, setIsSaving] = useState(false)
+
+    const handleSaveOptions = async () => {
+        setIsSaving(true)
+        try {
+            const result = await updateCampaign(campaign.id, {
+                daily_limit: campaign.daily_limit,
+                stop_on_reply: campaign.stop_on_reply,
+                open_tracking: campaign.open_tracking,
+                link_tracking: campaign.link_tracking,
+                send_as_text: campaign.send_as_text
+            })
+
+            if (result.success) {
+                toast.success('Campaign options saved')
+            } else {
+                toast.error(result.error || 'Failed to save options')
+            }
+        } catch (error) {
+            console.error('Error saving options:', error)
+            toast.error('Failed to save options')
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
     // Mock accounts
     const accounts = [
         { id: '1', email: 'amanda@equityscale.org' },
@@ -1484,7 +1593,10 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                         </div>
                         <div className="flex items-center gap-4">
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <Checkbox checked={campaign.link_tracking} />
+                                <Checkbox
+                                    checked={campaign.link_tracking}
+                                    onCheckedChange={(checked) => setCampaign({ ...campaign, link_tracking: !!checked })}
+                                />
                                 <span className="text-sm text-zinc-400">Link tracking</span>
                             </label>
                             <div className="flex items-center gap-2">
@@ -1531,7 +1643,10 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                         </div>
                         <div className="flex flex-col gap-2 items-end">
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <Checkbox checked={campaign.send_as_text} />
+                                <Checkbox
+                                    checked={campaign.send_as_text}
+                                    onCheckedChange={(checked) => setCampaign({ ...campaign, send_as_text: !!checked })}
+                                />
                                 <span className="text-sm text-zinc-400">Send emails as text-only (no HTML)</span>
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
@@ -1562,11 +1677,24 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                 </CardContent>
             </Card>
 
-            {/* Advanced Options Link */}
-            <div className="flex justify-center pt-4">
+            {/* Action Bar */}
+            <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
                 <Button variant="ghost" className="text-zinc-500 hover:text-white gap-2">
                     <Settings className="h-4 w-4" />
                     Show advanced options
+                </Button>
+
+                <Button
+                    className="bg-primary hover:bg-primary/90 min-w-[140px]"
+                    onClick={handleSaveOptions}
+                    disabled={isSaving}
+                >
+                    {isSaving ? (
+                        <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Saving...
+                        </>
+                    ) : 'Save Changes'}
                 </Button>
             </div>
         </div>
