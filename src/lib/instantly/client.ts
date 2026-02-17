@@ -239,14 +239,26 @@ export class InstantlyClient {
      * Update campaign sequences (email steps)
      */
     async updateCampaignSequences(campaignId: string, sequences: any[]): Promise<any> {
+        // V2 structure: sequences is an array of sequence objects (usually just one main one)
+        // Each sequence has 'steps' array.
+        // Each step has 'variants' array.
         return this.request(`/campaigns/${campaignId}`, {
             method: 'PATCH',
             body: JSON.stringify({
-                sequences: sequences.map(seq => ({
-                    subject: seq.subject,
-                    body: seq.body,
-                    delay: seq.delay_days ?? 1,
-                }))
+                sequences: [
+                    {
+                        steps: sequences.map(seq => ({
+                            start_delay: seq.step_number === 1 ? 0 : (seq.delay_days ?? 1), // V2 uses start_delay for first step? search said 'delay'
+                            delay: seq.delay_days ?? (seq.step_number === 1 ? 0 : 1),
+                            variants: [
+                                {
+                                    subject: seq.subject,
+                                    body: seq.body
+                                }
+                            ]
+                        }))
+                    }
+                ]
             }),
         })
     }
