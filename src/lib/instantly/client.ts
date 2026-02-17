@@ -177,7 +177,7 @@ export class InstantlyClient {
             email: lead.email,
             first_name: lead.first_name,
             last_name: lead.last_name,
-            company_name: lead.company_name,
+            company: lead.company_name,
             phone: lead.phone,
             website: lead.website,
             personalization: lead.personalization || lead.icebreaker,
