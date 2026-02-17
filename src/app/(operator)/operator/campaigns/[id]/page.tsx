@@ -597,7 +597,9 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
     const [previewLeads, setPreviewLeads] = useState<any[]>([])
     const [selectedLeadId, setSelectedLeadId] = useState<string>('sample')
     const [loadingPreviewLeads, setLoadingPreviewLeads] = useState(false)
-    const [lastFocusedField, setLastFocusedField] = useState<'subject' | 'body'>('body')
+
+    // Cursor tracking
+    const [lastSelection, setLastSelection] = useState<{ field: 'subject' | 'body', start: number, end: number } | null>(null)
     const subjectRef = useRef<HTMLInputElement>(null)
 
     // Load sequences on mount
@@ -863,41 +865,73 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
         }, 1000)
     }
 
+    const handleInputSelect = (field: 'subject' | 'body', e: React.SyntheticEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const target = e.currentTarget
+        setLastSelection({
+            field,
+            start: target.selectionStart || 0,
+            end: target.selectionEnd || 0
+        })
+    }
+
     const insertVariable = (variable: string) => {
         const variant = getActiveVariant()
         if (!variant) return
 
-        if (lastFocusedField === 'subject') {
-            const input = subjectRef.current
-            if (!input) return
+        // Default to body if no selection
+        const selection = lastSelection || { field: 'body', start: (variant.body || '').length, end: (variant.body || '').length }
 
-            const start = input.selectionStart || 0
-            const end = input.selectionEnd || 0
+        if (selection.field === 'subject') {
+            const input = subjectRef.current
+
             const currentSubject = variant.subject || ''
+            // Use current ref selection if available and focused, otherwise fallback to stored selection
+            // This handles tight loops where user clicked back into input
+            const start = input === document.activeElement ? (input?.selectionStart || 0) : selection.start
+            const end = input === document.activeElement ? (input?.selectionEnd || 0) : selection.end
+
             const newSubject = currentSubject.substring(0, start) + variable + currentSubject.substring(end)
 
             updateVariantContent({ subject: newSubject })
 
+            // Update selection for next insertion
+            setLastSelection({
+                field: 'subject',
+                start: start + variable.length,
+                end: start + variable.length
+            })
+
             requestAnimationFrame(() => {
-                input.focus()
-                const newCursorPos = start + variable.length
-                input.setSelectionRange(newCursorPos, newCursorPos)
+                if (input) {
+                    input.focus()
+                    const newCursorPos = start + variable.length
+                    input.setSelectionRange(newCursorPos, newCursorPos)
+                }
             })
         } else {
             const textarea = bodyRef.current
-            if (!textarea) return
 
-            const start = textarea.selectionStart || 0
-            const end = textarea.selectionEnd || 0
             const currentBody = variant.body || ''
+            const start = textarea === document.activeElement ? (textarea?.selectionStart || 0) : selection.start
+            const end = textarea === document.activeElement ? (textarea?.selectionEnd || 0) : selection.end
+
             const newBody = currentBody.substring(0, start) + variable + currentBody.substring(end)
 
             updateVariantContent({ body: newBody })
 
+            // Update selection for next insertion
+            setLastSelection({
+                field: 'body',
+                start: start + variable.length,
+                end: start + variable.length
+            })
+
             requestAnimationFrame(() => {
-                textarea.focus()
-                const newCursorPos = start + variable.length
-                textarea.setSelectionRange(newCursorPos, newCursorPos)
+                if (textarea) {
+                    textarea.focus()
+                    const newCursorPos = start + variable.length
+                    textarea.setSelectionRange(newCursorPos, newCursorPos)
+                }
             })
         }
     }
@@ -1084,7 +1118,9 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                                     ref={subjectRef}
                                     value={activeVariant?.subject || ''}
                                     onChange={(e) => updateVariantContent({ subject: e.target.value })}
-                                    onFocus={() => setLastFocusedField('subject')}
+                                    onSelect={(e) => handleInputSelect('subject', e)}
+                                    onClick={(e) => handleInputSelect('subject', e)}
+                                    onKeyUp={(e) => handleInputSelect('subject', e)}
                                     className="flex-1 min-w-[300px] bg-zinc-900 border-zinc-800"
                                     placeholder="Enter subject line..."
                                 />
@@ -1105,7 +1141,9 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                             ref={bodyRef}
                             value={activeVariant?.body || ''}
                             onChange={(e) => updateVariantContent({ body: e.target.value })}
-                            onFocus={() => setLastFocusedField('body')}
+                            onSelect={(e) => handleInputSelect('body', e)}
+                            onClick={(e) => handleInputSelect('body', e)}
+                            onKeyUp={(e) => handleInputSelect('body', e)}
                             className="min-h-[400px] bg-zinc-900 border-zinc-800 font-mono text-sm leading-relaxed"
                             placeholder="Write your email body here..."
                         />
