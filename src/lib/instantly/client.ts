@@ -252,6 +252,15 @@ export class InstantlyClient {
             body: JSON.stringify(options),
         })
     }
+
+    /**
+     * Delete a campaign
+     */
+    async deleteCampaign(campaignId: string): Promise<any> {
+        return this.request(`/campaigns/${campaignId}`, {
+            method: 'DELETE',
+        })
+    }
 }
 
 export const instantly = new InstantlyClient()

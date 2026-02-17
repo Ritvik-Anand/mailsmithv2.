@@ -370,6 +370,40 @@ export async function deleteCampaign(campaignId: string) {
     }
 
     try {
+        // 1. Get campaign details first to handle Instantly deletion
+        const { data: campaign } = await supabase
+            .from('campaigns')
+            .select('instantly_campaign_id')
+            .eq('id', campaignId)
+            .single()
+
+        // 2. Unlink leads from this campaign (Fixes foreign key constraint)
+        const { error: unlinkError } = await supabase
+            .from('leads')
+            .update({
+                campaign_id: null,
+                campaign_status: 'not_added'
+            })
+            .eq('campaign_id', campaignId)
+
+        if (unlinkError) {
+            console.error('Error unlinking leads:', unlinkError)
+            throw new Error('Failed to unlink leads from campaign')
+        }
+
+        // 3. Delete from Instantly if linked
+        if (campaign?.instantly_campaign_id) {
+            try {
+                await instantly.deleteCampaign(campaign.instantly_campaign_id)
+            } catch (err) {
+                console.error('Failed to delete campaign from Instantly:', err)
+                // Continue with local deletion even if Instantly fails, 
+                // or maybe we should stop? Usually better to clean up locally.
+                // But let's log it.
+            }
+        }
+
+        // 4. Delete local campaign
         const { error } = await supabase
             .from('campaigns')
             .delete()
