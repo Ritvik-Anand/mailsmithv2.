@@ -21,6 +21,7 @@ import {
     Mail,
     Zap,
     Loader2,
+    Loader,
     CheckCircle2,
     AlertCircle,
     ExternalLink,
@@ -558,7 +559,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 hover:bg-primary/10 transition-colors cursor-default">
-                            {job?.status === 'completed' ? <CheckCircle2 className="mr-1 h-3 w-3" /> : <RefreshCw className="mr-1 h-3 w-3 animate-spin" />}
+                            {job?.status === 'completed' ? <CheckCircle2 className="mr-1 h-3 w-3" /> : <Loader className="mr-1 h-3 w-3 animate-spin" />}
                             {job?.status.toUpperCase()}
                         </Badge>
                         <span className="text-xs text-zinc-500 font-mono">Job: {jobId.slice(0, 8)}</span>

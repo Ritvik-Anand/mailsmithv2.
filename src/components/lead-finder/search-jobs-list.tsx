@@ -13,6 +13,7 @@ import {
     CheckCircle2,
     XCircle,
     Loader2,
+    Loader,
     RefreshCw,
     Users,
     ChevronRight,
@@ -40,7 +41,7 @@ const statusConfig: Record<string, {
     },
     running: {
         label: 'Running',
-        icon: Loader2,
+        icon: Loader,
         color: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
         animate: true
     },

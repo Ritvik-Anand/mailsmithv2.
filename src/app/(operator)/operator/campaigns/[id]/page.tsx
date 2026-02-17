@@ -1142,6 +1142,88 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
 // ============================================================================
 // SCHEDULE TAB
 // ============================================================================
+const TIMEZONES = [
+    "UTC",
+    "America/New_York",
+    "America/Chicago",
+    "America/Denver",
+    "America/Los_Angeles",
+    "America/Anchorage",
+    "America/Honolulu",
+    "America/Phoenix",
+    "America/Detroit",
+    "America/Indiana/Indianapolis",
+    "America/Kentucky/Louisville",
+    "America/Toronto",
+    "America/Vancouver",
+    "America/Winnipeg",
+    "America/Edmonton",
+    "America/Halifax",
+    "America/St_Johns",
+    "Europe/London",
+    "Europe/Paris",
+    "Europe/Berlin",
+    "Europe/Rome",
+    "Europe/Madrid",
+    "Europe/Amsterdam",
+    "Europe/Brussels",
+    "Europe/Dublin",
+    "Europe/Lisbon",
+    "Europe/Prague",
+    "Europe/Vienna",
+    "Europe/Warsaw",
+    "Europe/Zurich",
+    "Europe/Athens",
+    "Europe/Bucharest",
+    "Europe/Helsinki",
+    "Europe/Kiev",
+    "Europe/Moscow",
+    "Europe/Istanbul",
+    "Asia/Dubai",
+    "Asia/Jerusalem",
+    "Asia/Riyadh",
+    "Asia/Baghdad",
+    "Asia/Tehran",
+    "Asia/Baku",
+    "Asia/Tbilisi",
+    "Asia/Yerevan",
+    "Asia/Kabul",
+    "Asia/Karachi",
+    "Asia/Kolkata",
+    "Asia/Kathmandu",
+    "Asia/Dhaka",
+    "Asia/Colombo",
+    "Asia/Bangkok",
+    "Asia/Jakarta",
+    "Asia/Ho_Chi_Minh",
+    "Asia/Singapore",
+    "Asia/Kuala_Lumpur",
+    "Asia/Hong_Kong",
+    "Asia/Shanghai",
+    "Asia/Taipei",
+    "Asia/Manila",
+    "Asia/Seoul",
+    "Asia/Tokyo",
+    "Australia/Perth",
+    "Australia/Darwin",
+    "Australia/Adelaide",
+    "Australia/Brisbane",
+    "Australia/Sydney",
+    "Australia/Canberra",
+    "Australia/Melbourne",
+    "Australia/Hobart",
+    "Pacific/Port_Moresby",
+    "Pacific/Guam",
+    "Pacific/Fiji",
+    "Pacific/Auckland",
+    "Pacific/Tongatapu",
+    "Africa/Cairo",
+    "Africa/Johannesburg",
+    "Africa/Lagos",
+    "Africa/Nairobi",
+    "Africa/Casablanca"
+].sort()
+
 function ScheduleTab({ campaignId }: { campaignId: string }) {
     const [schedule, setSchedule] = useState({
         name: 'USA Schedule',
@@ -1162,6 +1244,12 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
     })
 
     const dayLabels = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
+
+    const formatTime = (h: number) => {
+        const ampm = h < 12 ? 'AM' : 'PM'
+        const hours = h % 12 || 12
+        return `${hours}:00 ${ampm}`
+    }
 
     return (
         <div className="grid grid-cols-12 gap-6">
@@ -1216,14 +1304,20 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="space-y-1">
                                     <span className="text-[10px] text-zinc-600">From</span>
-                                    <Select value={`${schedule.fromHour}:${schedule.fromMinute} `}>
+                                    <Select
+                                        value={`${schedule.fromHour}:${schedule.fromMinute}`}
+                                        onValueChange={(val) => {
+                                            const [h, m] = val.split(':')
+                                            setSchedule({ ...schedule, fromHour: h, fromMinute: m })
+                                        }}
+                                    >
                                         <SelectTrigger className="bg-zinc-900 border-zinc-800">
                                             <SelectValue />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-zinc-950 border-zinc-800">
+                                        <SelectContent className="bg-zinc-950 border-zinc-800 max-h-[300px] overflow-y-auto">
                                             {Array.from({ length: 24 }).map((_, h) => (
                                                 <SelectItem key={h} value={`${h}:00`}>
-                                                    {h.toString().padStart(2, '0')}:00 {h < 12 ? 'AM' : 'PM'}
+                                                    {formatTime(h)}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -1231,14 +1325,20 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                                 </div>
                                 <div className="space-y-1">
                                     <span className="text-[10px] text-zinc-600">To</span>
-                                    <Select value={`${schedule.toHour}:${schedule.toMinute} `}>
+                                    <Select
+                                        value={`${schedule.toHour}:${schedule.toMinute}`}
+                                        onValueChange={(val) => {
+                                            const [h, m] = val.split(':')
+                                            setSchedule({ ...schedule, toHour: h, toMinute: m })
+                                        }}
+                                    >
                                         <SelectTrigger className="bg-zinc-900 border-zinc-800">
                                             <SelectValue />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-zinc-950 border-zinc-800">
+                                        <SelectContent className="bg-zinc-950 border-zinc-800 max-h-[300px] overflow-y-auto">
                                             {Array.from({ length: 24 }).map((_, h) => (
                                                 <SelectItem key={h} value={`${h}:00`}>
-                                                    {h.toString().padStart(2, '0')}:00 {h < 12 ? 'AM' : 'PM'}
+                                                    {formatTime(h)}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -1246,16 +1346,19 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                                 </div>
                                 <div className="space-y-1">
                                     <span className="text-[10px] text-zinc-600">Timezone</span>
-                                    <Select value={schedule.timezone}>
+                                    <Select
+                                        value={schedule.timezone}
+                                        onValueChange={(val) => setSchedule({ ...schedule, timezone: val })}
+                                    >
                                         <SelectTrigger className="bg-zinc-900 border-zinc-800">
                                             <SelectValue />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-zinc-950 border-zinc-800">
-                                            <SelectItem value="America/New_York">Eastern Time (US & Canada)</SelectItem>
-                                            <SelectItem value="America/Chicago">Central Time (US & Canada)</SelectItem>
-                                            <SelectItem value="America/Denver">Mountain Time (US & Canada)</SelectItem>
-                                            <SelectItem value="America/Los_Angeles">Pacific Time (US & Canada)</SelectItem>
-                                            <SelectItem value="UTC">UTC</SelectItem>
+                                        <SelectContent className="bg-zinc-950 border-zinc-800 max-h-[300px] overflow-y-auto">
+                                            {TIMEZONES.map((tz) => (
+                                                <SelectItem key={tz} value={tz}>
+                                                    {tz}
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -1265,7 +1368,7 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                         {/* Days */}
                         <div className="space-y-2">
                             <Label className="text-zinc-400">Days</Label>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-4 flex-wrap">
                                 {dayLabels.map((day) => (
                                     <label
                                         key={day}
