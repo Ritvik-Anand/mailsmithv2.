@@ -196,12 +196,10 @@ export class InstantlyClient {
         }
 
         const promises = chunks.map(chunk =>
-            // Using V1 endpoint for reliable bulk upload as V2 behavior is inconsistent
-            this.request('/../../v1/lead/add', {
+            // Using V2 /campaigns/{id}/leads endpoint which likely supports bulk
+            this.request(`/campaigns/${campaignId}/leads`, {
                 method: 'POST',
                 body: JSON.stringify({
-                    api_key: this.apiKey,
-                    campaign_id: campaignId,
                     skip_if_in_workspace: true,
                     skip_if_in_campaign: true,
                     leads: chunk
@@ -211,6 +209,8 @@ export class InstantlyClient {
 
         return Promise.all(promises)
     }
+
+
 
     /**
      * Updates the status of a campaign
