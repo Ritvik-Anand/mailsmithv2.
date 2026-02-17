@@ -188,15 +188,20 @@ export class InstantlyClient {
             }
         }))
 
-        return this.request('/leads', {
-            method: 'POST',
-            body: JSON.stringify({
-                campaign_id: campaignId,
-                skip_if_in_workspace: true,
-                skip_if_in_campaign: true,
-                leads: formattedLeads
-            }),
-        })
+        // V2 doesn't have bulk endpoint, so adding in parallel
+        const promises = formattedLeads.map(lead =>
+            this.request('/leads', {
+                method: 'POST',
+                body: JSON.stringify({
+                    campaign_id: campaignId,
+                    skip_if_in_workspace: true,
+                    skip_if_in_campaign: true,
+                    ...lead
+                })
+            })
+        )
+
+        return Promise.all(promises)
     }
 
     /**
