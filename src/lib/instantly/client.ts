@@ -19,12 +19,43 @@ export interface InstantlyAccount {
 export interface InstantlyCampaign {
     id: string
     name: string
-    status: number // V2: 0=paused, 1=active, etc.
+    status: number
     created_at: string
+    // Advanced options
+    daily_limit?: number
+    stop_on_reply?: boolean
+    stop_on_auto_reply?: boolean
+    open_tracking?: boolean
+    link_tracking?: boolean
+    delivery_optimization?: boolean
+    prioritize_new_leads?: boolean
+    first_email_text_only?: boolean
+    show_unsubscribe?: boolean // inferred from search 'insert_unsubscribe_header'
+    minimum_wait_time?: number
+    random_variance?: number
+    cc_email_list?: string[]
+    bcc_email_list?: string[]
+}
+
+export interface InstantlyCampaignOptions {
+    daily_limit?: number
+    stop_on_reply?: boolean
+    stop_on_auto_reply?: boolean
+    open_tracking?: boolean
+    link_tracking?: boolean
+    delivery_optimization?: boolean
+    prioritize_new_leads?: boolean
+    first_email_text_only?: boolean
+    show_unsubscribe?: boolean
+    minimum_wait_time?: number
+    random_variance?: number
+    cc_email_list?: string[]
+    bcc_email_list?: string[]
 }
 
 export class InstantlyClient {
     private apiKey: string
+    // ... existing constructor ...
 
     constructor() {
         const key = process.env.INSTANTLY_API_KEY
@@ -214,13 +245,7 @@ export class InstantlyClient {
     /**
      * Update campaign options
      */
-    async updateCampaignOptions(campaignId: string, options: {
-        stop_on_reply?: boolean;
-        open_tracking?: boolean;
-        link_tracking?: boolean;
-        send_as_text?: boolean;
-        daily_limit?: number;
-    }): Promise<any> {
+    async updateCampaignOptions(campaignId: string, options: InstantlyCampaignOptions): Promise<any> {
         return this.request(`/campaigns/${campaignId}`, {
             method: 'PATCH',
             body: JSON.stringify(options),

@@ -51,7 +51,7 @@ import {
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { getCampaignById, getCampaignLeads, getCampaignSequences, upsertSequenceStep, deleteSequenceStep, getCampaignSchedules, upsertSchedule, updateCampaign } from '@/server/actions/campaigns'
-import { getOrganizationNodes, getCampaignAccountsFromInstantly, updateCampaignAccountsInInstantly } from '@/server/actions/instantly'
+import { getOrganizationNodes, getCampaignAccountsFromInstantly, updateCampaignAccountsInInstantly, getCampaignAdvancedOptionsFromInstantly, updateCampaignAdvancedOptionsInInstantly } from '@/server/actions/instantly'
 import { cn } from '@/lib/utils'
 
 const TABS = [
@@ -1489,23 +1489,23 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
 function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any }) {
     const [isSaving, setIsSaving] = useState(false)
     const [showAdvanced, setShowAdvanced] = useState(false)
+    const [advancedOptions, setAdvancedOptions] = useState<any>({})
+    const [isLoadingAdvanced, setIsLoadingAdvanced] = useState(false)
 
     const [availableAccounts, setAvailableAccounts] = useState<any[]>([])
     const [selectedEmails, setSelectedEmails] = useState<string[]>([])
     const [isLoadingAccounts, setIsLoadingAccounts] = useState(false)
 
     useEffect(() => {
-        async function loadAccounts() {
+        async function loadAccountsAndOptions() {
             if (!campaign?.organization_id) return
+
+            // 1. Load Accounts
             setIsLoadingAccounts(true)
             try {
-                // 1. Get all nodes for org
                 const nodes = await getOrganizationNodes(campaign.organization_id)
                 setAvailableAccounts(nodes || [])
 
-                // 2. Get assigned accounts from Instantly
-                // We only do this if we haven't modified the selection locally yet?
-                // Actually, we should load initial state.
                 if (campaign.instantly_campaign_id) {
                     const assigned = await getCampaignAccountsFromInstantly(campaign.id)
                     if (assigned.success && Array.isArray(assigned.emails)) {
@@ -1518,8 +1518,23 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
             } finally {
                 setIsLoadingAccounts(false)
             }
+
+            // 2. Load Advanced Options
+            if (campaign.instantly_campaign_id) {
+                setIsLoadingAdvanced(true)
+                try {
+                    const adv = await getCampaignAdvancedOptionsFromInstantly(campaign.id)
+                    if (adv.success && adv.options) {
+                        setAdvancedOptions(adv.options)
+                    }
+                } catch (error) {
+                    console.error('Error loading advanced options:', error)
+                } finally {
+                    setIsLoadingAdvanced(false)
+                }
+            }
         }
-        loadAccounts()
+        loadAccountsAndOptions()
     }, [campaign?.id, campaign?.organization_id])
 
     const handleSaveOptions = async () => {
@@ -1538,6 +1553,12 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                 const accResult = await updateCampaignAccountsInInstantly(campaign.id, selectedEmails)
                 if (!accResult.success) {
                     toast.error('Failed to update accounts: ' + accResult.error)
+                }
+
+                // Update advanced options
+                const advResult = await updateCampaignAdvancedOptionsInInstantly(campaign.id, advancedOptions)
+                if (!advResult.success) {
+                    toast.error('Failed to update advanced options: ' + advResult.error)
                 }
             }
 
@@ -1750,15 +1771,119 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                 </CardContent>
             </Card>
 
+            {/* Advanced Options Section */}
+            {showAdvanced && (
+                <div className="space-y-6 pt-4 border-t border-zinc-800 animate-in fade-in slide-in-from-top-4 duration-300">
+                    <h3 className="text-lg font-semibold text-white">Advanced Settings</h3>
+
+                    {isLoadingAdvanced ? (
+                        <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+                        </div>
+                    ) : (
+                        <>
+                            {/* Prioritize New Leads */}
+                            <Card className="bg-zinc-950 border-zinc-800">
+                                <CardContent className="p-6 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-white">Prioritize New Leads</h3>
+                                        <p className="text-sm text-zinc-500 mt-1">Send first emails to new leads before sending follow-ups.</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            size="sm"
+                                            variant={advancedOptions.prioritize_new_leads ? "default" : "secondary"}
+                                            className={cn(advancedOptions.prioritize_new_leads ? "bg-primary text-primary-foreground" : "bg-zinc-800 text-zinc-400")}
+                                            onClick={() => setAdvancedOptions({ ...advancedOptions, prioritize_new_leads: true })}
+                                        >
+                                            Enable
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant={!advancedOptions.prioritize_new_leads ? "default" : "outline"}
+                                            className={cn(!advancedOptions.prioritize_new_leads ? "bg-zinc-900 text-white" : "border-zinc-800 text-zinc-400")}
+                                            onClick={() => setAdvancedOptions({ ...advancedOptions, prioritize_new_leads: false })}
+                                        >
+                                            Disable
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Stop on Auto-Reply */}
+                            <Card className="bg-zinc-950 border-zinc-800">
+                                <CardContent className="p-6 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-white">Stop on Auto-Reply</h3>
+                                        <p className="text-sm text-zinc-500 mt-1">Stop sending emails if an auto-reply (OOO) is received.</p>
+                                    </div>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <Checkbox
+                                            checked={advancedOptions.stop_on_auto_reply}
+                                            onCheckedChange={(c) => setAdvancedOptions({ ...advancedOptions, stop_on_auto_reply: !!c })}
+                                        />
+                                        <span className="text-sm text-zinc-400">Enable</span>
+                                    </label>
+                                </CardContent>
+                            </Card>
+
+                            {/* Show Unsubscribe Header */}
+                            <Card className="bg-zinc-950 border-zinc-800">
+                                <CardContent className="p-6 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-white">Unsubscribe Header</h3>
+                                        <p className="text-sm text-zinc-500 mt-1">Include 'List-Unsubscribe' header in emails.</p>
+                                    </div>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <Checkbox
+                                            checked={advancedOptions.show_unsubscribe}
+                                            onCheckedChange={(c) => setAdvancedOptions({ ...advancedOptions, show_unsubscribe: !!c })}
+                                        />
+                                        <span className="text-sm text-zinc-400">Enable</span>
+                                    </label>
+                                </CardContent>
+                            </Card>
+
+                            {/* Wait Time & Variance */}
+                            <Card className="bg-zinc-950 border-zinc-800">
+                                <CardContent className="p-6 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h3 className="font-bold text-white">Minimum Wait Time</h3>
+                                            <p className="text-sm text-zinc-500 mt-1">Minimum minutes between emails sent from same account.</p>
+                                        </div>
+                                        <Input
+                                            type="number"
+                                            className="w-24 bg-zinc-900 border-zinc-800 text-right"
+                                            value={advancedOptions.minimum_wait_time || 0}
+                                            onChange={(e) => setAdvancedOptions({ ...advancedOptions, minimum_wait_time: parseInt(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between border-t border-zinc-900 pt-4">
+                                        <div>
+                                            <h3 className="font-bold text-white">Random Variance</h3>
+                                            <p className="text-sm text-zinc-500 mt-1">Max additional random minutes to wait.</p>
+                                        </div>
+                                        <Input
+                                            type="number"
+                                            className="w-24 bg-zinc-900 border-zinc-800 text-right"
+                                            value={advancedOptions.random_variance || 0}
+                                            onChange={(e) => setAdvancedOptions({ ...advancedOptions, random_variance: parseInt(e.target.value) })}
+                                        />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </>
+                    )}
+                </div>
+            )}
+
             {/* Action Bar */}
             <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
                 <Button
                     variant="ghost"
                     className="text-zinc-500 hover:text-white gap-2"
-                    onClick={() => {
-                        setShowAdvanced(!showAdvanced)
-                        if (!showAdvanced) toast.info('Advanced options expanded')
-                    }}
+                    onClick={() => setShowAdvanced(!showAdvanced)}
                 >
                     <Settings className="h-4 w-4" />
                     {showAdvanced ? 'Hide advanced options' : 'Show advanced options'}

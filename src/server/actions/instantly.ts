@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { instantly } from '@/lib/instantly/client'
+import { instantly, InstantlyCampaignOptions } from '@/lib/instantly/client'
 import { revalidatePath } from 'next/cache'
 
 /**
@@ -466,6 +466,76 @@ export async function updateCampaignAccountsInInstantly(campaignId: string, emai
         return { success: true }
     } catch (error: any) {
         console.error('Error updating campaign accounts:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+/**
+ * Get advanced options for a campaign from Instantly
+ */
+export async function getCampaignAdvancedOptionsFromInstantly(campaignId: string) {
+    const supabase = await createClient()
+
+    try {
+        const { data: campaign, error: fetchError } = await supabase
+            .from('campaigns')
+            .select('instantly_campaign_id')
+            .eq('id', campaignId)
+            .single()
+
+        if (fetchError || !campaign?.instantly_campaign_id) {
+            return { success: false, error: 'Campaign not linked to Instantly' }
+        }
+
+        const remoteCampaign: any = await instantly.getCampaign(campaign.instantly_campaign_id)
+
+        // Extract options based on our interface
+        const options: InstantlyCampaignOptions = {
+            daily_limit: remoteCampaign.daily_limit,
+            stop_on_reply: remoteCampaign.stop_on_reply,
+            stop_on_auto_reply: remoteCampaign.stop_on_auto_reply,
+            open_tracking: remoteCampaign.open_tracking,
+            link_tracking: remoteCampaign.link_tracking,
+            delivery_optimization: remoteCampaign.delivery_optimization,
+            prioritize_new_leads: remoteCampaign.prioritize_new_leads,
+            first_email_text_only: remoteCampaign.first_email_text_only,
+            show_unsubscribe: remoteCampaign.show_unsubscribe || remoteCampaign.insert_unsubscribe_header,
+            minimum_wait_time: remoteCampaign.email_gap || remoteCampaign.minimum_wait_time,
+            random_variance: remoteCampaign.random_wait_max || remoteCampaign.random_variance,
+            cc_email_list: remoteCampaign.cc_email_list || remoteCampaign.cc_list,
+            bcc_email_list: remoteCampaign.bcc_email_list || remoteCampaign.bcc_list
+        }
+
+        return { success: true, options }
+    } catch (error: any) {
+        console.error('Error fetching campaign options:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+/**
+ * Update advanced options for a campaign in Instantly
+ */
+export async function updateCampaignAdvancedOptionsInInstantly(campaignId: string, options: InstantlyCampaignOptions) {
+    const supabase = await createClient()
+
+    try {
+        const { data: campaign, error: fetchError } = await supabase
+            .from('campaigns')
+            .select('instantly_campaign_id')
+            .eq('id', campaignId)
+            .single()
+
+        if (fetchError || !campaign?.instantly_campaign_id) {
+            return { success: false, error: 'Campaign not linked to Instantly' }
+        }
+
+        await instantly.updateCampaignOptions(campaign.instantly_campaign_id, options)
+
+        revalidatePath(`/operator/campaigns/${campaignId}`)
+        return { success: true }
+    } catch (error: any) {
+        console.error('Error updating campaign options:', error)
         return { success: false, error: error.message }
     }
 }
