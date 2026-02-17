@@ -248,6 +248,7 @@ export class InstantlyClient {
                 sequences: [
                     {
                         steps: sequences.map(seq => ({
+                            type: 'email',
                             start_delay: seq.step_number === 1 ? 0 : (seq.delay_days ?? 1), // V2 uses start_delay for first step? search said 'delay'
                             delay: seq.delay_days ?? (seq.step_number === 1 ? 0 : 1),
                             variants: [
