@@ -212,6 +212,7 @@ export class InstantlyClient {
         const action = status === 1 ? 'activate' : 'pause'
         return this.request(`/campaigns/${campaignId}/${action}`, {
             method: 'POST',
+            body: JSON.stringify({})
         })
     }
 
