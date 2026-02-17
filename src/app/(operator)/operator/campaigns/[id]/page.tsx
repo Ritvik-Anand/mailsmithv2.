@@ -10,6 +10,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogDescription,
+    DialogFooter
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -581,6 +582,11 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
 // SEQUENCES TAB
 // ============================================================================
 function SequencesTab({ campaignId }: { campaignId: string }) {
+    // Delete Step Confirmation
+    const [deleteStepDialogOpen, setDeleteStepDialogOpen] = useState(false)
+    const [stepToDelete, setStepToDelete] = useState<any>(null)
+    const [isDeletingStep, setIsDeletingStep] = useState(false)
+
     const [sequences, setSequences] = useState<any[]>([])
     const [selectedStep, setSelectedStep] = useState<any>(null)
     const [activeVariantId, setActiveVariantId] = useState<string | null>(null)
@@ -788,18 +794,27 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
             toast.warning('Campaign must have at least one step')
             return
         }
-        if (!confirm(`Delete Step ${step.step} and all its variants?`)) return
+        setStepToDelete(step)
+        setDeleteStepDialogOpen(true)
+    }
 
+    const confirmDeleteStep = async () => {
+        if (!stepToDelete) return
+
+        setIsDeletingStep(true)
         try {
             // Delete all variants for this step
-            await Promise.all(step.variants.map((v: any) => deleteSequenceStep(v.id, campaignId)))
+            await Promise.all(stepToDelete.variants.map((v: any) => deleteSequenceStep(v.id, campaignId)))
 
             // Reload to sync step numbers and removing the step
             loadSequences()
             toast.success('Step deleted')
+            setDeleteStepDialogOpen(false)
         } catch (error) {
             console.error('Error deleting step:', error)
             toast.error('Failed to delete step')
+        } finally {
+            setIsDeletingStep(false)
         }
     }
 
@@ -1150,6 +1165,34 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                             </div>
                         </div>
                     </div>
+                </DialogContent>
+            </Dialog>
+            {/* Delete Step Confirmation Dialog */}
+            <Dialog open={deleteStepDialogOpen} onOpenChange={setDeleteStepDialogOpen}>
+                <DialogContent className="bg-zinc-950 border-zinc-900">
+                    <DialogHeader>
+                        <DialogTitle>Delete Sequence Step</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete Step {stepToDelete?.step} and all its variants? <br />
+                            <span className="text-red-500 font-bold">This action cannot be undone.</span>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            variant="ghost"
+                            onClick={() => setDeleteStepDialogOpen(false)}
+                            disabled={isDeletingStep}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={confirmDeleteStep}
+                            disabled={isDeletingStep}
+                        >
+                            {isDeletingStep ? 'Deleting...' : 'Delete Step'}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>

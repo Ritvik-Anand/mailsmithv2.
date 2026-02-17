@@ -55,6 +55,11 @@ export default function OperatorCampaignsPage() {
     const [targetOrgId, setTargetOrgId] = useState<string>('')
     const [isMoving, setIsMoving] = useState(false)
 
+    // Delete Modal State
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+    const [campaignToDelete, setCampaignToDelete] = useState<any>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
+
     useEffect(() => {
         async function loadData() {
             setIsLoading(true)
@@ -222,23 +227,10 @@ export default function OperatorCampaignsPage() {
                                             variant="ghost"
                                             size="sm"
                                             className="h-8 w-8 p-0 text-red-500 hover:text-red-400 hover:bg-red-500/10"
-                                            onClick={async (e) => {
+                                            onClick={(e) => {
                                                 e.stopPropagation()
-                                                if (confirm(`Are you sure you want to delete "${campaign.name}"? This action cannot be undone.`)) {
-                                                    try {
-                                                        const result = await deleteCampaign(campaign.id)
-                                                        if (result.success) {
-                                                            toast.success('Campaign deleted successfully')
-                                                            // Refresh campaigns list
-                                                            const data = await getOrganizationCampaigns(selectedOrgId)
-                                                            setCampaigns(data)
-                                                        } else {
-                                                            toast.error(result.error || 'Failed to delete campaign')
-                                                        }
-                                                    } catch (error) {
-                                                        toast.error('Failed to delete campaign')
-                                                    }
-                                                }
+                                                setCampaignToDelete(campaign)
+                                                setDeleteModalOpen(true)
                                             }}
                                             title="Delete campaign"
                                         >
@@ -316,6 +308,54 @@ export default function OperatorCampaignsPage() {
                             disabled={!targetOrgId || isMoving}
                         >
                             {isMoving ? 'Moving...' : 'Move Campaign'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Campaign Dialog */}
+            <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+                <DialogContent className="bg-zinc-950 border-zinc-900">
+                    <DialogHeader>
+                        <DialogTitle>Delete Campaign</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete "{campaignToDelete?.name}"? <br />
+                            <span className="text-red-500 font-bold">This action cannot be undone.</span>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            variant="ghost"
+                            onClick={() => setDeleteModalOpen(false)}
+                            disabled={isDeleting}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={async () => {
+                                if (!campaignToDelete) return
+                                setIsDeleting(true)
+                                try {
+                                    const result = await deleteCampaign(campaignToDelete.id)
+                                    if (result.success) {
+                                        toast.success('Campaign deleted successfully')
+                                        setDeleteModalOpen(false)
+                                        // Refresh campaigns list
+                                        const data = await getOrganizationCampaigns(selectedOrgId)
+                                        setCampaigns(data)
+                                    } else {
+                                        toast.error(result.error || 'Failed to delete campaign')
+                                    }
+                                } catch (error) {
+                                    toast.error('Failed to delete campaign')
+                                } finally {
+                                    setIsDeleting(false)
+                                }
+                            }}
+                            disabled={isDeleting}
+                        >
+                            {isDeleting ? 'Deleting...' : 'Delete Campaign'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

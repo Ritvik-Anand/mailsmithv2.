@@ -8,6 +8,14 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter
+} from '@/components/ui/dialog'
+import {
     Table,
     TableBody,
     TableCell,
@@ -98,6 +106,12 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
     // Create campaign feature
     const [isCreatingCampaign, setIsCreatingCampaign] = useState(false)
     const [newCampaignName, setNewCampaignName] = useState('')
+
+    // Confirmation States
+    const [assignDialogOpen, setAssignDialogOpen] = useState(false)
+    const [generationDialogOpen, setGenerationDialogOpen] = useState(false)
+    const [leadsToProcess, setLeadsToProcess] = useState<any[]>([])
+    const [generationMessage, setGenerationMessage] = useState('')
 
     const fetchData = async (resetPage = false) => {
         setIsLoading(true)
@@ -212,12 +226,12 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
         }
     }, [job?.status])
 
-    const handleGenerateIcebreakers = async () => {
+    const initiateGeneration = async () => {
         setIsGenerating(true)
         toast.info('Loading all leads from job...')
 
         try {
-            // First, fetch ALL leads from the job (not just current page)
+            // First, fetch ALL leads from the job
             const allLeadsRes = await getLeadsFromJob(jobId, { pageSize: -1 })
             if (!allLeadsRes.success || !allLeadsRes.leads) {
                 toast.error('Failed to load leads')
@@ -233,25 +247,47 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                 : allLeads.filter(l => l.icebreaker_status === 'pending' || l.icebreaker_status === 'failed')
 
             // Apply limit if specified
-            const leadsToProcess = generateLimit && generateLimit > 0
+            const leadsToGen = generateLimit && generateLimit > 0
                 ? targetLeads.slice(0, generateLimit)
                 : targetLeads
 
-            if (leadsToProcess.length === 0) {
+            if (leadsToGen.length === 0) {
                 toast.info('No leads to generate icebreakers for.')
                 setIsGenerating(false)
                 return
             }
 
-            const confirmMessage = regenerateMode
-                ? `Generate icebreakers for ${leadsToProcess.length} leads (including ${targetLeads.filter(l => l.icebreaker_status === 'completed').length} with existing icebreakers)?`
-                : `Generate icebreakers for ${leadsToProcess.length} leads?`
+            setLeadsToProcess(leadsToGen)
 
-            if (regenerateMode && !confirm(confirmMessage)) {
-                setIsGenerating(false)
-                return
+            // If regenerate mode, ask for confirmation. 
+            // Actually, let's ask always for better UX, or stick to original logic.
+            // Original: only if regenerateMode. 
+            // But having a dialog popup is good practice for bulk actions.
+            const message = regenerateMode
+                ? `Generate icebreakers for ${leadsToGen.length} leads (including ${targetLeads.filter(l => l.icebreaker_status === 'completed').length} with existing icebreakers)?`
+                : `Generate icebreakers for ${leadsToGen.length} leads?`
+
+            setGenerationMessage(message)
+
+            if (regenerateMode) {
+                setGenerationDialogOpen(true)
+            } else {
+                // If not regenerate mode, just start?
+                // The user asked for popups. Let's make it consistent and ask always.
+                setGenerationDialogOpen(true)
             }
+        } catch (error) {
+            console.error('Error preparing generation:', error)
+            toast.error('Failed to prepare generation')
+            setIsGenerating(false)
+        }
+    }
 
+    const executeGeneration = async () => {
+        setGenerationDialogOpen(false)
+        // Keep isGenerating true
+
+        try {
             setCancelGeneration(false)
             let successCount = 0
             let failureCount = 0
@@ -270,12 +306,11 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     break
                 }
 
-                // Update progress toast every 10 leads
                 if (i > 0 && i % 10 === 0) {
                     toast.info(`Progress: ${i}/${leadsToProcess.length} leads processed...`)
                 }
 
-                // Update local status to "generating" if lead is visible on current page
+                // Update local status
                 setLeads(prev => prev.map(l =>
                     l.id === lead.id ? { ...l, icebreaker_status: 'generating' } : l
                 ))
@@ -284,7 +319,6 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
 
                 if (result.success) {
                     successCount++
-                    // Update local state incrementally if lead is visible
                     setLeads(prev => prev.map(l =>
                         l.id === lead.id ? {
                             ...l,
@@ -301,15 +335,10 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
             }
 
             if (!cancelGeneration) {
-                if (successCount > 0) {
-                    toast.success(`Successfully generated ${successCount} icebreakers`)
-                }
-                if (failureCount > 0) {
-                    toast.error(`Failed to generate ${failureCount} icebreakers`)
-                }
+                if (successCount > 0) toast.success(`Successfully generated ${successCount} icebreakers`)
+                if (failureCount > 0) toast.error(`Failed to generate ${failureCount} icebreakers`)
             }
 
-            // Refresh stats after generation
             await fetchData()
         } catch (error) {
             toast.error('Error during icebreaker generation')
@@ -352,17 +381,16 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
         }
     }
 
-    const handleAssignToCustomer = async () => {
+    const initiateAssign = () => {
         if (!selectedTargetOrg) {
             toast.error('Please select a target customer first')
             return
         }
+        setAssignDialogOpen(true)
+    }
 
-        const confirmMessage = `Assign all ${allLeadsStats.total} leads to the selected customer?`
-        if (!confirm(confirmMessage)) {
-            return
-        }
-
+    const executeAssign = async () => {
+        setAssignDialogOpen(false)
         setIsAssigning(true)
         try {
             const result = await assignLeadsToCustomer({
@@ -720,7 +748,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                         ) : (
                             <Button
                                 className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-500/20"
-                                onClick={handleGenerateIcebreakers}
+                                onClick={initiateGeneration}
                                 disabled={leads.length === 0}
                             >
                                 <Sparkles className="mr-2 h-4 w-4" />
@@ -1038,7 +1066,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                             <Button
                                 className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-6 shadow-xl shadow-blue-500/20 transition-all"
                                 disabled={isAssigning || !selectedTargetOrg || allLeadsStats.total === 0}
-                                onClick={handleAssignToCustomer}
+                                onClick={initiateAssign}
                             >
                                 {isAssigning ? (
                                     <>
@@ -1205,6 +1233,41 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     </div>
                 </div>
             )}
+            {/* Confirmation Dialogs */}
+            <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+                <DialogContent className="bg-zinc-950 border-zinc-900 text-zinc-100">
+                    <DialogHeader>
+                        <DialogTitle>Assign Leads to Customer</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            Assign all {allLeadsStats.total} leads to the selected customer? This allows the customer to view these leads in their portal.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setAssignDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={executeAssign}>Confirm Assignment</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={generationDialogOpen} onOpenChange={setGenerationDialogOpen}>
+                <DialogContent className="bg-zinc-950 border-zinc-900 text-zinc-100">
+                    <DialogHeader>
+                        <DialogTitle>Generate Icebreakers</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            {generationMessage}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => {
+                            setGenerationDialogOpen(false)
+                            setIsGenerating(false) // Reset loading state
+                        }}>Cancel</Button>
+                        <Button onClick={executeGeneration} className="bg-amber-500 text-black hover:bg-amber-600">
+                            Start Generation
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
