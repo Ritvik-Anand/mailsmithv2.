@@ -495,24 +495,31 @@ export async function syncCampaignStats(campaignId: string) {
             return { success: false, error: `Campaign "${campaign.name}" is not linked to Instantly yet. Launch it first.` }
         }
 
-        // Fetch from Instantly
-        const stats = await instantly.getCampaignAnalytics(campaign.instantly_campaign_id)
+        // Fetch from Instantly (V2 Overview returns an array of campaign stats)
+        const response = await instantly.getCampaignAnalytics(campaign.instantly_campaign_id)
 
-        // Update local stats
+        // Handle array or single object response
+        const stats = Array.isArray(response) ? response[0] : response
+
+        if (!stats) {
+            return { success: false, error: 'No analytics found for this campaign' }
+        }
+
+        // Update local stats (V2 Overview uses sent, opened, replied, etc.)
         const { error: updateError } = await supabase
             .from('campaigns')
             .update({
-                emails_sent: stats.sent || 0,
-                emails_opened: stats.opened || 0,
-                emails_replied: stats.replied || 0,
-                emails_bounced: stats.bounced || 0,
-                emails_clicked: stats.clicked || 0,
-                emails_interested: stats.interested || 0,
+                emails_sent: stats.sent || stats.total_sent || 0,
+                emails_opened: stats.opened || stats.total_opened || 0,
+                emails_replied: stats.replied || stats.total_replied || 0,
+                emails_bounced: stats.bounced || stats.total_bounced || 0,
+                emails_clicked: stats.clicked || stats.total_clicked || 0,
+                emails_interested: stats.interested || stats.total_interested || 0,
                 emails_uninterested: stats.uninterested || 0,
                 emails_unsubscribed: stats.unsubscribed || 0,
                 last_synced_at: new Date().toISOString(),
                 last_stats_sync_at: new Date().toISOString()
-            } as any) // Cast as any if columns don't exist yet in types
+            } as any)
             .eq('id', campaignId)
 
         if (updateError) throw updateError
@@ -537,11 +544,14 @@ export async function syncAllCampaignsLiveStats() {
         console.log('Starting bulk campaign stats sync...')
 
         // Fetch all campaigns from Instantly
-        // V2 /campaigns endpoint often includes stats in the list response
-        const instantlyCampaigns = await instantly.getSummaryStats()
+        const response = await instantly.getSummaryStats()
+
+        // V2 might return { data: [] } or a raw array
+        const instantlyCampaigns = Array.isArray(response) ? response : (response?.data || response?.items || [])
 
         if (!instantlyCampaigns || !Array.isArray(instantlyCampaigns)) {
-            throw new Error('Failed to fetch campaigns from Instantly')
+            console.error('Unexpected Instantly response:', response)
+            throw new Error('Failed to fetch campaigns from Instantly - invalid response format')
         }
 
         console.log(`Found ${instantlyCampaigns.length} campaigns in Instantly. Updating local database...`)

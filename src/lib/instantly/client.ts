@@ -231,10 +231,9 @@ export class InstantlyClient {
     /**
      * Gets summary stats for all campaigns
      */
-    async getSummaryStats(): Promise<any[]> {
-        // In V2, basic stats are often included in /campaigns or via /analytics
-        // For now, listing campaigns is a good fallback or if there's a specific summary endpoint
-        return this.request<any[]>('/campaigns')
+    async getSummaryStats(): Promise<any> {
+        // V2 /campaigns often returns a wrapped object or array
+        return this.request<any>('/campaigns')
     }
 
     /**
@@ -248,8 +247,9 @@ export class InstantlyClient {
      * Get campaign analytics/stats
      */
     async getCampaignAnalytics(campaignId: string): Promise<any> {
-        // V2 analytics endpoint
-        return this.request<any>(`/campaigns/${campaignId}/analytics`)
+        // V2 analytics overview endpoint
+        // Query param campaign_id is used for specific campaign filtering
+        return this.request<any>(`/campaigns/analytics/overview?campaign_id=${campaignId}`)
     }
 
     /**
