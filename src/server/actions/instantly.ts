@@ -281,6 +281,28 @@ export async function launchCampaign(data: {
             }
         }
 
+        // Sync Leads (associated with this campaign)
+        const { data: campaignLeads } = await supabase
+            .from('leads')
+            .select('*') // Warning: Default limit might apply (usually 1000)
+            .eq('campaign_id', campaignId)
+
+        if (campaignLeads && campaignLeads.length > 0) {
+            const validLeads = campaignLeads.filter(l => l.email && l.email.trim() !== '')
+
+            if (validLeads.length > 0) {
+                // Determine which leads need to be added. 
+                // Instantly deduplicates by email, so it's safe to send all using skip_if_in_campaign
+                await instantly.addLeadsToCampaign(instantlyId, validLeads)
+
+                // Update status locally
+                await supabase
+                    .from('leads')
+                    .update({ campaign_status: 'queued' })
+                    .in('id', validLeads.map(l => l.id))
+            }
+        }
+
         // Sync Advanced Options (that aren't columns)
         await instantly.updateCampaignOptions(instantlyId, {
             prioritize_new_leads: data.options.prioritizeNewLeads,
