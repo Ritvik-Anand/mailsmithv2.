@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -57,9 +57,12 @@ const TIMEZONES = [
 // Tab type
 type TabType = 'sequences' | 'schedule' | 'options'
 
-export default function NewCampaignPage() {
+function NewCampaignContent() {
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const orgId = searchParams.get('orgId')
     const [activeTab, setActiveTab] = useState<TabType>('sequences')
+    const [selectedStepId, setSelectedStepId] = useState<number>(1)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     // Organization and nodes
@@ -116,9 +119,14 @@ export default function NewCampaignPage() {
         async function loadOrgs() {
             const orgs = await getOrganizations()
             setOrganizations(orgs)
+
+            // Auto-select if orgId is in URL
+            if (orgId && orgs.some((o: any) => o.id === orgId)) {
+                setSelectedOrgId(orgId)
+            }
         }
         loadOrgs()
-    }, [])
+    }, [orgId])
 
     // Load nodes when org changes
     useEffect(() => {
@@ -167,11 +175,27 @@ export default function NewCampaignPage() {
         })
     }
 
+    const [lastFocusedStepId, setLastFocusedStepId] = useState<number>(1)
+    const [lastFocusedField, setLastFocusedField] = useState<'subject' | 'body'>('body')
+
     // Update sequence - using functional update to fix stale closure
     const updateSequence = (id: number, field: string, value: any) => {
         setSequences(prev => prev.map(s =>
             s.id === id ? { ...s, [field]: value } : s
         ))
+    }
+
+    const insertVariable = (variable: string) => {
+        setSequences(prev => prev.map(s => {
+            if (s.id === lastFocusedStepId) {
+                const currentVal = (s as any)[lastFocusedField] || ''
+                // For simplicity in this non-ref version, we append.
+                // In a perfect world we'd use refs like in the edit page,
+                // but let's at least make it work.
+                return { ...s, [lastFocusedField]: currentVal + variable }
+            }
+            return s
+        }))
     }
 
     // Handle launch
@@ -350,7 +374,11 @@ export default function NewCampaignPage() {
                             {sequences.map((seq, idx) => (
                                 <div
                                     key={seq.id}
-                                    className={`p-4 rounded-xl border transition-all cursor-pointer ${idx === 0
+                                    onClick={() => {
+                                        setSelectedStepId(seq.id)
+                                        setLastFocusedStepId(seq.id)
+                                    }}
+                                    className={`p-4 rounded-xl border transition-all cursor-pointer ${selectedStepId === seq.id
                                         ? 'bg-amber-500/5 border-amber-500/30'
                                         : 'bg-zinc-900/50 border-zinc-800 hover:border-zinc-700'
                                         }`}
@@ -398,64 +426,71 @@ export default function NewCampaignPage() {
 
                         {/* Email Editor */}
                         <div className="lg:col-span-2">
-                            <Card className="bg-zinc-900/50 border-zinc-800">
-                                <CardHeader className="border-b border-zinc-800">
-                                    <div className="flex items-center justify-between">
-                                        <CardTitle className="text-base">Step 1 Email</CardTitle>
-                                        <Button variant="ghost" size="sm" className="text-zinc-500">
-                                            <Eye className="h-4 w-4 mr-2" />
-                                            Preview
-                                        </Button>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="p-6 space-y-4">
-                                    <div>
-                                        <Label className="text-xs text-zinc-500 mb-2 block">Subject Line</Label>
-                                        <Input
-                                            value={sequences[0]?.subject || ''}
-                                            onChange={(e) => updateSequence(sequences[0]?.id || 1, 'subject', e.target.value)}
-                                            placeholder="Enter subject line..."
-                                            className="bg-zinc-950 border-zinc-800"
-                                        />
-                                    </div>
+                            {(() => {
+                                const activeStep = sequences.find(s => s.id === selectedStepId) || sequences[0]
+                                return (
+                                    <Card className="bg-zinc-900/50 border-zinc-800">
+                                        <CardHeader className="border-b border-zinc-800">
+                                            <div className="flex items-center justify-between">
+                                                <CardTitle className="text-base">Step {activeStep?.stepNumber} Email</CardTitle>
+                                                <Button variant="ghost" size="sm" className="text-zinc-500">
+                                                    <Eye className="h-4 w-4 mr-2" />
+                                                    Preview
+                                                </Button>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="p-6 space-y-4">
+                                            <div>
+                                                <Label className="text-xs text-zinc-500 mb-2 block">Subject Line</Label>
+                                                <Input
+                                                    value={activeStep?.subject || ''}
+                                                    onChange={(e) => updateSequence(activeStep?.id || 1, 'subject', e.target.value)}
+                                                    onFocus={() => { setLastFocusedStepId(activeStep?.id || 1); setLastFocusedField('subject') }}
+                                                    placeholder="Enter subject line..."
+                                                    className="bg-zinc-950 border-zinc-800"
+                                                />
+                                            </div>
 
-                                    <div>
-                                        <Label className="text-xs text-zinc-500 mb-2 block">Email Body</Label>
-                                        <Textarea
-                                            value={sequences[0]?.body || ''}
-                                            onChange={(e) => updateSequence(sequences[0]?.id || 1, 'body', e.target.value)}
-                                            placeholder="Write your email here... Use {{icebreaker}} for AI-generated personalization."
-                                            className="min-h-[300px] bg-zinc-950 border-zinc-800 font-mono text-sm"
-                                        />
-                                    </div>
+                                            <div>
+                                                <Label className="text-xs text-zinc-500 mb-2 block">Email Body</Label>
+                                                <Textarea
+                                                    value={activeStep?.body || ''}
+                                                    onChange={(e) => updateSequence(activeStep?.id || 1, 'body', e.target.value)}
+                                                    onFocus={() => { setLastFocusedStepId(activeStep?.id || 1); setLastFocusedField('body') }}
+                                                    placeholder="Write your email here..."
+                                                    className="min-h-[300px] bg-zinc-950 border-zinc-800 font-mono text-sm"
+                                                />
+                                            </div>
 
-                                    {/* Variable hints */}
-                                    <div className="flex flex-wrap gap-2 pt-2">
-                                        <span className="text-xs text-zinc-600">Available variables:</span>
-                                        {[
-                                            { var: '{{icebreaker}}', desc: 'AI Personalization', highlight: true },
-                                            { var: '{{firstName}}', desc: 'First Name' },
-                                            { var: '{{lastName}}', desc: 'Last Name' },
-                                            { var: '{{companyName}}', desc: 'Company' },
-                                            { var: '{{jobTitle}}', desc: 'Job Title' },
-                                            { var: '{{email}}', desc: 'Email' },
-                                            { var: '{{sendingAccountFirstName}}', desc: 'Your Name' }
-                                        ].map(v => (
-                                            <Badge
-                                                key={v.var}
-                                                variant="outline"
-                                                className={`text-[10px] cursor-pointer ${v.highlight
-                                                    ? 'bg-amber-500/10 border-amber-500/50 text-amber-500 hover:bg-amber-500/20'
-                                                    : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-amber-500/50 hover:text-amber-500'
-                                                    }`}
-                                                title={v.desc}
-                                            >
-                                                {v.var}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                            {/* Variable hints */}
+                                            <div className="flex flex-wrap gap-2 pt-2">
+                                                <span className="text-xs text-zinc-600">Available variables:</span>
+                                                {[
+                                                    { var: '{{firstName}}', desc: 'Leads first name' },
+                                                    { var: '{{lastName}}', desc: 'Leads last name' },
+                                                    { var: '{{companyName}}', desc: 'Leads company name' },
+                                                    { var: '{{jobTitle}}', desc: 'Leads job title' },
+                                                    { var: '{{personalization}}', desc: 'AI icebreaker', highlight: true },
+                                                    { var: '{{sendingAccountFirstName}}', desc: 'My first name' },
+                                                ].map(v => (
+                                                    <Badge
+                                                        key={v.var}
+                                                        variant="outline"
+                                                        className={`text-[10px] cursor-pointer ${v.highlight
+                                                            ? 'bg-amber-500/10 border-amber-500/50 text-amber-500 hover:bg-amber-500/20'
+                                                            : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-amber-500/50 hover:text-amber-500'
+                                                            }`}
+                                                        title={v.desc}
+                                                        onClick={() => insertVariable(v.var)}
+                                                    >
+                                                        {v.var}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )
+                            })()}
                         </div>
                     </div>
                 )}
@@ -783,5 +818,17 @@ export default function NewCampaignPage() {
                 )}
             </div>
         </div>
+    )
+}
+
+export default function NewCampaignPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center p-12">
+                <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+            </div>
+        }>
+            <NewCampaignContent />
+        </Suspense>
     )
 }

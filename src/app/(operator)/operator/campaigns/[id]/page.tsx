@@ -696,10 +696,13 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
     }
 
     const replaceVariables = (text: string) => {
+        if (!text) return ''
         let result = text
         const vars = getActiveVariables()
         for (const [key, value] of Object.entries(vars)) {
-            result = result.replaceAll(key, value)
+            // Escape special characters in key for regex
+            const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            result = result.replace(new RegExp(escapedKey, 'g'), value || '')
         }
         return result
     }
@@ -878,62 +881,31 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
         const variant = getActiveVariant()
         if (!variant) return
 
-        // Default to body if no selection
-        const selection = lastSelection || { field: 'body', start: (variant.body || '').length, end: (variant.body || '').length }
+        const field = lastSelection?.field || 'body'
+        const ref = field === 'subject' ? subjectRef : bodyRef
+        const input = ref.current
+        if (!input) return
 
-        if (selection.field === 'subject') {
-            const input = subjectRef.current
+        // Ensure we have correct focus if possible
+        const start = input.selectionStart || 0
+        const end = input.selectionEnd || 0
+        const currentValue = field === 'subject' ? (variant.subject || '') : (variant.body || '')
 
-            const currentSubject = variant.subject || ''
-            // Use current ref selection if available and focused, otherwise fallback to stored selection
-            // This handles tight loops where user clicked back into input
-            const start = input === document.activeElement ? (input?.selectionStart || 0) : selection.start
-            const end = input === document.activeElement ? (input?.selectionEnd || 0) : selection.end
+        const newValue = currentValue.substring(0, start) + variable + currentValue.substring(end)
 
-            const newSubject = currentSubject.substring(0, start) + variable + currentSubject.substring(end)
+        updateVariantContent({ [field]: newValue })
 
-            updateVariantContent({ subject: newSubject })
+        // Force update lastSelection so subsequent clicks work even if onSelect doesn't fire
+        setLastSelection({
+            field,
+            start: start + variable.length,
+            end: start + variable.length
+        })
 
-            // Update selection for next insertion
-            setLastSelection({
-                field: 'subject',
-                start: start + variable.length,
-                end: start + variable.length
-            })
-
-            requestAnimationFrame(() => {
-                if (input) {
-                    input.focus()
-                    const newCursorPos = start + variable.length
-                    input.setSelectionRange(newCursorPos, newCursorPos)
-                }
-            })
-        } else {
-            const textarea = bodyRef.current
-
-            const currentBody = variant.body || ''
-            const start = textarea === document.activeElement ? (textarea?.selectionStart || 0) : selection.start
-            const end = textarea === document.activeElement ? (textarea?.selectionEnd || 0) : selection.end
-
-            const newBody = currentBody.substring(0, start) + variable + currentBody.substring(end)
-
-            updateVariantContent({ body: newBody })
-
-            // Update selection for next insertion
-            setLastSelection({
-                field: 'body',
-                start: start + variable.length,
-                end: start + variable.length
-            })
-
-            requestAnimationFrame(() => {
-                if (textarea) {
-                    textarea.focus()
-                    const newCursorPos = start + variable.length
-                    textarea.setSelectionRange(newCursorPos, newCursorPos)
-                }
-            })
-        }
+        requestAnimationFrame(() => {
+            input.focus()
+            input.setSelectionRange(start + variable.length, start + variable.length)
+        })
     }
 
     const saveStep = async () => {
@@ -1170,14 +1142,21 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                             <Button variant="outline" size="sm" className="gap-2 border-zinc-800 text-zinc-400">
                                 Templates
                             </Button>
-                            <Button variant="outline" size="sm" className="gap-2 border-zinc-800 text-zinc-400">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2 border-zinc-800 text-zinc-400"
+                                onClick={() => {
+                                    document.getElementById('variables-section')?.scrollIntoView({ behavior: 'smooth' })
+                                }}
+                            >
                                 <span className="text-blue-400">⚡</span>
                                 Variables
                             </Button>
                         </div>
 
                         {/* Variables Reference */}
-                        <div className="mt-4 p-3 bg-zinc-900/50 rounded-lg border border-zinc-800">
+                        <div id="variables-section" className="mt-4 p-3 bg-zinc-900/50 rounded-lg border border-zinc-800">
                             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Available Variables — click to insert</p>
                             <div className="flex flex-wrap gap-2">
                                 {['{{firstName}}', '{{lastName}}', '{{companyName}}', '{{jobTitle}}', '{{personalization}}', '{{sendingAccountFirstName}}'].map((v) => (
