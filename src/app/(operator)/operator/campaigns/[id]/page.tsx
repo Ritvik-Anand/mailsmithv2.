@@ -1564,8 +1564,8 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                 send_as_text: campaign.send_as_text
             })
 
-            // Update assigned accounts
-            if (campaign.instantly_campaign_id) {
+            if (result.success) {
+                // Update assigned accounts
                 const accResult = await updateCampaignAccountsInInstantly(campaign.id, selectedEmails)
                 if (!accResult.success) {
                     toast.error('Failed to update accounts: ' + accResult.error)
@@ -1576,10 +1576,16 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                 if (!advResult.success) {
                     toast.error('Failed to update advanced options: ' + advResult.error)
                 }
-            }
 
-            if (result.success) {
                 toast.success('Campaign options saved')
+
+                // If it was a draft locally (no ID), refresh to get the new ID
+                if (!campaign.instantly_campaign_id) {
+                    const refined = await getCampaignById(campaign.id)
+                    if (refined.success && refined.campaign) {
+                        setCampaign(refined.campaign)
+                    }
+                }
             } else {
                 toast.error(result.error || 'Failed to save options')
             }
