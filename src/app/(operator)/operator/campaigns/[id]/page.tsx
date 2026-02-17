@@ -820,6 +820,9 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
         }
     }
 
+    // Auto-save ref
+    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
     const updateVariantContent = (newContent: Partial<{ subject: string, body: string }>) => {
         // Optimistic update locally
         if (!selectedStep || !activeVariantId) return
@@ -831,6 +834,33 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
 
         setSelectedStep(updatedStep)
         setSequences(sequences.map(s => s.step === selectedStep.step ? updatedStep : s))
+
+        // Trigger Auto-Save
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+
+        setIsSaving(true)
+        saveTimeoutRef.current = setTimeout(async () => {
+            // Find latest variant state
+            const latestVariant = updatedVariants.find((v: any) => v.id === activeVariantId)
+            if (!latestVariant) return
+
+            try {
+                await upsertSequenceStep(campaignId, {
+                    id: latestVariant.id,
+                    step_number: updatedStep.step,
+                    subject: latestVariant.subject,
+                    body: latestVariant.body,
+                    delay_days: updatedStep.delayDays,
+                    variant_label: latestVariant.label
+                })
+                // Don't show success toast on every auto-save to avoid spam
+            } catch (error) {
+                console.error('Error auto-saving:', error)
+                toast.error('Failed to auto-save')
+            } finally {
+                setIsSaving(false)
+            }
+        }, 1000)
     }
 
     const insertVariable = (variable: string) => {
@@ -1082,19 +1112,19 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
 
                         {/* Editor Toolbar */}
                         <div className="flex items-center gap-2 mt-4 pt-4 border-t border-zinc-800">
-                            <Button
-                                size="sm"
-                                className="bg-primary hover:bg-primary/90"
-                                onClick={saveStep}
-                                disabled={isSaving}
-                            >
+                            <div className="mr-auto flex items-center gap-2">
                                 {isSaving ? (
-                                    <>
-                                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                                    <div className="flex items-center text-xs text-zinc-500">
+                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                                         Saving...
-                                    </>
-                                ) : 'Save'}
-                            </Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center text-xs text-emerald-500">
+                                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                                        Saved
+                                    </div>
+                                )}
+                            </div>
                             <Button variant="outline" size="sm" className="gap-2 border-zinc-800 text-zinc-400">
                                 <span className="text-amber-400">✨</span>
                                 AI Tools
