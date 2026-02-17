@@ -652,8 +652,14 @@ async function ensureInstantlyCampaignExists(campaignId: string) {
     }
 
     // 2. Create in Instantly
-    const remoteCampaign = await instantly.createCampaign(campaign.name)
-    const instantlyId = remoteCampaign.id
+    let instantlyId: string
+    try {
+        const remoteCampaign = await instantly.createCampaign(campaign.name)
+        instantlyId = remoteCampaign.id
+    } catch (e: any) {
+        console.error('Failed to create campaign in Instantly:', e)
+        throw new Error(`Instantly API Error (Create Campaign): ${e.message}`)
+    }
 
     // 3. Update local DB with ID
     await supabase
@@ -663,56 +669,71 @@ async function ensureInstantlyCampaignExists(campaignId: string) {
 
     // 4. Sync initial data (Schedules, Sequences, Basic Options)
     // Sync Options
-    await instantly.updateCampaignOptions(instantlyId, {
-        daily_limit: campaign.daily_limit,
-        stop_on_reply: campaign.stop_on_reply,
-        open_tracking: campaign.open_tracking,
-        link_tracking: campaign.link_tracking,
-        send_as_text: campaign.send_as_text
-    })
+    try {
+        await instantly.updateCampaignOptions(instantlyId, {
+            daily_limit: campaign.daily_limit,
+            stop_on_reply: campaign.stop_on_reply,
+            open_tracking: campaign.open_tracking,
+            link_tracking: campaign.link_tracking,
+            send_as_text: campaign.send_as_text
+        })
+    } catch (e: any) {
+        console.error('Failed to update campaign options:', e)
+        throw new Error(`Instantly API Error (Update Options): ${e.message}`)
+    }
 
     // Sync Schedules
-    const schedules = await getCampaignSchedules(campaignId)
-    if (schedules && schedules.length > 0) {
-        // Instantly V2 usually takes one schedule or specific format.
-        // Assuming the first one for now or merging days.
-        const schedule = schedules[0]
-        const days = []
-        if (schedule.monday) days.push(1)
-        if (schedule.tuesday) days.push(2)
-        if (schedule.wednesday) days.push(3)
-        if (schedule.thursday) days.push(4)
-        if (schedule.friday) days.push(5)
-        if (schedule.saturday) days.push(6)
-        if (schedule.sunday) days.push(0)
+    try {
+        const schedules = await getCampaignSchedules(campaignId)
+        if (schedules && schedules.length > 0) {
+            // Instantly V2 usually takes one schedule or specific format.
+            // Assuming the first one for now or merging days.
+            const schedule = schedules[0]
+            const days = []
+            if (schedule.monday) days.push(1)
+            if (schedule.tuesday) days.push(2)
+            if (schedule.wednesday) days.push(3)
+            if (schedule.thursday) days.push(4)
+            if (schedule.friday) days.push(5)
+            if (schedule.saturday) days.push(6)
+            if (schedule.sunday) days.push(0)
 
-        await instantly.updateCampaignSchedule(instantlyId, {
-            from_hour: schedule.send_from_hour,
-            to_hour: schedule.send_to_hour,
-            timezone: schedule.timezone,
-            days: days
-        })
+            await instantly.updateCampaignSchedule(instantlyId, {
+                from_hour: schedule.send_from_hour,
+                to_hour: schedule.send_to_hour,
+                timezone: schedule.timezone,
+                days: days
+            })
+        }
+    } catch (e: any) {
+        console.error('Failed to update campaign schedule:', e)
+        throw new Error(`Instantly API Error (Update Schedule): ${e.message}`)
     }
 
     // Sync Sequences
-    // Sync Sequences
-    const sequences = await getCampaignSequences(campaignId)
-    if (sequences && sequences.length > 0) {
-        // Filter sequences to only include one variant per step_number (e.g. 'A')
-        // This prevents Instantly from seeing variants as separate steps.
-        const uniqueSteps = sequences.reduce((acc: any[], current) => {
-            const exists = acc.find(item => item.step_number === current.step_number)
-            if (!exists) {
-                acc.push(current)
-            } else if (current.variant_label === 'A' && exists.variant_label !== 'A') {
-                // Replace with variant A if exists wasn't A (though unlikely given sort order usually)
-                const index = acc.indexOf(exists)
-                acc[index] = current
-            }
-            return acc
-        }, [])
+    try {
+        const sequences = await getCampaignSequences(campaignId)
+        if (sequences && sequences.length > 0) {
+            // Filter sequences to only include one variant per step_number (e.g. 'A')
+            // This prevents Instantly from seeing variants as separate steps.
+            const uniqueSteps = sequences.reduce((acc: any[], current) => {
+                const exists = acc.find(item => item.step_number === current.step_number)
+                if (!exists) {
+                    acc.push(current)
+                } else if (current.variant_label === 'A' && exists.variant_label !== 'A') {
+                    // Replace with variant A if exists wasn't A (though unlikely given sort order usually)
+                    const index = acc.indexOf(exists)
+                    acc[index] = current
+                }
+                return acc
+            }, [])
 
-        await instantly.updateCampaignSequences(instantlyId, uniqueSteps)
+            await instantly.updateCampaignSequences(instantlyId, uniqueSteps)
+        }
+
+    } catch (e: any) {
+        console.error('Failed to update campaign sequences:', e)
+        throw new Error(`Instantly API Error (Update Sequences): ${e.message}`)
     }
 
     return instantlyId
