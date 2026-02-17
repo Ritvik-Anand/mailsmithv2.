@@ -61,7 +61,7 @@ export default function OperatorJobsPage() {
         switch (status) {
             case 'running':
             case 'pending':
-                return <Loader className="h-4 w-4 animate-spin text-amber-500" />
+                return <Loader className="h-4 w-4 text-amber-500" />
             case 'completed':
                 return <CheckCircle2 className="h-4 w-4 text-emerald-500" />
             case 'failed':
@@ -121,7 +121,7 @@ export default function OperatorJobsPage() {
                 <Card className="bg-amber-500/5 border-amber-500/20">
                     <CardContent className="p-4 flex items-center gap-4">
                         <div className="h-12 w-12 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                            <Loader className="h-6 w-6 text-amber-500 animate-spin" />
+                            <Loader className="h-6 w-6 text-amber-500" />
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-amber-500">{runningJobs.length}</p>

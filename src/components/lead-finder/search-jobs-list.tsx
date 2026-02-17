@@ -43,7 +43,7 @@ const statusConfig: Record<string, {
         label: 'Running',
         icon: Loader,
         color: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-        animate: true
+        animate: false
     },
     completed: {
         label: 'Completed',
