@@ -307,6 +307,30 @@ function NewCampaignContent() {
         }))
     }
 
+    // Remove variant
+    const removeVariant = (stepId: number, variantLabel: string) => {
+        setSequences((prev: any[]) => prev.map(s => {
+            if (s.id === stepId) {
+                if (s.variants.length <= 1) {
+                    toast.error('Cannot remove the last variant')
+                    return s
+                }
+
+                // If removing active variant, switch to another one
+                if (activeVariantLabel === variantLabel) {
+                    const other = s.variants.find((v: any) => v.label !== variantLabel)
+                    if (other) setActiveVariantLabel(other.label)
+                }
+
+                return {
+                    ...s,
+                    variants: s.variants.filter((v: any) => v.label !== variantLabel)
+                }
+            }
+            return s
+        }))
+    }
+
     const insertVariable = (variable: string) => {
         setSequences(prev => prev.map(s => {
             if (s.id === lastFocusedStepId) {
@@ -598,6 +622,16 @@ function NewCampaignContent() {
                                                         >
                                                             <Plus className="h-3 w-3" />
                                                         </button>
+
+                                                        {activeStep.variants.length > 1 && (
+                                                            <button
+                                                                onClick={() => removeVariant(activeStep.id, activeVariantLabel)}
+                                                                className="px-2 py-1 text-zinc-600 hover:text-red-500 transition-colors ml-1"
+                                                                title={`Remove Current Variant (${activeVariantLabel})`}
+                                                            >
+                                                                <Trash2 className="h-3 w-3" />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
 

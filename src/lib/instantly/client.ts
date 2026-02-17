@@ -68,7 +68,8 @@ export class InstantlyClient {
 
     private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
         const url = new URL(`${INSTANTLY_BASE_URL}${endpoint}`)
-        url.searchParams.append('api_key', this.apiKey)
+        // V2 uses Authorization header, query param not needed/might interfere
+
 
         const response = await fetch(url.toString(), {
             ...options,
@@ -82,7 +83,7 @@ export class InstantlyClient {
         if (!response.ok) {
             const errorText = await response.text()
             console.error(`Instantly API Error Raw: ${errorText}`)
-            throw new Error(`Instantly API Error (V2): ${response.status} ${response.statusText}`)
+            throw new Error(`Instantly API Error (V2): ${response.status} ${response.statusText} - ${errorText}`)
         }
 
         return response.json() as Promise<T>
