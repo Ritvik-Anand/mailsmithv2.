@@ -171,8 +171,8 @@ export class InstantlyClient {
      * Adds leads to a campaign in bulk
      */
     async addLeadsToCampaign(campaignId: string, leads: any[]): Promise<any> {
-        // V2 structure: POST /leads with { campaign_id, ...lead }
-        // Using sequential requests because bulk endpoint behavior is inconsistent
+        // Attempting V1 Bulk Endpoint with V2 Bearer Token
+        // This handles explicit linking and bulk upload natively
         const formattedLeads = leads.map(lead => ({
             email: lead.email,
             first_name: lead.first_name,
@@ -189,29 +189,26 @@ export class InstantlyClient {
             } : lead.custom_variables
         }))
 
-        // Process in batches of 10 to avoid rate limits
-        const batchSize = 10
-        const results = []
-
-        for (let i = 0; i < formattedLeads.length; i += batchSize) {
-            const batch = formattedLeads.slice(i, i + batchSize)
-            const batchPromises = batch.map(lead =>
-                this.request(`/leads?campaign_id=${campaignId}`, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        campaign_id: campaignId,
-                        campaignId: campaignId, // Keep for safety
-                        skip_if_in_workspace: false,
-                        skip_if_in_campaign: true,
-                        ...lead
-                    })
-                })
-            )
-            const batchResults = await Promise.all(batchPromises)
-            results.push(...batchResults)
+        // Chunking
+        const chunkSize = 100
+        const chunks = []
+        for (let i = 0; i < formattedLeads.length; i += chunkSize) {
+            chunks.push(formattedLeads.slice(i, i + chunkSize))
         }
 
-        return results
+        const promises = chunks.map(chunk =>
+            this.request('/../../v1/lead/add', {
+                method: 'POST',
+                body: JSON.stringify({
+                    campaign_id: campaignId,
+                    skip_if_in_workspace: false,
+                    skip_if_in_campaign: true,
+                    leads: chunk
+                })
+            })
+        )
+
+        return Promise.all(promises)
     }
 
 
