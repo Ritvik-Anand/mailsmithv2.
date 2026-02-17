@@ -35,9 +35,16 @@ import {
     Zap,
     Eye
 } from 'lucide-react'
-import { getOrganizations } from '@/server/actions/organizations'
+import { getOrganizations, getSampleLeadForOrganization } from '@/server/actions/organizations'
 import { getOrganizationNodes, launchCampaign } from '@/server/actions/instantly'
 import { toast } from 'sonner'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription
+} from '@/components/ui/dialog'
 
 // Timezone options
 const TIMEZONES = [
@@ -73,6 +80,69 @@ function NewCampaignContent() {
 
     // Campaign basics
     const [campaignName, setCampaignName] = useState('')
+
+    // Preview
+    const [showPreview, setShowPreview] = useState(false)
+    const [previewLead, setPreviewLead] = useState<any>(null)
+    const [isLoadingPreview, setIsLoadingPreview] = useState(false)
+
+    // Fetch sample lead for preview
+    const fetchPreviewLead = async () => {
+        if (!selectedOrgId) return
+        setIsLoadingPreview(true)
+        try {
+            const lead = await getSampleLeadForOrganization(selectedOrgId)
+            setPreviewLead(lead)
+        } catch (error) {
+            console.error('Failed to fetch sample lead', error)
+        } finally {
+            setIsLoadingPreview(false)
+        }
+    }
+
+    // Open preview
+    const handlePreview = () => {
+        if (!selectedOrgId) {
+            toast.error('Please select a customer organization first')
+            return
+        }
+        fetchPreviewLead()
+        setShowPreview(true)
+    }
+
+    // Replace variables for preview
+    const replaceVariablesForPreview = (text: string) => {
+        if (!text) return ''
+
+        let result = text
+
+        // Sample data if no lead found
+        const data = previewLead || {
+            first_name: 'Alex',
+            last_name: 'Johnson',
+            company_name: 'Acme Corp',
+            job_title: 'CEO',
+            email: 'alex@acme.com',
+            icebreaker: 'I noticed your recent expansion into the European market.',
+        }
+
+        const variables: Record<string, string> = {
+            '{{firstName}}': data.first_name || 'Alex',
+            '{{lastName}}': data.last_name || 'Johnson',
+            '{{companyName}}': data.company_name || 'Acme Corp',
+            '{{jobTitle}}': data.job_title || 'CEO',
+            '{{email}}': data.email || 'alex@acme.com',
+            '{{personalization}}': data.icebreaker || 'I noticed your recent expansion into the European market.',
+            '{{sendingAccountFirstName}}': 'John', // Placeholder
+        }
+
+        for (const [key, value] of Object.entries(variables)) {
+            const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            result = result.replace(new RegExp(escapedKey, 'g'), value || '')
+        }
+
+        return result
+    }
 
     // Sequences (multi-step emails)
     const [sequences, setSequences] = useState([
@@ -502,8 +572,8 @@ function NewCampaignContent() {
                                                                 key={v.label}
                                                                 onClick={() => setActiveVariantLabel(v.label)}
                                                                 className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeVariantLabel === v.label
-                                                                        ? 'bg-zinc-800 text-white shadow-sm'
-                                                                        : 'text-zinc-500 hover:text-zinc-300'
+                                                                    ? 'bg-zinc-800 text-white shadow-sm'
+                                                                    : 'text-zinc-500 hover:text-zinc-300'
                                                                     }`}
                                                             >
                                                                 {v.label}
@@ -519,7 +589,12 @@ function NewCampaignContent() {
                                                     </div>
                                                 </div>
 
-                                                <Button variant="ghost" size="sm" className="text-zinc-500">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-zinc-500 hover:text-white"
+                                                    onClick={handlePreview}
+                                                >
                                                     <Eye className="h-4 w-4 mr-2" />
                                                     Preview
                                                 </Button>
@@ -900,9 +975,237 @@ function NewCampaignContent() {
                                 </div>
                             </CardContent>
                         </Card>
+
+                        {/* Campaign Settings */}
+                        <Card className="bg-zinc-900/50 border-zinc-800">
+                            <CardHeader>
+                                <CardTitle className="text-base flex items-center gap-2">
+                                    <Settings className="h-4 w-4 text-amber-500" />
+                                    Campaign Settings
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                {/* Basic Settings */}
+                                <div className="space-y-4">
+                                    <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Behavior</h4>
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Stop on Reply</p>
+                                            <p className="text-xs text-zinc-600">Pause sequence when lead replies</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.stopOnReply}
+                                            onCheckedChange={(checked) => setOptions({ ...options, stopOnReply: !!checked })}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Prioritize New Leads</p>
+                                            <p className="text-xs text-zinc-600">Send to new leads first</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.prioritizeNewLeads}
+                                            onCheckedChange={(checked) => setOptions({ ...options, prioritizeNewLeads: !!checked })}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Match Lead Timezone</p>
+                                            <p className="text-xs text-zinc-600">Send based on lead&apos;s timezone</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.matchLeadTimezone}
+                                            onCheckedChange={(checked) => setOptions({ ...options, matchLeadTimezone: !!checked })}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Skip Weekends</p>
+                                            <p className="text-xs text-zinc-600">Don&apos;t count weekends in delays</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.skipWeekends}
+                                            onCheckedChange={(checked) => setOptions({ ...options, skipWeekends: !!checked })}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Tracking Settings */}
+                                <div className="space-y-4 pt-4 border-t border-zinc-800">
+                                    <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Tracking</h4>
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Open Tracking</p>
+                                            <p className="text-xs text-zinc-600">Track when emails are opened</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.openTracking}
+                                            onCheckedChange={(checked) => setOptions({ ...options, openTracking: !!checked })}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Link Tracking</p>
+                                            <p className="text-xs text-zinc-600">Track link clicks in emails</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.linkTracking}
+                                            onCheckedChange={(checked) => setOptions({ ...options, linkTracking: !!checked })}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Send as Plain Text</p>
+                                            <p className="text-xs text-zinc-600">Better deliverability, no formatting</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.sendAsText}
+                                            onCheckedChange={(checked) => setOptions({ ...options, sendAsText: !!checked })}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Limits */}
+                                <div className="space-y-4 pt-4 border-t border-zinc-800">
+                                    <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Limits & Delays</h4>
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Daily Email Limit</p>
+                                            <p className="text-xs text-zinc-600">Max emails per account per day</p>
+                                        </div>
+                                        <Input
+                                            type="number"
+                                            value={options.dailyLimit}
+                                            onChange={(e) => setOptions({ ...options, dailyLimit: parseInt(e.target.value) || 50 })}
+                                            className="w-20 h-8 bg-zinc-950 border-zinc-800 text-center"
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between py-2">
+                                        <div>
+                                            <p className="text-sm font-medium">Randomize Delay</p>
+                                            <p className="text-xs text-zinc-600">Add random variation to sequence delays</p>
+                                        </div>
+                                        <Checkbox
+                                            checked={options.randomizeDelay}
+                                            onCheckedChange={(checked) => setOptions({ ...options, randomizeDelay: !!checked })}
+                                        />
+                                    </div>
+
+                                    {options.randomizeDelay && (
+                                        <div className="flex items-center gap-3 py-2 pl-4 border-l-2 border-amber-500/30">
+                                            <span className="text-xs text-zinc-600">Delay range:</span>
+                                            <Input
+                                                type="number"
+                                                value={options.minDelay}
+                                                onChange={(e) => setOptions({ ...options, minDelay: parseInt(e.target.value) || 1 })}
+                                                className="w-16 h-7 text-xs bg-zinc-950 border-zinc-800 text-center"
+                                            />
+                                            <span className="text-xs text-zinc-600">to</span>
+                                            <Input
+                                                type="number"
+                                                value={options.maxDelay}
+                                                onChange={(e) => setOptions({ ...options, maxDelay: parseInt(e.target.value) || 7 })}
+                                                className="w-16 h-7 text-xs bg-zinc-950 border-zinc-800 text-center"
+                                            />
+                                            <span className="text-xs text-zinc-600">days</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* CC/BCC */}
+                                <div className="space-y-4 pt-4 border-t border-zinc-800">
+                                    <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Email Copies</h4>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-xs text-zinc-500">CC Email (optional)</Label>
+                                        <Input
+                                            value={options.ccEmail}
+                                            onChange={(e) => setOptions({ ...options, ccEmail: e.target.value })}
+                                            placeholder="cc@example.com"
+                                            className="bg-zinc-950 border-zinc-800 text-sm"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-xs text-zinc-500">BCC Email (optional)</Label>
+                                        <Input
+                                            value={options.bccEmail}
+                                            onChange={(e) => setOptions({ ...options, bccEmail: e.target.value })}
+                                            placeholder="bcc@example.com"
+                                            className="bg-zinc-950 border-zinc-800 text-sm"
+                                        />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
                 )}
             </div>
+
+            {/* Preview Dialog */}
+            <Dialog open={showPreview} onOpenChange={setShowPreview}>
+                <DialogContent className="sm:max-w-2xl bg-zinc-950 border-zinc-800 max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="text-white">Email Preview</DialogTitle>
+                        <DialogDescription className="text-zinc-500">
+                            See how this email will look for a sample lead from {organizations?.find(o => o.id === selectedOrgId)?.name || 'the customer'}.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {(() => {
+                        const activeStep = sequences.find(s => s.id === selectedStepId) || sequences[0]
+                        const activeVariant = activeStep?.variants.find((v: any) => v.label === activeVariantLabel) || activeStep?.variants[0]
+
+                        return (
+                            <div className="space-y-4 mt-2">
+                                {/* Lead Info Banner */}
+                                <div className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-800 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-8 w-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 text-xs font-bold">
+                                            {(previewLead?.first_name?.[0] || 'A')}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-white">
+                                                {previewLead ? `${previewLead.first_name} ${previewLead.last_name}` : 'Alex Johnson (Sample)'}
+                                            </p>
+                                            <p className="text-[10px] text-zinc-500">
+                                                {previewLead?.email || 'alex@acme.com'} • {previewLead?.company_name || 'Acme Corp'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {isLoadingPreview && <Loader2 className="h-3 w-3 animate-spin text-zinc-500" />}
+                                </div>
+
+                                {/* Subject */}
+                                <div className="space-y-1">
+                                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Subject</span>
+                                    <div className="p-3 bg-zinc-900 rounded-lg border border-zinc-800 text-sm text-white font-medium">
+                                        {replaceVariablesForPreview(activeVariant?.subject || '') || <span className="text-zinc-600 italic">No subject</span>}
+                                    </div>
+                                </div>
+
+                                {/* Body */}
+                                <div className="space-y-1">
+                                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Body</span>
+                                    <div className="p-4 bg-white rounded-lg text-zinc-900 text-sm leading-relaxed whitespace-pre-wrap min-h-[200px]">
+                                        {replaceVariablesForPreview(activeVariant?.body || '') || <span className="text-zinc-400 italic">No body content</span>}
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })()}
+                </DialogContent>
+            </Dialog>
+
         </div>
     )
 }

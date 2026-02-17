@@ -357,3 +357,38 @@ export async function deleteOrganization(id: string) {
         return { success: false, error: error.message }
     }
 }
+
+/**
+ * Get a sample lead for an organization to use in previews
+ */
+export async function getSampleLeadForOrganization(organizationId: string) {
+    const supabase = await createClient()
+
+    // Try to get a lead that has some data populated
+    const { data: lead, error } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .not('first_name', 'is', null) // Prefer leads with names
+        .limit(1)
+        .maybeSingle()
+
+    if (error) {
+        console.error('Error fetching sample lead:', error)
+        return null
+    }
+
+    if (!lead) {
+        // Try getting ANY lead if no "good" lead found
+        const { data: anyLead } = await supabase
+            .from('leads')
+            .select('*')
+            .eq('organization_id', organizationId)
+            .limit(1)
+            .maybeSingle()
+
+        return anyLead
+    }
+
+    return lead
+}
