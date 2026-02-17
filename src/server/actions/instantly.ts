@@ -651,10 +651,33 @@ async function ensureInstantlyCampaignExists(campaignId: string) {
         return campaign.instantly_campaign_id
     }
 
+    // 1b. Get local schedule to pass to creation (Required by Instantly V2 API)
+    const schedules = await getCampaignSchedules(campaignId)
+    let initialSchedule = undefined
+
+    if (schedules && schedules.length > 0) {
+        const sched = schedules[0]
+        const days = []
+        if (sched.monday) days.push(1)
+        if (sched.tuesday) days.push(2)
+        if (sched.wednesday) days.push(3)
+        if (sched.thursday) days.push(4)
+        if (sched.friday) days.push(5)
+        if (sched.saturday) days.push(6)
+        if (sched.sunday) days.push(0)
+
+        initialSchedule = {
+            from_hour: sched.send_from_hour,
+            to_hour: sched.send_to_hour,
+            timezone: sched.timezone,
+            days: days
+        }
+    }
+
     // 2. Create in Instantly
     let instantlyId: string
     try {
-        const remoteCampaign = await instantly.createCampaign(campaign.name)
+        const remoteCampaign = await instantly.createCampaign(campaign.name, initialSchedule)
         instantlyId = remoteCampaign.id
     } catch (e: any) {
         console.error('Failed to create campaign in Instantly:', e)
@@ -682,33 +705,7 @@ async function ensureInstantlyCampaignExists(campaignId: string) {
         throw new Error(`Instantly API Error (Update Options): ${e.message}`)
     }
 
-    // Sync Schedules
-    try {
-        const schedules = await getCampaignSchedules(campaignId)
-        if (schedules && schedules.length > 0) {
-            // Instantly V2 usually takes one schedule or specific format.
-            // Assuming the first one for now or merging days.
-            const schedule = schedules[0]
-            const days = []
-            if (schedule.monday) days.push(1)
-            if (schedule.tuesday) days.push(2)
-            if (schedule.wednesday) days.push(3)
-            if (schedule.thursday) days.push(4)
-            if (schedule.friday) days.push(5)
-            if (schedule.saturday) days.push(6)
-            if (schedule.sunday) days.push(0)
 
-            await instantly.updateCampaignSchedule(instantlyId, {
-                from_hour: schedule.send_from_hour,
-                to_hour: schedule.send_to_hour,
-                timezone: schedule.timezone,
-                days: days
-            })
-        }
-    } catch (e: any) {
-        console.error('Failed to update campaign schedule:', e)
-        throw new Error(`Instantly API Error (Update Schedule): ${e.message}`)
-    }
 
     // Sync Sequences
     try {

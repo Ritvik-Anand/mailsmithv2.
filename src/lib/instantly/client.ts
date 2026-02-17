@@ -119,10 +119,31 @@ export class InstantlyClient {
     /**
      * Creates a new campaign
      */
-    async createCampaign(name: string): Promise<{ id: string }> {
+    async createCampaign(name: string, schedule?: {
+        from_hour: number;
+        to_hour: number;
+        timezone: string;
+        days: number[];
+    }): Promise<{ id: string }> {
+        // Construct default schedule if not provided (e.g. 9-5 EST M-F)
+        const campaignSchedule = schedule ? {
+            from: `${schedule.from_hour.toString().padStart(2, '0')}:00`,
+            to: `${schedule.to_hour.toString().padStart(2, '0')}:00`,
+            timezone: schedule.timezone,
+            days: schedule.days
+        } : {
+            from: '09:00',
+            to: '17:00',
+            timezone: 'America/New_York',
+            days: [1, 2, 3, 4, 5]
+        }
+
         return this.request<{ id: string }>('/campaigns', {
             method: 'POST',
-            body: JSON.stringify({ name }),
+            body: JSON.stringify({
+                name,
+                campaign_schedule: campaignSchedule
+            }),
         })
     }
 
