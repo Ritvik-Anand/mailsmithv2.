@@ -133,7 +133,7 @@ export class InstantlyClient {
                 to: `${schedule.to_hour.toString().padStart(2, '0')}:00`
             },
             timezone: schedule.timezone,
-            days: schedule.days
+            days: schedule.days.reduce((acc: any, day) => ({ ...acc, [day]: true }), {})
         } : {
             name: 'Default Schedule',
             timing: {
@@ -141,7 +141,7 @@ export class InstantlyClient {
                 to: '17:00'
             },
             timezone: 'America/New_York',
-            days: [1, 2, 3, 4, 5]
+            days: { 1: true, 2: true, 3: true, 4: true, 5: true }
         }
 
         return this.request<{ id: string }>('/campaigns', {
