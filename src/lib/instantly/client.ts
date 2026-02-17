@@ -171,8 +171,8 @@ export class InstantlyClient {
      * Adds leads to a campaign in bulk
      */
     async addLeadsToCampaign(campaignId: string, leads: any[]): Promise<any> {
-        // Attempting V1 Bulk Endpoint with V2 Bearer Token
-        // This handles explicit linking and bulk upload natively
+        // V2 Sequential - Reverting because V1 is 404
+        // DEBUG MODE ENABLED
         const formattedLeads = leads.map(lead => ({
             email: lead.email,
             first_name: lead.first_name,
@@ -189,26 +189,34 @@ export class InstantlyClient {
             } : lead.custom_variables
         }))
 
-        // Chunking
-        const chunkSize = 100
-        const chunks = []
-        for (let i = 0; i < formattedLeads.length; i += chunkSize) {
-            chunks.push(formattedLeads.slice(i, i + chunkSize))
-        }
+        // Process sequentially to inspect response
+        const batchSize = 1 // Process one by one for debug clarity (or batch 10)
+        const results = []
 
-        const promises = chunks.map(chunk =>
-            this.request('/../../v1/lead/add', {
+        // Only process the FIRST batch for debugging to avoid spam if it fails/loops
+        // Use batch 5 to get enough data
+        const batch = formattedLeads.slice(0, 5)
+
+        const batchPromises = batch.map(lead =>
+            this.request(`/leads?campaign_id=${campaignId}`, {
                 method: 'POST',
                 body: JSON.stringify({
                     campaign_id: campaignId,
+                    campaignId: campaignId,
                     skip_if_in_workspace: false,
-                    skip_if_in_campaign: true,
-                    leads: chunk
+                    skip_if_in_campaign: false, // FORCE ADD
+                    ...lead
                 })
             })
         )
+        const batchResults = await Promise.all(batchPromises)
 
-        return Promise.all(promises)
+        if (batchResults.length > 0) {
+            // THROW DEBUG ERROR TO SHOW RESPONSE
+            throw new Error(`INSTANTLY DEBUG: ${JSON.stringify(batchResults[0])}`)
+        }
+
+        return batchResults
     }
 
 
