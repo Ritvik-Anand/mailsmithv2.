@@ -1147,6 +1147,7 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                                         key={v}
                                         className="text-[10px] bg-zinc-800 px-2 py-1 rounded text-amber-400 cursor-pointer hover:bg-zinc-700 hover:text-amber-300 transition-colors select-none border border-zinc-700 font-mono"
                                         onClick={() => insertVariable(v)}
+                                        onMouseDown={(e) => e.preventDefault()}
                                         type="button"
                                     >
                                         {v}
