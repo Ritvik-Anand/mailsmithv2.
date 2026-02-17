@@ -170,7 +170,7 @@ function NewCampaignContent() {
     const [schedule, setSchedule] = useState({
         sendFromHour: 9,
         sendToHour: 17,
-        timezone: 'America/New_York',
+        timezone: 'UTC',
         days: {
             monday: true,
             tuesday: true,

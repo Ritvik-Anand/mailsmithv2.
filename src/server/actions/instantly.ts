@@ -669,7 +669,7 @@ async function ensureInstantlyCampaignExists(campaignId: string) {
         initialSchedule = {
             from_hour: sched.send_from_hour,
             to_hour: sched.send_to_hour,
-            timezone: sched.timezone,
+            timezone: sched.timezone || 'UTC',
             days: days
         }
     }
