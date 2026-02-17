@@ -52,7 +52,7 @@ import {
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { getCampaignById, getCampaignLeads, getCampaignSequences, upsertSequenceStep, deleteSequenceStep, getCampaignSchedules, upsertSchedule, updateCampaign } from '@/server/actions/campaigns'
-import { getOrganizationNodes, getCampaignAccountsFromInstantly, updateCampaignAccountsInInstantly, getCampaignAdvancedOptionsFromInstantly, updateCampaignAdvancedOptionsInInstantly, toggleCampaignStatus } from '@/server/actions/instantly'
+import { getOrganizationNodes, getCampaignAccountsFromInstantly, updateCampaignAccountsInInstantly, getCampaignAdvancedOptionsFromInstantly, updateCampaignAdvancedOptionsInInstantly, toggleCampaignStatus, syncAllCampaignLeads } from '@/server/actions/instantly'
 import { cn } from '@/lib/utils'
 
 const TABS = [
@@ -418,6 +418,8 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
     const [searchQuery, setSearchQuery] = useState('')
     const [totalLeads, setTotalLeads] = useState(0)
     const [currentPage, setCurrentPage] = useState(1)
+    const [isSyncing, setIsSyncing] = useState(false)
+    const [refreshKey, setRefreshKey] = useState(0)
     const pageSize = 50
 
     useEffect(() => {
@@ -435,7 +437,24 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
             }
         }
         loadLeads()
-    }, [campaignId, currentPage])
+    }, [campaignId, currentPage, refreshKey])
+
+    async function handleSyncToInstantly() {
+        setIsSyncing(true)
+        try {
+            const result = await syncAllCampaignLeads(campaignId)
+            if (result.success) {
+                toast.success(result.message)
+                setRefreshKey(prev => prev + 1)
+            } else {
+                toast.error(result.error)
+            }
+        } catch (error) {
+            toast.error('Failed to sync leads')
+        } finally {
+            setIsSyncing(false)
+        }
+    }
 
     const filteredLeads = searchQuery
         ? leads.filter(lead =>
@@ -480,6 +499,20 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 border-zinc-800"
+                        onClick={handleSyncToInstantly}
+                        disabled={isSyncing}
+                    >
+                        {isSyncing ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+                        ) : (
+                            <RefreshCw className="h-4 w-4 text-zinc-400" />
+                        )}
+                        Sync to Instantly
+                    </Button>
                     <Button variant="outline" size="sm" className="gap-2 border-zinc-800">
                         <Settings className="h-4 w-4" />
                         Filters

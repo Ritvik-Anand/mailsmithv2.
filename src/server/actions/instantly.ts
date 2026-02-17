@@ -593,6 +593,89 @@ export async function addLeadsToInstantlyCampaign(
 }
 
 /**
+ * Sync ALL leads for a campaign to Instantly
+ * useful for "Sync Leads" button or fixing out-of-sync states
+ */
+export async function syncAllCampaignLeads(campaignId: string) {
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+
+    let supabase = supabaseClient
+
+    // Auth check similar to other actions
+    if (user) {
+        const { data: userData } = await supabaseClient
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (userData?.role === 'operator' || userData?.role === 'super_admin') {
+            supabase = createAdminClient()
+        }
+    }
+
+    try {
+        // 1. Get campaign details
+        const { data: campaign, error: campaignError } = await supabase
+            .from('campaigns')
+            .select('instantly_campaign_id')
+            .eq('id', campaignId)
+            .single()
+
+        if (campaignError || !campaign) {
+            return { success: false, error: 'Campaign not found' }
+        }
+
+        if (!campaign.instantly_campaign_id) {
+            return { success: false, error: 'Campaign is not linked to Instantly yet. Launch or Resume it first.' }
+        }
+
+        // 2. Fetch all leads
+        const { data: leads, error: leadsError } = await supabase
+            .from('leads')
+            .select('*')
+            .eq('campaign_id', campaignId)
+
+        if (leadsError) {
+            return { success: false, error: 'Failed to fetch leads' }
+        }
+
+        if (!leads || leads.length === 0) {
+            return { success: true, count: 0, message: 'No leads in campaign' }
+        }
+
+        // 3. Filter valid leads
+        const validLeads = leads.filter(l => l.email && l.email.trim() !== '')
+
+        if (validLeads.length === 0) {
+            return { success: false, error: 'No valid leads with emails found' }
+        }
+
+        // 4. Push to Instantly
+        await instantly.addLeadsToCampaign(campaign.instantly_campaign_id, validLeads)
+
+        // 5. Update status locally
+        await supabase
+            .from('leads')
+            .update({ campaign_status: 'queued' })
+            .in('id', validLeads.map(l => l.id))
+
+        revalidatePath(`/operator/campaigns/${campaignId}`)
+
+        return {
+            success: true,
+            count: validLeads.length,
+            message: `Synced ${validLeads.length} leads to Instantly`
+        }
+
+    } catch (error: any) {
+        console.error('Error syncing all leads:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+/**
  * Get accounts assigned to a campaign in Instantly
  */
 export async function getCampaignAccountsFromInstantly(campaignId: string) {
