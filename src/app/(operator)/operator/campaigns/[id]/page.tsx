@@ -597,6 +597,8 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
     const [previewLeads, setPreviewLeads] = useState<any[]>([])
     const [selectedLeadId, setSelectedLeadId] = useState<string>('sample')
     const [loadingPreviewLeads, setLoadingPreviewLeads] = useState(false)
+    const [lastFocusedField, setLastFocusedField] = useState<'subject' | 'body'>('body')
+    const subjectRef = useRef<HTMLInputElement>(null)
 
     // Load sequences on mount
     useEffect(() => {
@@ -832,22 +834,42 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
     }
 
     const insertVariable = (variable: string) => {
-        const textarea = bodyRef.current
         const variant = getActiveVariant()
-        if (!textarea || !variant) return
+        if (!variant) return
 
-        const start = textarea.selectionStart
-        const end = textarea.selectionEnd
-        const currentBody = variant.body || ''
-        const newBody = currentBody.substring(0, start) + variable + currentBody.substring(end)
+        if (lastFocusedField === 'subject') {
+            const input = subjectRef.current
+            if (!input) return
 
-        updateVariantContent({ body: newBody })
+            const start = input.selectionStart || 0
+            const end = input.selectionEnd || 0
+            const currentSubject = variant.subject || ''
+            const newSubject = currentSubject.substring(0, start) + variable + currentSubject.substring(end)
 
-        requestAnimationFrame(() => {
-            textarea.focus()
-            const newCursorPos = start + variable.length
-            textarea.setSelectionRange(newCursorPos, newCursorPos)
-        })
+            updateVariantContent({ subject: newSubject })
+
+            requestAnimationFrame(() => {
+                input.focus()
+                const newCursorPos = start + variable.length
+                input.setSelectionRange(newCursorPos, newCursorPos)
+            })
+        } else {
+            const textarea = bodyRef.current
+            if (!textarea) return
+
+            const start = textarea.selectionStart || 0
+            const end = textarea.selectionEnd || 0
+            const currentBody = variant.body || ''
+            const newBody = currentBody.substring(0, start) + variable + currentBody.substring(end)
+
+            updateVariantContent({ body: newBody })
+
+            requestAnimationFrame(() => {
+                textarea.focus()
+                const newCursorPos = start + variable.length
+                textarea.setSelectionRange(newCursorPos, newCursorPos)
+            })
+        }
     }
 
     const saveStep = async () => {
@@ -1029,8 +1051,10 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                             <div className="flex items-center gap-4">
                                 <Label className="text-zinc-400">Subject</Label>
                                 <Input
+                                    ref={subjectRef}
                                     value={activeVariant?.subject || ''}
                                     onChange={(e) => updateVariantContent({ subject: e.target.value })}
+                                    onFocus={() => setLastFocusedField('subject')}
                                     className="flex-1 min-w-[300px] bg-zinc-900 border-zinc-800"
                                     placeholder="Enter subject line..."
                                 />
@@ -1051,6 +1075,7 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                             ref={bodyRef}
                             value={activeVariant?.body || ''}
                             onChange={(e) => updateVariantContent({ body: e.target.value })}
+                            onFocus={() => setLastFocusedField('body')}
                             className="min-h-[400px] bg-zinc-900 border-zinc-800 font-mono text-sm leading-relaxed"
                             placeholder="Write your email body here..."
                         />
@@ -1088,13 +1113,14 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Available Variables — click to insert</p>
                             <div className="flex flex-wrap gap-2">
                                 {['{{firstName}}', '{{lastName}}', '{{companyName}}', '{{jobTitle}}', '{{personalization}}', '{{sendingAccountFirstName}}'].map((v) => (
-                                    <code
+                                    <button
                                         key={v}
-                                        className="text-[10px] bg-zinc-800 px-2 py-1 rounded text-amber-400 cursor-pointer hover:bg-zinc-700 hover:text-amber-300 transition-colors select-none"
+                                        className="text-[10px] bg-zinc-800 px-2 py-1 rounded text-amber-400 cursor-pointer hover:bg-zinc-700 hover:text-amber-300 transition-colors select-none border border-zinc-700 font-mono"
                                         onClick={() => insertVariable(v)}
+                                        type="button"
                                     >
                                         {v}
-                                    </code>
+                                    </button>
                                 ))}
                             </div>
                             <p className="text-[10px] text-zinc-600 mt-2">
