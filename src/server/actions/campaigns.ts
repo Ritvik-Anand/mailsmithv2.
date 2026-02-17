@@ -460,18 +460,39 @@ export async function addLeadsToCampaign(campaignId: string, leadIds: string[]) 
  * Sync campaign stats from Instantly
  */
 export async function syncCampaignStats(campaignId: string) {
-    const supabase = await createClient()
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+
+    let supabase = supabaseClient
+
+    // Use admin client for operators and super_admins to bypass RLS
+    if (user) {
+        const { data: userData } = await supabaseClient
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (userData?.role === 'operator' || userData?.role === 'super_admin') {
+            supabase = createAdminClient()
+        }
+    }
 
     try {
         // Get campaign with Instantly ID
         const { data: campaign, error: fetchError } = await supabase
             .from('campaigns')
-            .select('instantly_campaign_id')
+            .select('instantly_campaign_id, name')
             .eq('id', campaignId)
             .single()
 
-        if (fetchError || !campaign?.instantly_campaign_id) {
-            return { success: false, error: 'Campaign not linked to Instantly' }
+        if (fetchError || !campaign) {
+            console.error('Campaign fetch error:', fetchError)
+            return { success: false, error: 'Campaign not found in database' }
+        }
+
+        if (!campaign.instantly_campaign_id) {
+            return { success: false, error: `Campaign "${campaign.name}" is not linked to Instantly yet. Launch it first.` }
         }
 
         // Fetch from Instantly
