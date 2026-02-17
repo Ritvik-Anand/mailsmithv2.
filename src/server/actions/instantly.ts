@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { instantly, InstantlyCampaignOptions } from '@/lib/instantly/client'
 import { revalidatePath } from 'next/cache'
+import { getCampaignById, getCampaignSchedules, getCampaignSequences, updateCampaign } from '@/server/actions/campaigns'
 
 /**
  * Fetches all email accounts from the master Instantly account 
@@ -442,25 +443,89 @@ export async function getCampaignAccountsFromInstantly(campaignId: string) {
 }
 
 /**
+ * Helper to ensure a campaign exists in Instantly.
+ * If not, it creates it and syncs initial data.
+ */
+async function ensureInstantlyCampaignExists(campaignId: string) {
+    const supabase = await createClient()
+
+    // 1. Get local campaign
+    const { data: campaign, error: fetchError } = await supabase
+        .from('campaigns')
+        .select('*')
+        .eq('id', campaignId)
+        .single()
+
+    if (fetchError || !campaign) {
+        throw new Error('Campaign not found')
+    }
+
+    // If already linked, return the ID
+    if (campaign.instantly_campaign_id) {
+        return campaign.instantly_campaign_id
+    }
+
+    // 2. Create in Instantly
+    const remoteCampaign = await instantly.createCampaign(campaign.name)
+    const instantlyId = remoteCampaign.id
+
+    // 3. Update local DB with ID
+    await supabase
+        .from('campaigns')
+        .update({ instantly_campaign_id: instantlyId })
+        .eq('id', campaignId)
+
+    // 4. Sync initial data (Schedules, Sequences, Basic Options)
+    // Sync Options
+    await instantly.updateCampaignOptions(instantlyId, {
+        daily_limit: campaign.daily_limit,
+        stop_on_reply: campaign.stop_on_reply,
+        open_tracking: campaign.open_tracking,
+        link_tracking: campaign.link_tracking,
+        send_as_text: campaign.send_as_text
+    })
+
+    // Sync Schedules
+    const schedules = await getCampaignSchedules(campaignId)
+    if (schedules && schedules.length > 0) {
+        // Instantly V2 usually takes one schedule or specific format.
+        // Assuming the first one for now or merging days.
+        const schedule = schedules[0]
+        const days = []
+        if (schedule.monday) days.push(1)
+        if (schedule.tuesday) days.push(2)
+        if (schedule.wednesday) days.push(3)
+        if (schedule.thursday) days.push(4)
+        if (schedule.friday) days.push(5)
+        if (schedule.saturday) days.push(6)
+        if (schedule.sunday) days.push(0)
+
+        await instantly.updateCampaignSchedule(instantlyId, {
+            from_hour: schedule.send_from_hour,
+            to_hour: schedule.send_to_hour,
+            timezone: schedule.timezone,
+            days: days
+        })
+    }
+
+    // Sync Sequences
+    const sequences = await getCampaignSequences(campaignId)
+    if (sequences && sequences.length > 0) {
+        await instantly.updateCampaignSequences(instantlyId, sequences)
+    }
+
+    return instantlyId
+}
+
+/**
  * Update assigned accounts for a campaign in Instantly
  */
 export async function updateCampaignAccountsInInstantly(campaignId: string, emails: string[]) {
-    const supabase = await createClient()
-
     try {
-        // Get local campaign to find Instantly ID
-        const { data: campaign, error: fetchError } = await supabase
-            .from('campaigns')
-            .select('instantly_campaign_id')
-            .eq('id', campaignId)
-            .single()
-
-        if (fetchError || !campaign?.instantly_campaign_id) {
-            return { success: false, error: 'Campaign not linked to Instantly' }
-        }
+        const instantlyId = await ensureInstantlyCampaignExists(campaignId)
 
         // Update in Instantly
-        await instantly.addAccountsToCampaign(campaign.instantly_campaign_id, emails)
+        await instantly.addAccountsToCampaign(instantlyId, emails)
 
         revalidatePath(`/operator/campaigns/${campaignId}`)
         return { success: true }
@@ -517,25 +582,45 @@ export async function getCampaignAdvancedOptionsFromInstantly(campaignId: string
  * Update advanced options for a campaign in Instantly
  */
 export async function updateCampaignAdvancedOptionsInInstantly(campaignId: string, options: InstantlyCampaignOptions) {
-    const supabase = await createClient()
-
     try {
-        const { data: campaign, error: fetchError } = await supabase
-            .from('campaigns')
-            .select('instantly_campaign_id')
-            .eq('id', campaignId)
-            .single()
+        const instantlyId = await ensureInstantlyCampaignExists(campaignId)
 
-        if (fetchError || !campaign?.instantly_campaign_id) {
-            return { success: false, error: 'Campaign not linked to Instantly' }
-        }
-
-        await instantly.updateCampaignOptions(campaign.instantly_campaign_id, options)
+        await instantly.updateCampaignOptions(instantlyId, options)
 
         revalidatePath(`/operator/campaigns/${campaignId}`)
         return { success: true }
     } catch (error: any) {
         console.error('Error updating campaign options:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+/**
+ * Toggle campaign status (Active/Paused)
+ */
+export async function toggleCampaignStatus(campaignId: string, status: 'active' | 'paused') {
+    const supabase = await createClient()
+
+    try {
+        const instantlyId = await ensureInstantlyCampaignExists(campaignId)
+
+        // Update Instantly (1=active, 0=paused for V2 usually, or use string?)
+        // The client method updateCampaignStatus uses 0 | 1
+        await instantly.updateCampaignStatus(instantlyId, status === 'active' ? 1 : 0)
+
+        // Update local DB
+        await supabase
+            .from('campaigns')
+            .update({
+                status: status,
+                instantly_status: status // keep consistent
+            })
+            .eq('id', campaignId)
+
+        revalidatePath(`/operator/campaigns/${campaignId}`)
+        return { success: true }
+    } catch (error: any) {
+        console.error('Error toggling campaign status:', error)
         return { success: false, error: error.message }
     }
 }

@@ -51,7 +51,7 @@ import {
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { getCampaignById, getCampaignLeads, getCampaignSequences, upsertSequenceStep, deleteSequenceStep, getCampaignSchedules, upsertSchedule, updateCampaign } from '@/server/actions/campaigns'
-import { getOrganizationNodes, getCampaignAccountsFromInstantly, updateCampaignAccountsInInstantly, getCampaignAdvancedOptionsFromInstantly, updateCampaignAdvancedOptionsInInstantly } from '@/server/actions/instantly'
+import { getOrganizationNodes, getCampaignAccountsFromInstantly, updateCampaignAccountsInInstantly, getCampaignAdvancedOptionsFromInstantly, updateCampaignAdvancedOptionsInInstantly, toggleCampaignStatus } from '@/server/actions/instantly'
 import { cn } from '@/lib/utils'
 
 const TABS = [
@@ -93,15 +93,31 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
     const handleStatusToggle = async () => {
         setIsPausing(true)
-        // TODO: Implement pause/resume via API
-        setTimeout(() => {
-            setCampaign((prev: any) => ({
-                ...prev,
-                status: prev.status === 'active' ? 'paused' : 'active'
-            }))
-            toast.success(campaign.status === 'active' ? 'Campaign paused' : 'Campaign resumed')
+        const newStatus = campaign.status === 'active' ? 'paused' : 'active'
+        try {
+            const result = await toggleCampaignStatus(campaign.id, newStatus)
+            if (result.success) {
+                toast.success(newStatus === 'active' ? 'Campaign resumed' : 'Campaign paused')
+                // Reload campaign to get updated data (especially if it was just created in Instantly)
+                const refined = await getCampaignById(resolvedParams.id)
+                if (refined.success && refined.campaign) {
+                    setCampaign(refined.campaign)
+                } else {
+                    // Fallback to local update if reload fails
+                    setCampaign((prev: any) => ({
+                        ...prev,
+                        status: newStatus
+                    }))
+                }
+            } else {
+                toast.error(result.error || 'Failed to update status')
+            }
+        } catch (error) {
+            console.error('Error toggling status:', error)
+            toast.error('Failed to update status')
+        } finally {
             setIsPausing(false)
-        }, 1000)
+        }
     }
 
     const getStatusStyle = (status: string) => {

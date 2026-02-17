@@ -51,6 +51,7 @@ export interface InstantlyCampaignOptions {
     random_variance?: number
     cc_email_list?: string[]
     bcc_email_list?: string[]
+    send_as_text?: boolean
 }
 
 export class InstantlyClient {
