@@ -198,8 +198,9 @@ export default function NewCampaignPage() {
             const result = await launchCampaign({
                 organizationId: selectedOrgId,
                 name: campaignName,
-                subject: sequences[0].subject,
-                body: sequences[0].body,
+                sequences: sequences,
+                schedule: schedule,
+                options: options,
                 outreachNodeIds: selectedNodeIds,
                 startImmediately
             })
