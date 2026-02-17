@@ -127,11 +127,13 @@ export class InstantlyClient {
     }): Promise<{ id: string }> {
         // Construct default schedule if not provided (e.g. 9-5 EST M-F)
         const singleSchedule = schedule ? {
+            name: 'Default Schedule',
             from: `${schedule.from_hour.toString().padStart(2, '0')}:00`,
             to: `${schedule.to_hour.toString().padStart(2, '0')}:00`,
             timezone: schedule.timezone,
             days: schedule.days
         } : {
+            name: 'Default Schedule',
             from: '09:00',
             to: '17:00',
             timezone: 'America/New_York',
