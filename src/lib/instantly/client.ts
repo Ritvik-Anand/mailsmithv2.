@@ -196,11 +196,11 @@ export class InstantlyClient {
         for (let i = 0; i < formattedLeads.length; i += batchSize) {
             const batch = formattedLeads.slice(i, i + batchSize)
             const batchPromises = batch.map(lead =>
-                this.request('/leads', {
+                this.request(`/leads?campaign_id=${campaignId}`, {
                     method: 'POST',
                     body: JSON.stringify({
                         campaign_id: campaignId,
-                        campaignId: campaignId, // Try camelCase parameter
+                        campaignId: campaignId, // Keep for safety
                         skip_if_in_workspace: false,
                         skip_if_in_campaign: true,
                         ...lead
@@ -209,19 +209,6 @@ export class InstantlyClient {
             )
             const batchResults = await Promise.all(batchPromises)
             results.push(...batchResults)
-        }
-
-        // Secondary Step: Explicitly link leads via PATCH /campaigns/{id}
-        // This handles cases where POST /leads creates but fails to link
-        try {
-            await this.request(`/campaigns/${campaignId}`, {
-                method: 'PATCH',
-                body: JSON.stringify({
-                    leads: formattedLeads
-                })
-            })
-        } catch (e) {
-            console.error('Secondary link step failed (non-fatal if leads added via POST):', e)
         }
 
         return results
