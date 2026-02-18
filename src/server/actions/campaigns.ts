@@ -498,32 +498,61 @@ export async function syncCampaignStats(campaignId: string) {
         // Fetch from Instantly (V2 Overview returns an array of campaign stats)
         const response = await instantly.getCampaignAnalytics(campaign.instantly_campaign_id)
 
-        // Overview can return an array of all campaigns if filtering is broad, 
-        // so we find the specific one to be safe.
+        // Ensure we have an array to work with
         const statsList = Array.isArray(response) ? response : [response]
-        const stats = statsList.find((s: any) =>
-            s?.campaign_id === campaign.instantly_campaign_id ||
-            s?.id === campaign.instantly_campaign_id
-        ) || statsList[0]
+
+        // Find by ID match (most reliable)
+        let stats = statsList.find((s: any) =>
+            String(s?.campaign_id) === String(campaign.instantly_campaign_id) ||
+            String(s?.id) === String(campaign.instantly_campaign_id)
+        )
+
+        // Robust Fallback: Try to find by NAME if ID doesn't match perfectly
+        // (V2 IDs can sometimes differ slightly in case or format between endpoints)
+        if (!stats) {
+            stats = statsList.find((s: any) =>
+                s?.campaign_name?.toLowerCase() === campaign.name?.toLowerCase() ||
+                s?.name?.toLowerCase() === campaign.name?.toLowerCase()
+            )
+        }
 
         if (!stats) {
-            return { success: false, error: 'No analytics found for this campaign' }
+            const available = statsList.map(s => `[${s.id || s.campaign_id}: ${s.name || s.campaign_name}]`).join(', ')
+            const errorMsg = `No analytics match for ID ${campaign.instantly_campaign_id}. Available: ${available}`
+
+            await supabase
+                .from('campaigns')
+                .update({ sync_error: errorMsg } as any)
+                .eq('id', campaignId)
+
+            return { success: false, error: errorMsg }
+        }
+
+        // SMART MAPPING helper for all known V2 field variations
+        const getVal = (fields: string[]) => {
+            for (const f of fields) {
+                if (stats[f] !== undefined && stats[f] !== null) {
+                    return Number(stats[f])
+                }
+            }
+            return 0
         }
 
         // Update local stats with robust V2 field mapping
         const { error: updateError } = await supabase
             .from('campaigns')
             .update({
-                emails_sent: stats.total_sent || stats.sent_count || stats.sent || 0,
-                emails_opened: stats.total_opened || stats.open_count_unique || stats.open_count || stats.unique_opens || stats.opened || 0,
-                emails_replied: stats.total_replied || stats.reply_count_unique || stats.reply_count || stats.unique_replies || stats.replied || 0,
-                emails_bounced: stats.total_bounced || stats.bounced_count || stats.bounced || 0,
-                emails_clicked: stats.total_clicked || stats.link_click_count_unique || stats.link_click_count || stats.unique_clicks || stats.clicked || 0,
-                emails_interested: stats.total_interested || stats.total_opportunities || stats.interested || 0,
-                emails_uninterested: stats.total_uninterested || stats.uninterested || 0,
-                emails_unsubscribed: stats.total_unsubscribed || stats.unsubscribed_count || stats.unsubscribed || 0,
+                emails_sent: getVal(['total_sent', 'sent_count', 'sent', 'emails_sent']),
+                emails_opened: getVal(['total_opened', 'open_count_unique', 'unique_opens', 'open_count', 'opened']),
+                emails_replied: getVal(['total_replied', 'reply_count_unique', 'unique_replies', 'reply_count', 'replied']),
+                emails_bounced: getVal(['total_bounced', 'bounced_count', 'bounced']),
+                emails_clicked: getVal(['total_clicked', 'link_click_count_unique', 'unique_clicks', 'link_click_count']),
+                emails_interested: getVal(['total_interested', 'total_opportunities', 'interested_count', 'interested']),
+                emails_uninterested: getVal(['total_uninterested', 'uninterested_count', 'uninterested']),
+                emails_unsubscribed: getVal(['total_unsubscribed', 'unsubscribed_count', 'unsubscribed']),
                 last_synced_at: new Date().toISOString(),
-                last_stats_sync_at: new Date().toISOString()
+                last_stats_sync_at: new Date().toISOString(),
+                sync_error: null // Clear previous errors
             } as any)
             .eq('id', campaignId)
 
@@ -563,15 +592,23 @@ export async function syncAllCampaignsLiveStats() {
             const extId = stats.campaign_id || stats.id
             if (!extId) return
 
+            // Helper for mapping
+            const getVal = (fields: string[]) => {
+                for (const f of fields) {
+                    if (stats[f] !== undefined && stats[f] !== null) return Number(stats[f])
+                }
+                return 0
+            }
+
             const { data, error } = await supabase
                 .from('campaigns')
                 .update({
-                    emails_sent: stats.total_sent || stats.sent_count || stats.sent || 0,
-                    emails_opened: stats.total_opened || stats.open_count_unique || stats.open_count || stats.unique_opens || stats.opened || 0,
-                    emails_replied: stats.total_replied || stats.reply_count_unique || stats.reply_count || stats.unique_replies || stats.replied || 0,
-                    emails_bounced: stats.total_bounced || stats.bounced_count || stats.bounced || 0,
-                    emails_clicked: stats.total_clicked || stats.link_click_count_unique || stats.link_click_count || stats.unique_clicks || stats.clicked || 0,
-                    emails_interested: stats.total_interested || stats.total_opportunities || stats.interested || 0,
+                    emails_sent: getVal(['total_sent', 'sent_count', 'sent', 'emails_sent']),
+                    emails_opened: getVal(['total_opened', 'open_count_unique', 'unique_opens', 'open_count', 'opened']),
+                    emails_replied: getVal(['total_replied', 'reply_count_unique', 'unique_replies', 'reply_count', 'replied']),
+                    emails_bounced: getVal(['total_bounced', 'bounced_count', 'bounced']),
+                    emails_clicked: getVal(['total_clicked', 'link_click_count_unique', 'unique_clicks', 'link_click_count']),
+                    emails_interested: getVal(['total_interested', 'total_opportunities', 'interested_count', 'interested']),
                     last_synced_at: new Date().toISOString(),
                     last_stats_sync_at: new Date().toISOString()
                 } as any)
