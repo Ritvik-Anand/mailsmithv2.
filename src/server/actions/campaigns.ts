@@ -514,14 +514,14 @@ export async function syncCampaignStats(campaignId: string) {
         const { error: updateError } = await supabase
             .from('campaigns')
             .update({
-                emails_sent: stats.total_sent || stats.sent || 0,
-                emails_opened: stats.total_opened || stats.unique_opens || stats.opened || 0,
-                emails_replied: stats.total_replied || stats.unique_replies || stats.replied || 0,
-                emails_bounced: stats.total_bounced || stats.bounced || 0,
-                emails_clicked: stats.total_clicked || stats.unique_clicks || stats.clicked || 0,
-                emails_interested: stats.total_opportunities || stats.total_interested || stats.interested || 0,
+                emails_sent: stats.total_sent || stats.sent_count || stats.sent || 0,
+                emails_opened: stats.total_opened || stats.open_count_unique || stats.open_count || stats.unique_opens || stats.opened || 0,
+                emails_replied: stats.total_replied || stats.reply_count_unique || stats.reply_count || stats.unique_replies || stats.replied || 0,
+                emails_bounced: stats.total_bounced || stats.bounced_count || stats.bounced || 0,
+                emails_clicked: stats.total_clicked || stats.link_click_count_unique || stats.link_click_count || stats.unique_clicks || stats.clicked || 0,
+                emails_interested: stats.total_interested || stats.total_opportunities || stats.interested || 0,
                 emails_uninterested: stats.total_uninterested || stats.uninterested || 0,
-                emails_unsubscribed: stats.total_unsubscribed || stats.unsubscribed || 0,
+                emails_unsubscribed: stats.total_unsubscribed || stats.unsubscribed_count || stats.unsubscribed || 0,
                 last_synced_at: new Date().toISOString(),
                 last_stats_sync_at: new Date().toISOString()
             } as any)
@@ -566,12 +566,12 @@ export async function syncAllCampaignsLiveStats() {
             const { data, error } = await supabase
                 .from('campaigns')
                 .update({
-                    emails_sent: stats.total_sent || stats.sent || 0,
-                    emails_opened: stats.total_opened || stats.unique_opens || stats.opened || 0,
-                    emails_replied: stats.total_replied || stats.unique_replies || stats.replied || 0,
-                    emails_bounced: stats.total_bounced || stats.bounced || 0,
-                    emails_clicked: stats.total_clicked || stats.unique_clicks || stats.clicked || 0,
-                    emails_interested: stats.total_opportunities || stats.total_interested || stats.interested || 0,
+                    emails_sent: stats.total_sent || stats.sent_count || stats.sent || 0,
+                    emails_opened: stats.total_opened || stats.open_count_unique || stats.open_count || stats.unique_opens || stats.opened || 0,
+                    emails_replied: stats.total_replied || stats.reply_count_unique || stats.reply_count || stats.unique_replies || stats.replied || 0,
+                    emails_bounced: stats.total_bounced || stats.bounced_count || stats.bounced || 0,
+                    emails_clicked: stats.total_clicked || stats.link_click_count_unique || stats.link_click_count || stats.unique_clicks || stats.clicked || 0,
+                    emails_interested: stats.total_interested || stats.total_opportunities || stats.interested || 0,
                     last_synced_at: new Date().toISOString(),
                     last_stats_sync_at: new Date().toISOString()
                 } as any)

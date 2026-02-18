@@ -252,7 +252,8 @@ export class InstantlyClient {
         const startDate = '2024-01-01'
         const endDate = new Date().toISOString().split('T')[0]
 
-        return this.request<any>(`/campaigns/analytics/overview?campaign_id=${campaignId}&start_date=${startDate}&end_date=${endDate}`)
+        // expand_crm_events=true provides more granular interested/deal data
+        return this.request<any>(`/campaigns/analytics/overview?campaign_id=${campaignId}&start_date=${startDate}&end_date=${endDate}&expand_crm_events=true`)
     }
 
     /**
@@ -260,7 +261,7 @@ export class InstantlyClient {
      */
     async getAnalyticsOverview(startDate: string = '2024-01-01'): Promise<any[]> {
         const endDate = new Date().toISOString().split('T')[0]
-        const response = await this.request<any>(`/campaigns/analytics/overview?start_date=${startDate}&end_date=${endDate}`)
+        const response = await this.request<any>(`/campaigns/analytics/overview?start_date=${startDate}&end_date=${endDate}&expand_crm_events=true`)
 
         // V2 Overview usually returns an array directly, but handle potential wrapping
         return Array.isArray(response) ? response : (response?.data || [])
