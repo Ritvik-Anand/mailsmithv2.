@@ -248,8 +248,22 @@ export class InstantlyClient {
      */
     async getCampaignAnalytics(campaignId: string): Promise<any> {
         // V2 analytics overview endpoint
-        // Query param campaign_id is used for specific campaign filtering
-        return this.request<any>(`/campaigns/analytics/overview?campaign_id=${campaignId}`)
+        // Use a wide date range to get all-time stats by default
+        const startDate = '2024-01-01'
+        const endDate = new Date().toISOString().split('T')[0]
+
+        return this.request<any>(`/campaigns/analytics/overview?campaign_id=${campaignId}&start_date=${startDate}&end_date=${endDate}`)
+    }
+
+    /**
+     * Get analytics for all campaigns at once
+     */
+    async getAnalyticsOverview(startDate: string = '2024-01-01'): Promise<any[]> {
+        const endDate = new Date().toISOString().split('T')[0]
+        const response = await this.request<any>(`/campaigns/analytics/overview?start_date=${startDate}&end_date=${endDate}`)
+
+        // V2 Overview usually returns an array directly, but handle potential wrapping
+        return Array.isArray(response) ? response : (response?.data || [])
     }
 
     /**

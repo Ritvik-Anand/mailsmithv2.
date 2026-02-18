@@ -498,25 +498,30 @@ export async function syncCampaignStats(campaignId: string) {
         // Fetch from Instantly (V2 Overview returns an array of campaign stats)
         const response = await instantly.getCampaignAnalytics(campaign.instantly_campaign_id)
 
-        // Handle array or single object response
-        const stats = Array.isArray(response) ? response[0] : response
+        // Overview can return an array of all campaigns if filtering is broad, 
+        // so we find the specific one to be safe.
+        const statsList = Array.isArray(response) ? response : [response]
+        const stats = statsList.find((s: any) =>
+            s?.campaign_id === campaign.instantly_campaign_id ||
+            s?.id === campaign.instantly_campaign_id
+        ) || statsList[0]
 
         if (!stats) {
             return { success: false, error: 'No analytics found for this campaign' }
         }
 
-        // Update local stats (V2 Overview uses sent, opened, replied, etc.)
+        // Update local stats with robust V2 field mapping
         const { error: updateError } = await supabase
             .from('campaigns')
             .update({
-                emails_sent: stats.sent || stats.total_sent || 0,
-                emails_opened: stats.opened || stats.total_opened || 0,
-                emails_replied: stats.replied || stats.total_replied || 0,
-                emails_bounced: stats.bounced || stats.total_bounced || 0,
-                emails_clicked: stats.clicked || stats.total_clicked || 0,
-                emails_interested: stats.interested || stats.total_interested || 0,
-                emails_uninterested: stats.uninterested || 0,
-                emails_unsubscribed: stats.unsubscribed || 0,
+                emails_sent: stats.total_sent || stats.sent || 0,
+                emails_opened: stats.total_opened || stats.unique_opens || stats.opened || 0,
+                emails_replied: stats.total_replied || stats.unique_replies || stats.replied || 0,
+                emails_bounced: stats.total_bounced || stats.bounced || 0,
+                emails_clicked: stats.total_clicked || stats.unique_clicks || stats.clicked || 0,
+                emails_interested: stats.total_opportunities || stats.total_interested || stats.interested || 0,
+                emails_uninterested: stats.total_uninterested || stats.uninterested || 0,
+                emails_unsubscribed: stats.total_unsubscribed || stats.unsubscribed || 0,
                 last_synced_at: new Date().toISOString(),
                 last_stats_sync_at: new Date().toISOString()
             } as any)
@@ -541,41 +546,36 @@ export async function syncAllCampaignsLiveStats() {
     const supabase = createAdminClient() // Use admin for bulk update
 
     try {
-        console.log('Starting bulk campaign stats sync...')
+        console.log('Starting bulk campaign stats sync using Analytics Overview...')
 
-        // Fetch all campaigns from Instantly
-        const response = await instantly.getSummaryStats()
+        // Fetch ALL analytics (Batch)
+        const allStats = await instantly.getAnalyticsOverview()
 
-        // V2 might return { data: [] } or a raw array
-        const instantlyCampaigns = Array.isArray(response) ? response : (response?.data || response?.items || [])
-
-        if (!instantlyCampaigns || !Array.isArray(instantlyCampaigns)) {
-            console.error('Unexpected Instantly response:', response)
-            throw new Error('Failed to fetch campaigns from Instantly - invalid response format')
+        if (!allStats || !Array.isArray(allStats)) {
+            throw new Error('Failed to fetch analytics from Instantly')
         }
 
-        console.log(`Found ${instantlyCampaigns.length} campaigns in Instantly. Updating local database...`)
+        console.log(`Received analytics for ${allStats.length} campaigns. Syncing to database...`)
 
         // Batch update our DB
         let successCount = 0
-        const promises = instantlyCampaigns.map(async (instCampaign) => {
-            // Check if we have this campaign
-            const stats = instCampaign.stats || {}
+        const promises = allStats.map(async (stats) => {
+            const extId = stats.campaign_id || stats.id
+            if (!extId) return
 
             const { data, error } = await supabase
                 .from('campaigns')
                 .update({
-                    emails_sent: stats.sent || 0,
-                    emails_opened: stats.opened || 0,
-                    emails_replied: stats.replied || 0,
-                    emails_bounced: stats.bounced || 0,
-                    emails_clicked: stats.clicked || 0,
-                    emails_interested: stats.interested || 0,
-                    instantly_status: instCampaign.status === 1 ? 'active' : 'paused',
+                    emails_sent: stats.total_sent || stats.sent || 0,
+                    emails_opened: stats.total_opened || stats.unique_opens || stats.opened || 0,
+                    emails_replied: stats.total_replied || stats.unique_replies || stats.replied || 0,
+                    emails_bounced: stats.total_bounced || stats.bounced || 0,
+                    emails_clicked: stats.total_clicked || stats.unique_clicks || stats.clicked || 0,
+                    emails_interested: stats.total_opportunities || stats.total_interested || stats.interested || 0,
                     last_synced_at: new Date().toISOString(),
                     last_stats_sync_at: new Date().toISOString()
                 } as any)
-                .eq('instantly_campaign_id', instCampaign.id)
+                .eq('instantly_campaign_id', extId)
                 .select('id')
 
             if (!error && data && data.length > 0) {
@@ -585,12 +585,28 @@ export async function syncAllCampaignsLiveStats() {
 
         await Promise.all(promises)
 
+        // Also sync status from the campaigns list (optional but good for consistency)
+        try {
+            const campaignList = await instantly.getSummaryStats()
+            const campaigns = Array.isArray(campaignList) ? campaignList : (campaignList?.data || [])
+            if (Array.isArray(campaigns)) {
+                for (const c of campaigns) {
+                    await supabase
+                        .from('campaigns')
+                        .update({ instantly_status: c.status === 1 ? 'active' : 'paused' })
+                        .eq('instantly_campaign_id', c.id)
+                }
+            }
+        } catch (statusErr) {
+            console.warn('Failed to sync campaign statuses:', statusErr)
+        }
+
         revalidatePath('/operator/campaigns')
         console.log(`Bulk sync complete. Updated ${successCount} campaigns.`)
 
         return {
             success: true,
-            total: instantlyCampaigns.length,
+            total: allStats.length,
             updated: successCount
         }
     } catch (error: any) {
