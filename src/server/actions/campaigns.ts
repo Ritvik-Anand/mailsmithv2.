@@ -495,74 +495,56 @@ export async function syncCampaignStats(campaignId: string) {
             return { success: false, error: `Campaign "${campaign.name}" is not linked to Instantly yet. Launch it first.` }
         }
 
-        // Fetch from Instantly — log raw response for debugging
+        // Fetch from Instantly.
+        // When queried with a campaign_id filter, the V2 analytics endpoint returns
+        // a SINGLE bare stats object (e.g., { open_count: 3062, reply_count_unique: 74, ... })
+        // without any id/campaign_id/name fields. Use it directly.
         const response = await instantly.getCampaignAnalytics(campaign.instantly_campaign_id)
-        console.log('INSTANTLY RAW ANALYTICS RESPONSE:', JSON.stringify(response, null, 2))
+        console.log('INSTANTLY ANALYTICS RESPONSE:', JSON.stringify(response))
 
-        // Ensure we have an array to work with
-        const statsList = Array.isArray(response) ? response : (response?.data ? [response.data].flat() : [response])
-
-        console.log(`STATS LIST (${statsList.length} items):`, statsList.map((s: any) => ({
-            keys: Object.keys(s || {}),
-            campaign_id: s?.campaign_id,
-            id: s?.id,
-            name: s?.name || s?.campaign_name
-        })))
-
-        // Find by ID match (most reliable) — cast both to lower-case strings for safety
-        let stats = statsList.find((s: any) =>
-            String(s?.campaign_id ?? '').toLowerCase() === campaign.instantly_campaign_id.toLowerCase() ||
-            String(s?.id ?? '').toLowerCase() === campaign.instantly_campaign_id.toLowerCase()
-        )
-
-        // Fallback: try name match
-        if (!stats) {
-            stats = statsList.find((s: any) =>
-                (s?.campaign_name ?? s?.name ?? '').toLowerCase() === campaign.name?.toLowerCase()
-            )
+        // The response can be a bare object OR an array — normalise to a single stats object
+        let stats: any
+        if (Array.isArray(response)) {
+            // Array: try to find the matching campaign, fall back to first element
+            stats = response.find((s: any) =>
+                String(s?.campaign_id ?? '').toLowerCase() === campaign.instantly_campaign_id.toLowerCase() ||
+                String(s?.id ?? '').toLowerCase() === campaign.instantly_campaign_id.toLowerCase()
+            ) ?? response[0]
+        } else {
+            // Bare object (most common when campaign_id filter is used)
+            stats = response
         }
 
-        if (!stats) {
-            // Dump the FULL first item so we can see exactly what fields are available
-            const rawDump = JSON.stringify(statsList[0] ?? response)
-            const errorMsg = `No analytics match. Looking for ID: ${campaign.instantly_campaign_id}. Raw response (first item): ${rawDump}`
-
-            await supabase
-                .from('campaigns')
-                .update({ sync_error: errorMsg.slice(0, 1000) } as any)
-                .eq('id', campaignId)
-
-            console.error(errorMsg)
-            return { success: false, error: errorMsg.slice(0, 400) }
+        if (!stats || typeof stats !== 'object' || Object.keys(stats).length === 0) {
+            return { success: false, error: 'No analytics data returned from Instantly for this campaign.' }
         }
 
-        // SMART MAPPING helper for all known V2 field variations
+        // SMART MAPPING helper — tries every known V2 field name variant
         const getVal = (fields: string[]) => {
             for (const f of fields) {
-                if (stats[f] !== undefined && stats[f] !== null) {
-                    return Number(stats[f])
-                }
+                if (stats[f] !== undefined && stats[f] !== null) return Number(stats[f])
             }
             return 0
         }
 
-        // Update local stats with robust V2 field mapping
+        // Update local stats using the confirmed V2 field names
         const { error: updateError } = await supabase
             .from('campaigns')
             .update({
-                emails_sent: getVal(['total_sent', 'sent_count', 'sent', 'emails_sent']),
-                emails_opened: getVal(['total_opened', 'open_count_unique', 'unique_opens', 'open_count', 'opened']),
-                emails_replied: getVal(['total_replied', 'reply_count_unique', 'unique_replies', 'reply_count', 'replied']),
-                emails_bounced: getVal(['total_bounced', 'bounced_count', 'bounced']),
-                emails_clicked: getVal(['total_clicked', 'link_click_count_unique', 'unique_clicks', 'link_click_count']),
+                emails_sent: getVal(['total_sent', 'sent_count', 'sent']),
+                emails_opened: getVal(['open_count_unique', 'open_count', 'total_opened', 'unique_opens', 'opened']),
+                emails_replied: getVal(['reply_count_unique', 'reply_count', 'total_replied', 'unique_replies', 'replied']),
+                emails_bounced: getVal(['bounced_count', 'total_bounced', 'bounced']),
+                emails_clicked: getVal(['link_click_count_unique', 'link_click_count', 'total_clicked', 'unique_clicks', 'clicked']),
                 emails_interested: getVal(['total_interested', 'total_opportunities', 'interested_count', 'interested']),
                 emails_uninterested: getVal(['total_uninterested', 'uninterested_count', 'uninterested']),
-                emails_unsubscribed: getVal(['total_unsubscribed', 'unsubscribed_count', 'unsubscribed']),
+                emails_unsubscribed: getVal(['unsubscribed_count', 'total_unsubscribed', 'unsubscribed']),
                 last_synced_at: new Date().toISOString(),
                 last_stats_sync_at: new Date().toISOString(),
-                sync_error: null // Clear previous errors
+                sync_error: null
             } as any)
             .eq('id', campaignId)
+
 
         if (updateError) throw updateError
 
