@@ -465,7 +465,6 @@ export async function syncCampaignStats(campaignId: string) {
 
     let supabase = supabaseClient
 
-    // Use admin client for operators and super_admins to bypass RLS
     if (user) {
         const { data: userData } = await supabaseClient
             .from('users')
@@ -479,15 +478,14 @@ export async function syncCampaignStats(campaignId: string) {
     }
 
     try {
-        // Get campaign with Instantly ID
+        // 1. Load local campaign
         const { data: campaign, error: fetchError } = await supabase
             .from('campaigns')
-            .select('instantly_campaign_id, name')
+            .select('id, name, instantly_campaign_id')
             .eq('id', campaignId)
             .single()
 
         if (fetchError || !campaign) {
-            console.error('Campaign fetch error:', fetchError)
             return { success: false, error: 'Campaign not found in database' }
         }
 
@@ -495,23 +493,86 @@ export async function syncCampaignStats(campaignId: string) {
             return { success: false, error: `Campaign "${campaign.name}" is not linked to Instantly yet. Launch it first.` }
         }
 
-        // Fetch from Instantly.
-        // When queried with a campaign_id filter, the V2 analytics endpoint returns
-        // a SINGLE bare stats object (e.g., { open_count: 3062, reply_count_unique: 74, ... })
-        // without any id/campaign_id/name fields. Use it directly.
-        const response = await instantly.getCampaignAnalytics(campaign.instantly_campaign_id)
-        console.log('INSTANTLY ANALYTICS RESPONSE:', JSON.stringify(response))
+        // ─────────────────────────────────────────────────────────────────────
+        // 2. SELF-HEALING: Verify that the stored instantly_campaign_id actually
+        //    points to the right Instantly campaign by checking its name.
+        //    If the name doesn't match → scan all Instantly campaigns, find by
+        //    name, and silently correct the stored ID before syncing.
+        // ─────────────────────────────────────────────────────────────────────
+        let verifiedInstantlyId = campaign.instantly_campaign_id
 
-        // The response can be a bare object OR an array — normalise to a single stats object
+        try {
+            const instantlyCampaign = await instantly.getCampaign(campaign.instantly_campaign_id)
+            const instantlyName = (instantlyCampaign?.name ?? '').trim().toLowerCase()
+            const localName = (campaign.name ?? '').trim().toLowerCase()
+
+            if (instantlyName && instantlyName !== localName) {
+                // Mismatch — search all Instantly campaigns by name and auto-correct
+                console.log(`[SelfHeal] Name mismatch: Instantly="${instantlyCampaign.name}" vs Local="${campaign.name}". Searching for correct ID...`)
+
+                const allInstantlyCampaigns = await instantly.getCampaigns()
+                const match = allInstantlyCampaigns.find((c: any) =>
+                    (c.name ?? '').trim().toLowerCase() === localName
+                )
+
+                if (match?.id) {
+                    console.log(`[SelfHeal] Found correct Instantly ID: ${match.id}. Auto-updating DB...`)
+                    await supabase
+                        .from('campaigns')
+                        .update({ instantly_campaign_id: match.id } as any)
+                        .eq('id', campaignId)
+                    verifiedInstantlyId = match.id
+                } else {
+                    // No match by name — could be a naming inconsistency.
+                    // Try fuzzy: local name starts-with or contains instantly name
+                    const fuzzyMatch = allInstantlyCampaigns.find((c: any) => {
+                        const n = (c.name ?? '').trim().toLowerCase()
+                        return localName.includes(n) || n.includes(localName)
+                    })
+                    if (fuzzyMatch?.id) {
+                        console.log(`[SelfHeal] Fuzzy match found: "${fuzzyMatch.name}". Auto-updating DB...`)
+                        await supabase
+                            .from('campaigns')
+                            .update({ instantly_campaign_id: fuzzyMatch.id } as any)
+                            .eq('id', campaignId)
+                        verifiedInstantlyId = fuzzyMatch.id
+                    } else {
+                        console.warn(`[SelfHeal] No Instantly campaign found matching "${campaign.name}". Using existing ID.`)
+                    }
+                }
+            }
+        } catch (verifyErr) {
+            // If the verify call itself errors (e.g. 404 = invalid stored ID), try name lookup
+            console.warn('[SelfHeal] getCampaign verify failed, attempting name lookup...', verifyErr)
+            try {
+                const allInstantlyCampaigns = await instantly.getCampaigns()
+                const localName = (campaign.name ?? '').trim().toLowerCase()
+                const match = allInstantlyCampaigns.find((c: any) =>
+                    (c.name ?? '').trim().toLowerCase() === localName
+                )
+                if (match?.id) {
+                    console.log(`[SelfHeal] Recovered via name lookup: ${match.id}`)
+                    await supabase
+                        .from('campaigns')
+                        .update({ instantly_campaign_id: match.id } as any)
+                        .eq('id', campaignId)
+                    verifiedInstantlyId = match.id
+                }
+            } catch (_) { /* give up silently, proceed with original ID */ }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
+        // 3. Fetch analytics with the (possibly corrected) Instantly ID
+        const response = await instantly.getCampaignAnalytics(verifiedInstantlyId)
+
+        // When queried with a campaign_id filter, V2 returns a single bare stats object.
         let stats: any
         if (Array.isArray(response)) {
-            // Array: try to find the matching campaign, fall back to first element
             stats = response.find((s: any) =>
-                String(s?.campaign_id ?? '').toLowerCase() === campaign.instantly_campaign_id.toLowerCase() ||
-                String(s?.id ?? '').toLowerCase() === campaign.instantly_campaign_id.toLowerCase()
+                String(s?.campaign_id ?? '').toLowerCase() === verifiedInstantlyId.toLowerCase() ||
+                String(s?.id ?? '').toLowerCase() === verifiedInstantlyId.toLowerCase()
             ) ?? response[0]
         } else {
-            // Bare object (most common when campaign_id filter is used)
             stats = response
         }
 
@@ -519,7 +580,7 @@ export async function syncCampaignStats(campaignId: string) {
             return { success: false, error: 'No analytics data returned from Instantly for this campaign.' }
         }
 
-        // SMART MAPPING helper — tries every known V2 field name variant
+        // 4. Map V2 field names to local columns
         const getVal = (fields: string[]) => {
             for (const f of fields) {
                 if (stats[f] !== undefined && stats[f] !== null) return Number(stats[f])
@@ -527,7 +588,6 @@ export async function syncCampaignStats(campaignId: string) {
             return 0
         }
 
-        // Update local stats using the confirmed V2 field names
         const { error: updateError } = await supabase
             .from('campaigns')
             .update({
@@ -544,7 +604,6 @@ export async function syncCampaignStats(campaignId: string) {
                 sync_error: null
             } as any)
             .eq('id', campaignId)
-
 
         if (updateError) throw updateError
 
