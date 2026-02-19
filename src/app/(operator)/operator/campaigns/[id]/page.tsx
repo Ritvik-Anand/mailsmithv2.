@@ -71,6 +71,9 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     const [isLoading, setIsLoading] = useState(true)
     const [isPausing, setIsPausing] = useState(false)
     const [isSyncingStat, setIsSyncingStat] = useState(false)
+    const [isEditingInstantlyId, setIsEditingInstantlyId] = useState(false)
+    const [instantlyIdInput, setInstantlyIdInput] = useState('')
+    const [isSavingInstantlyId, setIsSavingInstantlyId] = useState(false)
 
     useEffect(() => {
         async function loadCampaign() {
@@ -144,6 +147,25 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         }
     }
 
+    const handleSaveInstantlyId = async () => {
+        if (!instantlyIdInput.trim()) return
+        setIsSavingInstantlyId(true)
+        try {
+            const result = await updateCampaign(campaign.id, { instantly_campaign_id: instantlyIdInput.trim() } as any)
+            if (result.success) {
+                toast.success('Instantly ID updated — re-sync stats to apply')
+                setCampaign((prev: any) => ({ ...prev, instantly_campaign_id: instantlyIdInput.trim() }))
+                setIsEditingInstantlyId(false)
+            } else {
+                toast.error('Failed to update Instantly ID')
+            }
+        } catch (e) {
+            toast.error('Error saving')
+        } finally {
+            setIsSavingInstantlyId(false)
+        }
+    }
+
     const getStatusStyle = (status: string) => {
         switch (status) {
             case 'active':
@@ -202,6 +224,47 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                         <p className="text-sm text-muted-foreground mt-1">
                             Campaign ID: {resolvedParams.id}
                         </p>
+                        {/* Instantly ID display / edit */}
+                        <div className="flex items-center gap-2 mt-1">
+                            {isEditingInstantlyId ? (
+                                <>
+                                    <input
+                                        value={instantlyIdInput}
+                                        onChange={e => setInstantlyIdInput(e.target.value)}
+                                        placeholder="Paste Instantly campaign UUID..."
+                                        className="text-xs font-mono bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-zinc-200 w-72 outline-none focus:border-amber-500"
+                                    />
+                                    <button
+                                        onClick={handleSaveInstantlyId}
+                                        disabled={isSavingInstantlyId}
+                                        className="text-xs font-bold text-amber-500 hover:text-amber-400 disabled:opacity-50"
+                                    >
+                                        {isSavingInstantlyId ? 'Saving...' : 'Save'}
+                                    </button>
+                                    <button
+                                        onClick={() => setIsEditingInstantlyId(false)}
+                                        className="text-xs text-zinc-500 hover:text-zinc-300"
+                                    >
+                                        Cancel
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="text-xs font-mono text-zinc-600">
+                                        Instantly ID: {campaign.instantly_campaign_id ? campaign.instantly_campaign_id.slice(0, 18) + '...' : 'Not linked'}
+                                    </span>
+                                    <button
+                                        onClick={() => {
+                                            setInstantlyIdInput(campaign.instantly_campaign_id || '')
+                                            setIsEditingInstantlyId(true)
+                                        }}
+                                        className="text-[10px] text-amber-500/70 hover:text-amber-400 font-semibold"
+                                    >
+                                        Edit
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">

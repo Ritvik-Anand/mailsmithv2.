@@ -484,6 +484,30 @@ export async function deleteCampaign(campaignId: string) {
     }
 }
 
+/**
+ * Bulk delete multiple campaigns
+ */
+export async function bulkDeleteCampaigns(campaignIds: string[]) {
+    const results: { id: string; success: boolean; error?: string }[] = []
+
+    for (const id of campaignIds) {
+        const result = await deleteCampaign(id)
+        results.push({ id, success: result.success, error: (result as any).error })
+    }
+
+    const succeeded = results.filter(r => r.success).length
+    const failed = results.filter(r => !r.success).length
+
+    revalidatePath('/operator/campaigns')
+
+    return {
+        success: failed === 0,
+        succeeded,
+        failed,
+        results
+    }
+}
+
 
 /**
  * Fetches all outreach nodes from the local database.

@@ -21,7 +21,7 @@ import {
     ArrowRightLeft
 } from 'lucide-react'
 import { getOrganizations } from '@/server/actions/organizations'
-import { getOrganizationCampaigns, deleteCampaign, assignCampaignToOrganization } from '@/server/actions/instantly'
+import { getOrganizationCampaigns, deleteCampaign, assignCampaignToOrganization, bulkDeleteCampaigns } from '@/server/actions/instantly'
 import { syncAllCampaignsLiveStats } from '@/server/actions/campaigns'
 import { relinkInstantlyCampaigns } from '@/server/actions/relink-campaigns'
 import {
@@ -58,6 +58,9 @@ export default function OperatorCampaignsPage() {
     const [isMoving, setIsMoving] = useState(false)
     const [isSyncing, setIsSyncing] = useState(false)
     const [isRelinking, setIsRelinking] = useState(false)
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+    const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
 
     // Delete Modal State
     const [deleteModalOpen, setDeleteModalOpen] = useState(false)
@@ -154,8 +157,42 @@ export default function OperatorCampaignsPage() {
         }
     }
 
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev)
+            if (next.has(id)) next.delete(id)
+            else next.add(id)
+            return next
+        })
+    }
+
+    const toggleSelectAll = () => {
+        if (selectedIds.size === campaigns.length) {
+            setSelectedIds(new Set())
+        } else {
+            setSelectedIds(new Set(campaigns.map((c: any) => c.id)))
+        }
+    }
+
+    const handleBulkDelete = async () => {
+        setIsBulkDeleting(true)
+        try {
+            const ids = Array.from(selectedIds)
+            const result = await bulkDeleteCampaigns(ids)
+            toast.success(`Deleted ${result.succeeded} campaign(s)` + (result.failed > 0 ? `, ${result.failed} failed` : ''))
+            setSelectedIds(new Set())
+            setBulkDeleteModalOpen(false)
+            const data = await getOrganizationCampaigns(selectedOrgId)
+            setCampaigns(data)
+        } catch (error) {
+            toast.error('Error deleting campaigns')
+        } finally {
+            setIsBulkDeleting(false)
+        }
+    }
 
     return (
+
         <div className="space-y-8 pb-20">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -230,13 +267,36 @@ export default function OperatorCampaignsPage() {
                 </div>
             ) : (
                 <div className="space-y-3">
+                    {/* Select All bar */}
+                    <div className="flex items-center gap-3 px-1">
+                        <input
+                            type="checkbox"
+                            checked={selectedIds.size === campaigns.length && campaigns.length > 0}
+                            onChange={toggleSelectAll}
+                            className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 accent-amber-500 cursor-pointer"
+                        />
+                        <span className="text-xs text-zinc-500 font-medium">
+                            {selectedIds.size > 0 ? `${selectedIds.size} selected` : 'Select all'}
+                        </span>
+                    </div>
                     {campaigns.map((campaign) => (
                         <Card
                             key={campaign.id}
-                            className="bg-zinc-950 border-zinc-800 hover:border-zinc-700 transition-all group overflow-hidden shadow-none"
+                            className={cn(
+                                "bg-zinc-950 border-zinc-800 hover:border-zinc-700 transition-all group overflow-hidden shadow-none",
+                                selectedIds.has(campaign.id) && "border-amber-500/40 bg-amber-500/5"
+                            )}
                         >
                             <CardContent className="p-5">
-                                <div className="flex items-center gap-6">
+                                <div className="flex items-center gap-4">
+                                    {/* Checkbox */}
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedIds.has(campaign.id)}
+                                        onChange={() => toggleSelect(campaign.id)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 accent-amber-500 cursor-pointer flex-shrink-0"
+                                    />
                                     {/* Status Badge */}
                                     <div className="flex-shrink-0">
                                         <Badge variant="outline" className={cn("text-[10px] font-black uppercase tracking-tighter px-2.5 py-1", getStatusStyle(campaign.status))}>
@@ -327,6 +387,33 @@ export default function OperatorCampaignsPage() {
                 </div>
             )}
 
+            {/* Floating Bulk Action Bar */}
+            {selectedIds.size > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 duration-200">
+                    <div className="flex items-center gap-4 bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-3 shadow-2xl shadow-black/50">
+                        <span className="text-sm font-bold text-zinc-200">{selectedIds.size} campaign{selectedIds.size > 1 ? 's' : ''} selected</span>
+                        <div className="w-px h-5 bg-zinc-700" />
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-zinc-400 hover:text-white"
+                            onClick={() => setSelectedIds(new Set())}
+                        >
+                            Clear
+                        </Button>
+                        <Button
+                            size="sm"
+                            className="bg-red-500 hover:bg-red-600 text-white font-bold"
+                            onClick={() => setBulkDeleteModalOpen(true)}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete Selected
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             {/* Move Campaign Dialog */}
             <Dialog open={moveModalOpen} onOpenChange={setMoveModalOpen}>
@@ -441,9 +528,31 @@ export default function OperatorCampaignsPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Bulk Delete Confirm Dialog */}
+            <Dialog open={bulkDeleteModalOpen} onOpenChange={setBulkDeleteModalOpen}>
+                <DialogContent className="bg-zinc-950 border-zinc-900">
+                    <DialogHeader>
+                        <DialogTitle>Delete {selectedIds.size} Campaign{selectedIds.size > 1 ? 's' : ''}?</DialogTitle>
+                        <DialogDescription>
+                            This will permanently delete {selectedIds.size} campaign{selectedIds.size > 1 ? 's' : ''} and unlink all associated leads.<br />
+                            <span className="text-red-500 font-bold">This action cannot be undone.</span>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setBulkDeleteModalOpen(false)} disabled={isBulkDeleting}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleBulkDelete} disabled={isBulkDeleting}>
+                            {isBulkDeleting ? 'Deleting...' : `Delete ${selectedIds.size} Campaign${selectedIds.size > 1 ? 's' : ''}`}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
+
 
 function cn(...inputs: any[]) {
     return inputs.filter(Boolean).join(' ')
