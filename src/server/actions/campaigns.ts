@@ -495,37 +495,45 @@ export async function syncCampaignStats(campaignId: string) {
             return { success: false, error: `Campaign "${campaign.name}" is not linked to Instantly yet. Launch it first.` }
         }
 
-        // Fetch from Instantly (V2 Overview returns an array of campaign stats)
+        // Fetch from Instantly — log raw response for debugging
         const response = await instantly.getCampaignAnalytics(campaign.instantly_campaign_id)
+        console.log('INSTANTLY RAW ANALYTICS RESPONSE:', JSON.stringify(response, null, 2))
 
         // Ensure we have an array to work with
-        const statsList = Array.isArray(response) ? response : [response]
+        const statsList = Array.isArray(response) ? response : (response?.data ? [response.data].flat() : [response])
 
-        // Find by ID match (most reliable)
+        console.log(`STATS LIST (${statsList.length} items):`, statsList.map((s: any) => ({
+            keys: Object.keys(s || {}),
+            campaign_id: s?.campaign_id,
+            id: s?.id,
+            name: s?.name || s?.campaign_name
+        })))
+
+        // Find by ID match (most reliable) — cast both to lower-case strings for safety
         let stats = statsList.find((s: any) =>
-            String(s?.campaign_id) === String(campaign.instantly_campaign_id) ||
-            String(s?.id) === String(campaign.instantly_campaign_id)
+            String(s?.campaign_id ?? '').toLowerCase() === campaign.instantly_campaign_id.toLowerCase() ||
+            String(s?.id ?? '').toLowerCase() === campaign.instantly_campaign_id.toLowerCase()
         )
 
-        // Robust Fallback: Try to find by NAME if ID doesn't match perfectly
-        // (V2 IDs can sometimes differ slightly in case or format between endpoints)
+        // Fallback: try name match
         if (!stats) {
             stats = statsList.find((s: any) =>
-                s?.campaign_name?.toLowerCase() === campaign.name?.toLowerCase() ||
-                s?.name?.toLowerCase() === campaign.name?.toLowerCase()
+                (s?.campaign_name ?? s?.name ?? '').toLowerCase() === campaign.name?.toLowerCase()
             )
         }
 
         if (!stats) {
-            const available = statsList.map(s => `[${s.id || s.campaign_id}: ${s.name || s.campaign_name}]`).join(', ')
-            const errorMsg = `No analytics match for ID ${campaign.instantly_campaign_id}. Available: ${available}`
+            // Dump the FULL first item so we can see exactly what fields are available
+            const rawDump = JSON.stringify(statsList[0] ?? response)
+            const errorMsg = `No analytics match. Looking for ID: ${campaign.instantly_campaign_id}. Raw response (first item): ${rawDump}`
 
             await supabase
                 .from('campaigns')
-                .update({ sync_error: errorMsg } as any)
+                .update({ sync_error: errorMsg.slice(0, 1000) } as any)
                 .eq('id', campaignId)
 
-            return { success: false, error: errorMsg }
+            console.error(errorMsg)
+            return { success: false, error: errorMsg.slice(0, 400) }
         }
 
         // SMART MAPPING helper for all known V2 field variations
