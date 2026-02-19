@@ -23,6 +23,7 @@ import {
 import { getOrganizations } from '@/server/actions/organizations'
 import { getOrganizationCampaigns, deleteCampaign, assignCampaignToOrganization } from '@/server/actions/instantly'
 import { syncAllCampaignsLiveStats } from '@/server/actions/campaigns'
+import { relinkInstantlyCampaigns } from '@/server/actions/relink-campaigns'
 import {
     Dialog,
     DialogContent,
@@ -56,6 +57,7 @@ export default function OperatorCampaignsPage() {
     const [targetOrgId, setTargetOrgId] = useState<string>('')
     const [isMoving, setIsMoving] = useState(false)
     const [isSyncing, setIsSyncing] = useState(false)
+    const [isRelinking, setIsRelinking] = useState(false)
 
     // Delete Modal State
     const [deleteModalOpen, setDeleteModalOpen] = useState(false)
@@ -122,6 +124,27 @@ export default function OperatorCampaignsPage() {
         }
     }
 
+    const handleRelink = async () => {
+        setIsRelinking(true)
+        try {
+            const result = await relinkInstantlyCampaigns()
+            if (result.success) {
+                toast.success(result.summary || 'Re-link complete')
+                // Refresh list after relinking
+                if (selectedOrgId !== 'all') {
+                    const data = await getOrganizationCampaigns(selectedOrgId)
+                    setCampaigns(data)
+                }
+            } else {
+                toast.error(result.error || 'Re-link failed')
+            }
+        } catch (error) {
+            toast.error('Error re-linking campaigns')
+        } finally {
+            setIsRelinking(false)
+        }
+    }
+
     const getStatusStyle = (status: string) => {
         switch (status) {
             case 'active': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
@@ -130,6 +153,7 @@ export default function OperatorCampaignsPage() {
             default: return 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20'
         }
     }
+
 
     return (
         <div className="space-y-8 pb-20">
@@ -140,6 +164,15 @@ export default function OperatorCampaignsPage() {
                     <p className="text-muted-foreground">Manage and monitor outreach campaigns across all customers.</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <Button
+                        variant="outline"
+                        onClick={handleRelink}
+                        disabled={isRelinking || isSyncing}
+                        className="border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 font-bold h-11 px-5 shadow-sm"
+                    >
+                        <ArrowRightLeft className={cn("mr-2 h-4 w-4", isRelinking && "animate-spin")} />
+                        {isRelinking ? 'Re-linking...' : 'Re-link Campaigns'}
+                    </Button>
                     <Button
                         variant="outline"
                         onClick={handleSyncAll}
