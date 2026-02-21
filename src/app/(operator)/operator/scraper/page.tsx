@@ -580,10 +580,26 @@ function ScraperContent() {
     }
 
     const handleLoadTemplate = (templateFilters: Partial<LeadSearchFilters>) => {
-        setFilters({
-            ...BLANK_FILTERS,
-            ...templateFilters
-        })
+        // Sanitize: JSONB from Supabase can return `null` for optional array fields.
+        // Null values would override BLANK_FILTERS defaults and crash `.map()` calls.
+        const ARRAY_FIELDS: (keyof LeadSearchFilters)[] = [
+            'contact_job_title', 'contact_not_job_title',
+            'company_industry', 'company_not_industry',
+            'contact_location', 'contact_not_location',
+            'contact_city', 'contact_not_city',
+            'seniority_level', 'functional_level',
+            'size', 'funding',
+            'company_keywords', 'company_not_keywords',
+            'company_domain', 'email_status',
+        ]
+        const sanitized: Partial<LeadSearchFilters> = { ...templateFilters }
+        for (const field of ARRAY_FIELDS) {
+            if (!Array.isArray(sanitized[field])) {
+                // @ts-ignore – reset nulls/undefined to empty arrays
+                sanitized[field] = []
+            }
+        }
+        setFilters({ ...BLANK_FILTERS, ...sanitized })
     }
 
     const handleStartJob = async () => {
