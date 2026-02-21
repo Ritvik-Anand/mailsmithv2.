@@ -23,10 +23,17 @@ import {
     Plus,
     MinusCircle,
     Check,
-    Layers
+    Layers,
+    BookmarkPlus,
+    BookOpen,
+    Trash2,
+    ChevronRight,
+    Save,
+    LayoutTemplate,
+    Clock
 } from 'lucide-react'
 import { getOrganizations } from '@/server/actions/organizations'
-import { startLeadSearchJob } from '@/server/actions/lead-finder'
+import { startLeadSearchJob, saveScrapingTemplate, getScrapingTemplates, deleteScrapingTemplate } from '@/server/actions/lead-finder'
 import { toast } from 'sonner'
 import {
     LeadSearchFilters,
@@ -81,7 +88,27 @@ const FUNDING_OPTIONS: { label: string; value: FundingStage }[] = [
     { label: 'PE', value: 'pe' },
 ]
 
-// Generic List Input Component with Suggestions
+const BLANK_FILTERS: Partial<LeadSearchFilters> = {
+    contact_job_title: [],
+    contact_not_job_title: [],
+    company_industry: [],
+    company_not_industry: [],
+    contact_location: [],
+    contact_not_location: [],
+    contact_city: [],
+    contact_not_city: [],
+    seniority_level: [],
+    functional_level: [],
+    size: [],
+    funding: [],
+    company_keywords: [],
+    company_not_keywords: [],
+    company_domain: [],
+    fetch_count: 50
+}
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
 function ListInput({
     label,
     placeholder,
@@ -191,11 +218,331 @@ function ListInput({
     )
 }
 
+// ─── Save Template Modal ──────────────────────────────────────────────────────
+
+function SaveTemplateModal({
+    filters,
+    onClose,
+    onSaved
+}: {
+    filters: Partial<LeadSearchFilters>
+    onClose: () => void
+    onSaved: () => void
+}) {
+    const [name, setName] = useState('')
+    const [description, setDescription] = useState('')
+    const [saving, setSaving] = useState(false)
+
+    const handleSave = async () => {
+        if (!name.trim()) {
+            toast.error('Please enter a template name')
+            return
+        }
+        setSaving(true)
+        try {
+            const result = await saveScrapingTemplate({
+                name: name.trim(),
+                description: description.trim() || undefined,
+                filters: filters as LeadSearchFilters
+            })
+            if (result.success) {
+                toast.success('Template saved!')
+                onSaved()
+                onClose()
+            } else {
+                toast.error(result.error || 'Failed to save template')
+            }
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    // Get a quick summary of what's in the filters
+    const filterSummary = [
+        ...(filters.contact_job_title?.length ? [`${filters.contact_job_title.length} job title(s)`] : []),
+        ...(filters.company_industry?.length ? [`${filters.company_industry.length} industry(ies)`] : []),
+        ...(filters.contact_location?.length ? [`${filters.contact_location.length} location(s)`] : []),
+        ...(filters.seniority_level?.length ? [`${filters.seniority_level.length} seniority level(s)`] : []),
+        ...(filters.size?.length ? [`${filters.size.length} company size(s)`] : []),
+    ]
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+
+            {/* Modal */}
+            <div className="relative w-full max-w-md mx-4 bg-zinc-950 border-2 border-zinc-800 rounded-2xl shadow-2xl shadow-black/50 animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-center justify-between p-6 border-b border-zinc-900">
+                    <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Save className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-black text-white uppercase tracking-tight">Save as Template</h2>
+                            <p className="text-[10px] text-zinc-500 font-medium">Reuse these filters later with one click</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="text-zinc-600 hover:text-white transition-colors">
+                        <X className="h-5 w-5" />
+                    </button>
+                </div>
+
+                <div className="p-6 space-y-5">
+                    {/* Filter preview */}
+                    {filterSummary.length > 0 && (
+                        <div className="p-3 rounded-lg bg-zinc-900/50 border border-zinc-800">
+                            <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-2">Current Filters</p>
+                            <div className="flex flex-wrap gap-1.5">
+                                {filterSummary.map((s, i) => (
+                                    <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
+                                        {s}
+                                    </span>
+                                ))}
+                                {filters.fetch_count && (
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700 font-medium">
+                                        {filters.fetch_count} leads
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Template Name *</Label>
+                        <Input
+                            placeholder="e.g. SaaS Founders USA"
+                            className="bg-zinc-900 border-zinc-800 h-11 text-sm focus-visible:ring-primary"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                            autoFocus
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Description (optional)</Label>
+                        <textarea
+                            placeholder="Brief description of this filter set..."
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm text-zinc-200 resize-none h-20 outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="flex gap-3 p-6 pt-0">
+                    <Button variant="outline" className="flex-1 border-zinc-800 h-11" onClick={onClose}>
+                        Cancel
+                    </Button>
+                    <Button
+                        className="flex-1 bg-primary hover:bg-primary/90 h-11 font-black"
+                        onClick={handleSave}
+                        disabled={saving || !name.trim()}
+                    >
+                        {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        Save Template
+                    </Button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// ─── Templates Panel ──────────────────────────────────────────────────────────
+
+interface ScrapingTemplate {
+    id: string
+    name: string
+    description?: string
+    filters: LeadSearchFilters
+    created_at: string
+}
+
+function TemplatesPanel({
+    onLoadTemplate,
+    currentFilters,
+    refreshSignal
+}: {
+    onLoadTemplate: (filters: Partial<LeadSearchFilters>) => void
+    currentFilters: Partial<LeadSearchFilters>
+    refreshSignal: number
+}) {
+    const [templates, setTemplates] = useState<ScrapingTemplate[]>([])
+    const [loading, setLoading] = useState(true)
+    const [deletingId, setDeletingId] = useState<string | null>(null)
+    const [showSaveModal, setShowSaveModal] = useState(false)
+
+    const fetchTemplates = async () => {
+        setLoading(true)
+        const result = await getScrapingTemplates()
+        if (result.success && result.templates) {
+            setTemplates(result.templates as ScrapingTemplate[])
+        }
+        setLoading(false)
+    }
+
+    useEffect(() => {
+        fetchTemplates()
+    }, [refreshSignal])
+
+    const handleDelete = async (templateId: string, templateName: string) => {
+        setDeletingId(templateId)
+        const result = await deleteScrapingTemplate(templateId)
+        if (result.success) {
+            toast.success(`Template "${templateName}" deleted`)
+            setTemplates(prev => prev.filter(t => t.id !== templateId))
+        } else {
+            toast.error(result.error || 'Failed to delete template')
+        }
+        setDeletingId(null)
+    }
+
+    const handleLoad = (template: ScrapingTemplate) => {
+        onLoadTemplate(template.filters)
+        toast.success(`Loaded "${template.name}"`, {
+            description: 'All filters have been applied'
+        })
+    }
+
+    // Summarize which filters are set in a template
+    const getTemplateSummary = (filters: LeadSearchFilters): string[] => {
+        const parts: string[] = []
+        if (filters.contact_job_title?.length) parts.push(`${filters.contact_job_title.slice(0, 2).join(', ')}${filters.contact_job_title.length > 2 ? ' +more' : ''}`)
+        if (filters.company_industry?.length) parts.push(filters.company_industry.slice(0, 2).join(', '))
+        if (filters.contact_location?.length) parts.push(filters.contact_location.slice(0, 2).join(', '))
+        return parts
+    }
+
+    return (
+        <>
+            <Card className="bg-zinc-950 border-zinc-900 shadow-none border-2">
+                <CardHeader className="pb-4 border-b border-zinc-900">
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-2">
+                            <LayoutTemplate className="h-3.5 w-3.5" />
+                            Templates
+                        </CardTitle>
+                        <button
+                            onClick={() => setShowSaveModal(true)}
+                            className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-primary/5"
+                        >
+                            <BookmarkPlus className="h-3 w-3" />
+                            Save Current
+                        </button>
+                    </div>
+                    <CardDescription className="text-[10px] text-zinc-600 font-medium">
+                        Click a template to load its filters instantly
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-4 space-y-2">
+                    {loading ? (
+                        <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-5 w-5 animate-spin text-zinc-600" />
+                        </div>
+                    ) : templates.length === 0 ? (
+                        <div className="text-center py-8 space-y-3">
+                            <div className="h-10 w-10 rounded-xl bg-zinc-900 flex items-center justify-center mx-auto">
+                                <BookOpen className="h-5 w-5 text-zinc-600" />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-zinc-500">No templates yet</p>
+                                <p className="text-[10px] text-zinc-600 mt-1">Configure filters then save as a template</p>
+                            </div>
+                            <button
+                                onClick={() => setShowSaveModal(true)}
+                                className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
+                            >
+                                Save Current Filters →
+                            </button>
+                        </div>
+                    ) : (
+                        templates.map((template) => {
+                            const summary = getTemplateSummary(template.filters)
+                            const isDeleting = deletingId === template.id
+                            return (
+                                <div
+                                    key={template.id}
+                                    className="group relative rounded-xl border border-zinc-900 bg-zinc-900/30 hover:bg-zinc-900/60 hover:border-zinc-700 transition-all duration-200 overflow-hidden"
+                                >
+                                    <button
+                                        className="w-full text-left p-3 pr-10"
+                                        onClick={() => handleLoad(template)}
+                                    >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-xs font-bold text-zinc-200 truncate group-hover:text-white transition-colors">
+                                                    {template.name}
+                                                </p>
+                                                {template.description && (
+                                                    <p className="text-[10px] text-zinc-600 mt-0.5 line-clamp-1">
+                                                        {template.description}
+                                                    </p>
+                                                )}
+                                                {summary.length > 0 && (
+                                                    <p className="text-[10px] text-zinc-600 mt-1 line-clamp-1">
+                                                        {summary.join(' · ')}
+                                                    </p>
+                                                )}
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    {template.filters.fetch_count && (
+                                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 font-mono">
+                                                            {template.filters.fetch_count} leads
+                                                        </span>
+                                                    )}
+                                                    <span className="text-[9px] text-zinc-700 flex items-center gap-1">
+                                                        <Clock className="h-2.5 w-2.5" />
+                                                        {new Date(template.created_at).toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <ChevronRight className="h-4 w-4 text-zinc-600 group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-0.5" />
+                                        </div>
+                                    </button>
+
+                                    {/* Delete button */}
+                                    <button
+                                        className="absolute top-2 right-8 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/10 hover:text-red-500 text-zinc-600"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            handleDelete(template.id, template.name)
+                                        }}
+                                        disabled={isDeleting}
+                                        title="Delete template"
+                                    >
+                                        {isDeleting ? (
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : (
+                                            <Trash2 className="h-3 w-3" />
+                                        )}
+                                    </button>
+                                </div>
+                            )
+                        })
+                    )}
+                </CardContent>
+            </Card>
+
+            {showSaveModal && (
+                <SaveTemplateModal
+                    filters={currentFilters}
+                    onClose={() => setShowSaveModal(false)}
+                    onSaved={() => fetchTemplates()}
+                />
+            )}
+        </>
+    )
+}
+
+// ─── Main Scraper Content ──────────────────────────────────────────────────────
+
 function ScraperContent() {
     const searchParams = useSearchParams()
     const orgIdFromQuery = searchParams.get('org')
     const [organizations, setOrganizations] = useState<any[]>([])
     const [selectedOrg, setSelectedOrg] = useState<string>('')
+    const [showSaveModal, setShowSaveModal] = useState(false)
+    const [templateRefreshSignal, setTemplateRefreshSignal] = useState(0)
 
     useEffect(() => {
         if (orgIdFromQuery) {
@@ -203,24 +550,7 @@ function ScraperContent() {
         }
     }, [orgIdFromQuery])
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [filters, setFilters] = useState<Partial<LeadSearchFilters>>({
-        contact_job_title: [],
-        contact_not_job_title: [],
-        company_industry: [],
-        company_not_industry: [],
-        contact_location: [],
-        contact_not_location: [],
-        contact_city: [],
-        contact_not_city: [],
-        seniority_level: [],
-        functional_level: [],
-        size: [],
-        funding: [],
-        company_keywords: [],
-        company_not_keywords: [],
-        company_domain: [],
-        fetch_count: 50
-    })
+    const [filters, setFilters] = useState<Partial<LeadSearchFilters>>({ ...BLANK_FILTERS })
 
     useEffect(() => {
         const fetchOrgs = async () => {
@@ -249,6 +579,13 @@ function ScraperContent() {
         }
     }
 
+    const handleLoadTemplate = (templateFilters: Partial<LeadSearchFilters>) => {
+        setFilters({
+            ...BLANK_FILTERS,
+            ...templateFilters
+        })
+    }
+
     const handleStartJob = async () => {
         if (!selectedOrg) {
             toast.error('Please select a customer first')
@@ -260,7 +597,6 @@ function ScraperContent() {
             const result = await startLeadSearchJob(filters as LeadSearchFilters, selectedOrg)
             if (result.success && result.jobId) {
                 toast.success('Lead search job initiated! Redirecting to results...')
-                // Redirect to the leads page for this job
                 window.location.href = `/operator/leads/${result.jobId}`
             } else {
                 toast.error(result.error || 'Failed to start job')
@@ -280,24 +616,15 @@ function ScraperContent() {
                     <p className="text-zinc-500 font-medium">Global Lead Finding Infrastructure.</p>
                 </div>
                 <div className="flex gap-3">
-                    <Button variant="ghost" onClick={() => setFilters({
-                        contact_job_title: [],
-                        contact_not_job_title: [],
-                        company_industry: [],
-                        company_not_industry: [],
-                        contact_location: [],
-                        contact_not_location: [],
-                        contact_city: [],
-                        contact_not_city: [],
-                        seniority_level: [],
-                        functional_level: [],
-                        size: [],
-                        funding: [],
-                        company_keywords: [],
-                        company_not_keywords: [],
-                        company_domain: [],
-                        fetch_count: 50
-                    })}>Reset All</Button>
+                    <Button
+                        variant="outline"
+                        className="border-zinc-800 gap-2 hover:bg-zinc-900 hover:border-zinc-700"
+                        onClick={() => setShowSaveModal(true)}
+                    >
+                        <BookmarkPlus className="h-4 w-4" />
+                        Save as Template
+                    </Button>
+                    <Button variant="ghost" onClick={() => setFilters({ ...BLANK_FILTERS })}>Reset All</Button>
                     <Button
                         className="bg-primary hover:bg-primary/90 text-white font-black px-10 h-12 shadow-2xl shadow-primary/20"
                         onClick={handleStartJob}
@@ -367,6 +694,13 @@ function ScraperContent() {
                             </div>
                         </CardContent>
                     </Card>
+
+                    {/* Templates Panel */}
+                    <TemplatesPanel
+                        onLoadTemplate={handleLoadTemplate}
+                        currentFilters={filters}
+                        refreshSignal={templateRefreshSignal}
+                    />
                 </div>
 
                 {/* Main Filter Hub */}
@@ -599,6 +933,15 @@ function ScraperContent() {
                     </Tabs>
                 </div>
             </div>
+
+            {/* Save Template Modal (from header button) */}
+            {showSaveModal && (
+                <SaveTemplateModal
+                    filters={filters}
+                    onClose={() => setShowSaveModal(false)}
+                    onSaved={() => setTemplateRefreshSignal(s => s + 1)}
+                />
+            )}
         </div>
     )
 }
