@@ -38,6 +38,14 @@ Deno.serve(async (req: Request) => {
         }
         jobId = record.id
         configOrgId = record.icebreaker_config_org_id ?? null
+
+        // ── Early exit: only process when status transitions TO 'queued' ──────
+        // The webhook fires on every scrape_jobs UPDATE. Without this guard,
+        // our own writes to 'running'/'completed' would re-trigger the function
+        // in an infinite loop.
+        if (record.icebreaker_generation_status !== 'queued') {
+            return new Response('Skipped — status is not queued', { status: 200 })
+        }
     } catch {
         return new Response('Invalid payload', { status: 400 })
     }
