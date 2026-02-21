@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "esnext",
+        "module": "esnext",
+        "lib": [
+            "esnext",
+            "dom"
+        ],
+        "allowImportingTsExtensions": true,
+        "noEmit": true,
+        "strict": true,
+        "types": []
+    }
+}

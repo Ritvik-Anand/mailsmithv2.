@@ -51,7 +51,7 @@ import {
     Plus
 } from 'lucide-react'
 import { getLeadsFromJob, getSearchJobStatus, retrySyncFromApify, updateLeadIcebreaker, exportLeadsToCSV, assignLeadsToCustomer, renameScrapeJob, createCampaignFromPush } from '@/server/actions/lead-finder'
-import { generateSingleIcebreaker } from '@/server/actions/ai'
+import { generateSingleIcebreaker, queueIcebreakerGeneration, getIcebreakerGenerationStatus } from '@/server/actions/ai'
 import { addLeadsToInstantlyCampaign, getOrganizationCampaigns } from '@/server/actions/instantly'
 import { getOrganizationsWithIcebreakerConfigs, getOrganizations } from '@/server/actions/organizations'
 import { toast } from 'sonner'
@@ -80,6 +80,10 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
     const [cancelGeneration, setCancelGeneration] = useState(false)
     const [regenerateMode, setRegenerateMode] = useState(false)
     const [generateLimit, setGenerateLimit] = useState<number | null>(null)
+
+    // Background generation state
+    const [bgGenStatus, setBgGenStatus] = useState<'idle' | 'queued' | 'running' | 'completed' | 'failed'>('idle')
+    const [bgGenProgress, setBgGenProgress] = useState<{ total: number; completed: number; failed: number }>({ total: 0, completed: 0, failed: 0 })
     const [allLeadsStats, setAllLeadsStats] = useState<{
         total: number
         completed: number
@@ -226,127 +230,83 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
         }
     }, [job?.status])
 
+    // ── Background generation ──────────────────────────────────────────────
+
     const initiateGeneration = async () => {
-        setIsGenerating(true)
-        toast.info('Loading all leads from job...')
-
-        try {
-            // First, fetch ALL leads from the job
-            const allLeadsRes = await getLeadsFromJob(jobId, { pageSize: -1 })
-            if (!allLeadsRes.success || !allLeadsRes.leads) {
-                toast.error('Failed to load leads')
-                setIsGenerating(false)
-                return
-            }
-
-            const allLeads = allLeadsRes.leads
-
-            // In regenerate mode, target ALL leads. Otherwise, only pending/failed
-            const targetLeads = regenerateMode
-                ? allLeads
-                : allLeads.filter(l => l.icebreaker_status === 'pending' || l.icebreaker_status === 'failed')
-
-            // Apply limit if specified
-            const leadsToGen = generateLimit && generateLimit > 0
-                ? targetLeads.slice(0, generateLimit)
-                : targetLeads
-
-            if (leadsToGen.length === 0) {
-                toast.info('No leads to generate icebreakers for.')
-                setIsGenerating(false)
-                return
-            }
-
-            setLeadsToProcess(leadsToGen)
-
-            // If regenerate mode, ask for confirmation. 
-            // Actually, let's ask always for better UX, or stick to original logic.
-            // Original: only if regenerateMode. 
-            // But having a dialog popup is good practice for bulk actions.
-            const message = regenerateMode
-                ? `Generate icebreakers for ${leadsToGen.length} leads (including ${targetLeads.filter(l => l.icebreaker_status === 'completed').length} with existing icebreakers)?`
-                : `Generate icebreakers for ${leadsToGen.length} leads?`
-
-            setGenerationMessage(message)
-
-            if (regenerateMode) {
-                setGenerationDialogOpen(true)
-            } else {
-                // If not regenerate mode, just start?
-                // The user asked for popups. Let's make it consistent and ask always.
-                setGenerationDialogOpen(true)
-            }
-        } catch (error) {
-            console.error('Error preparing generation:', error)
-            toast.error('Failed to prepare generation')
-            setIsGenerating(false)
+        setGenerationDialogOpen(true)
+        // Count pending leads so we can show the total in the confirm dialog
+        const allLeadsRes = await getLeadsFromJob(jobId, { pageSize: -1 })
+        if (allLeadsRes.success && allLeadsRes.leads) {
+            const target = regenerateMode
+                ? allLeadsRes.leads
+                : allLeadsRes.leads.filter(l => l.icebreaker_status === 'pending' || l.icebreaker_status === 'failed')
+            const capped = generateLimit && generateLimit > 0 ? target.slice(0, generateLimit) : target
+            setLeadsToProcess(capped)
+            setGenerationMessage(
+                regenerateMode
+                    ? `Regenerate icebreakers for all ${capped.length} leads?`
+                    : `Queue background generation for ${capped.length} leads? You can navigate away — it will run unattended.`
+            )
         }
     }
 
     const executeGeneration = async () => {
         setGenerationDialogOpen(false)
-        // Keep isGenerating true
-
+        setIsGenerating(true)
         try {
-            setCancelGeneration(false)
-            let successCount = 0
-            let failureCount = 0
-            let skippedCount = 0
-
-            toast.info(`Generating icebreakers for ${leadsToProcess.length} leads...`)
-
-            // Process icebreakers one by one
-            for (let i = 0; i < leadsToProcess.length; i++) {
-                const lead = leadsToProcess[i]
-
-                // Check if user cancelled
-                if (cancelGeneration) {
-                    const processed = successCount + failureCount + skippedCount
-                    toast.warning(`Generation stopped. Processed ${processed} of ${leadsToProcess.length} leads.`)
-                    break
-                }
-
-                if (i > 0 && i % 10 === 0) {
-                    toast.info(`Progress: ${i}/${leadsToProcess.length} leads processed...`)
-                }
-
-                // Update local status
-                setLeads(prev => prev.map(l =>
-                    l.id === lead.id ? { ...l, icebreaker_status: 'generating' } : l
-                ))
-
-                const result = await generateSingleIcebreaker(lead.id, selectedConfigOrgId || undefined)
-
-                if (result.success) {
-                    successCount++
-                    setLeads(prev => prev.map(l =>
-                        l.id === lead.id ? {
-                            ...l,
-                            icebreaker: result.icebreaker ?? null,
-                            icebreaker_status: 'completed'
-                        } : l
-                    ))
-                } else {
-                    failureCount++
-                    setLeads(prev => prev.map(l =>
-                        l.id === lead.id ? { ...l, icebreaker_status: 'failed' } : l
-                    ))
-                }
+            const result = await queueIcebreakerGeneration(
+                jobId,
+                selectedConfigOrgId || undefined
+            )
+            if (result.success) {
+                setBgGenStatus('queued')
+                setBgGenProgress({ total: leadsToProcess.length, completed: 0, failed: 0 })
+                toast.success('Generation queued! Running in background — you can navigate away.')
+            } else {
+                toast.error(result.error || 'Failed to queue generation')
             }
-
-            if (!cancelGeneration) {
-                if (successCount > 0) toast.success(`Successfully generated ${successCount} icebreakers`)
-                if (failureCount > 0) toast.error(`Failed to generate ${failureCount} icebreakers`)
-            }
-
-            await fetchData()
-        } catch (error) {
-            toast.error('Error during icebreaker generation')
+        } catch (err) {
+            toast.error('Failed to queue generation')
         } finally {
             setIsGenerating(false)
-            setCancelGeneration(false)
         }
     }
+
+    // Poll for background job progress every 10 seconds while active
+    useEffect(() => {
+        if (bgGenStatus !== 'queued' && bgGenStatus !== 'running') return
+
+        const poll = setInterval(async () => {
+            const status = await getIcebreakerGenerationStatus(jobId)
+            if (status.success && status.status && status.progress) {
+                setBgGenStatus(status.status)
+                setBgGenProgress(status.progress)
+
+                if (status.status === 'completed') {
+                    toast.success(`Icebreaker generation complete! ${status.progress.completed} generated, ${status.progress.failed} failed.`)
+                    clearInterval(poll)
+                    fetchData() // refresh the leads table
+                } else if (status.status === 'failed') {
+                    toast.error('Background generation encountered an error')
+                    clearInterval(poll)
+                }
+            }
+        }, 10_000)
+
+        return () => clearInterval(poll)
+    }, [bgGenStatus, jobId])
+
+    // On load: restore background status if a job is already running
+    useEffect(() => {
+        const checkExistingBgJob = async () => {
+            const status = await getIcebreakerGenerationStatus(jobId)
+            if (status.success && status.status && status.status !== 'idle') {
+                setBgGenStatus(status.status)
+                if (status.progress) setBgGenProgress(status.progress)
+            }
+        }
+        checkExistingBgJob()
+    }, [jobId])
 
     const handleStopGeneration = () => {
         setCancelGeneration(true)
@@ -735,15 +695,56 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                             />
                         </div>
 
-                        {/* Generate/Stop Button */}
-                        {isGenerating ? (
+                        {/* Generate Button / Background Progress */}
+                        {(bgGenStatus === 'queued' || bgGenStatus === 'running') ? (
+                            <div className="flex flex-col gap-1 min-w-[220px]">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs text-indigo-400 font-bold flex items-center gap-1.5">
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                        Generating in background…
+                                    </span>
+                                    <span className="text-[10px] text-zinc-500 font-mono">
+                                        {bgGenProgress.completed}/{bgGenProgress.total}
+                                    </span>
+                                </div>
+                                <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
+                                        style={{
+                                            width: bgGenProgress.total > 0
+                                                ? `${Math.round((bgGenProgress.completed / bgGenProgress.total) * 100)}%`
+                                                : '0%'
+                                        }}
+                                    />
+                                </div>
+                                <p className="text-[10px] text-zinc-600">You can navigate away — this runs server-side</p>
+                            </div>
+                        ) : bgGenStatus === 'completed' ? (
+                            <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-3 py-2">
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                    <span className="text-xs text-emerald-400 font-bold">
+                                        {bgGenProgress.completed} generated
+                                        {bgGenProgress.failed > 0 && `, ${bgGenProgress.failed} failed`}
+                                    </span>
+                                </div>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs border-zinc-700 text-zinc-400"
+                                    onClick={() => setBgGenStatus('idle')}
+                                >
+                                    Regenerate
+                                </Button>
+                            </div>
+                        ) : isGenerating ? (
                             <Button
-                                variant="destructive"
-                                className="bg-red-600 hover:bg-red-500 text-white font-bold shadow-lg shadow-red-500/20"
-                                onClick={handleStopGeneration}
+                                variant="outline"
+                                className="border-zinc-700 text-zinc-400"
+                                disabled
                             >
-                                <X className="mr-2 h-4 w-4" />
-                                Stop Generation
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Queuing…
                             </Button>
                         ) : (
                             <Button
