@@ -48,6 +48,8 @@ import {
     POPULAR_LOCATIONS
 } from '@/lib/lead-finder/constants'
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 const SENIORITY_OPTIONS: { label: string; value: SeniorityLevel }[] = [
     { label: 'Founder', value: 'founder' },
     { label: 'Owner', value: 'owner' },
@@ -107,7 +109,18 @@ const BLANK_FILTERS: Partial<LeadSearchFilters> = {
     fetch_count: 50
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+const ARRAY_FIELDS: (keyof LeadSearchFilters)[] = [
+    'contact_job_title', 'contact_not_job_title',
+    'company_industry', 'company_not_industry',
+    'contact_location', 'contact_not_location',
+    'contact_city', 'contact_not_city',
+    'seniority_level', 'functional_level',
+    'size', 'funding',
+    'company_keywords', 'company_not_keywords',
+    'company_domain', 'email_status',
+]
+
+// ─── ListInput ────────────────────────────────────────────────────────────────
 
 function ListInput({
     label,
@@ -119,22 +132,22 @@ function ListInput({
     suggestions = [],
     isNegative = false
 }: {
-    label: string,
-    placeholder: string,
-    icon: any,
-    values: string[],
-    onAdd: (val: string) => void,
-    onRemove: (val: string) => void,
-    suggestions?: string[],
+    label: string
+    placeholder: string
+    icon: any
+    values: string[]
+    onAdd: (val: string) => void
+    onRemove: (val: string) => void
+    suggestions?: string[]
     isNegative?: boolean
 }) {
     const [input, setInput] = useState('')
     const [showSuggestions, setShowSuggestions] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
 
-    const filteredSuggestions = suggestions.filter(s =>
-        s.toLowerCase().includes(input.toLowerCase()) && !values.includes(s)
-    ).slice(0, 8)
+    const filteredSuggestions = suggestions
+        .filter(s => s.toLowerCase().includes(input.toLowerCase()) && !values.includes(s))
+        .slice(0, 8)
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -166,15 +179,10 @@ function ListInput({
                         placeholder={placeholder}
                         className={`bg-black border-zinc-800 pl-10 h-10 text-sm ${isNegative ? 'focus-visible:ring-red-500/50' : ''}`}
                         value={input}
-                        onChange={(e) => {
-                            setInput(e.target.value)
-                            setShowSuggestions(true)
-                        }}
+                        onChange={(e) => { setInput(e.target.value); setShowSuggestions(true) }}
                         onFocus={() => setShowSuggestions(true)}
                         onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
                     />
-
-                    {/* Suggestions Dropdown */}
                     {showSuggestions && filteredSuggestions.length > 0 && (
                         <div className="absolute z-50 mt-1 w-full bg-zinc-950 border border-zinc-900 rounded-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                             {filteredSuggestions.map((s, i) => (
@@ -204,8 +212,7 @@ function ListInput({
                         key={v}
                         className={`gap-2 py-1 pr-1.5 transition-all ${isNegative
                             ? 'bg-red-500/5 text-red-500 border-red-500/20'
-                            : 'bg-primary/5 text-primary border-primary/20'
-                            }`}
+                            : 'bg-primary/5 text-primary border-primary/20'}`}
                     >
                         {v}
                         <button onClick={() => onRemove(v)} className="hover:text-white">
@@ -218,7 +225,7 @@ function ListInput({
     )
 }
 
-// ─── Save Template Modal ──────────────────────────────────────────────────────
+// ─── SaveTemplateModal ────────────────────────────────────────────────────────
 
 function SaveTemplateModal({
     filters,
@@ -234,10 +241,7 @@ function SaveTemplateModal({
     const [saving, setSaving] = useState(false)
 
     const handleSave = async () => {
-        if (!name.trim()) {
-            toast.error('Please enter a template name')
-            return
-        }
+        if (!name.trim()) { toast.error('Please enter a template name'); return }
         setSaving(true)
         try {
             const result = await saveScrapingTemplate({
@@ -257,7 +261,6 @@ function SaveTemplateModal({
         }
     }
 
-    // Get a quick summary of what's in the filters
     const filterSummary = [
         ...(filters.contact_job_title?.length ? [`${filters.contact_job_title.length} job title(s)`] : []),
         ...(filters.company_industry?.length ? [`${filters.company_industry.length} industry(ies)`] : []),
@@ -268,10 +271,7 @@ function SaveTemplateModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-
-            {/* Modal */}
             <div className="relative w-full max-w-md mx-4 bg-zinc-950 border-2 border-zinc-800 rounded-2xl shadow-2xl shadow-black/50 animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between p-6 border-b border-zinc-900">
                     <div className="flex items-center gap-3">
@@ -287,27 +287,20 @@ function SaveTemplateModal({
                         <X className="h-5 w-5" />
                     </button>
                 </div>
-
                 <div className="p-6 space-y-5">
-                    {/* Filter preview */}
                     {filterSummary.length > 0 && (
                         <div className="p-3 rounded-lg bg-zinc-900/50 border border-zinc-800">
                             <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-2">Current Filters</p>
                             <div className="flex flex-wrap gap-1.5">
                                 {filterSummary.map((s, i) => (
-                                    <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
-                                        {s}
-                                    </span>
+                                    <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">{s}</span>
                                 ))}
                                 {filters.fetch_count && (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700 font-medium">
-                                        {filters.fetch_count} leads
-                                    </span>
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700 font-medium">{filters.fetch_count} leads</span>
                                 )}
                             </div>
                         </div>
                     )}
-
                     <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Template Name *</Label>
                         <Input
@@ -319,7 +312,6 @@ function SaveTemplateModal({
                             autoFocus
                         />
                     </div>
-
                     <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Description (optional)</Label>
                         <textarea
@@ -330,16 +322,9 @@ function SaveTemplateModal({
                         />
                     </div>
                 </div>
-
                 <div className="flex gap-3 p-6 pt-0">
-                    <Button variant="outline" className="flex-1 border-zinc-800 h-11" onClick={onClose}>
-                        Cancel
-                    </Button>
-                    <Button
-                        className="flex-1 bg-primary hover:bg-primary/90 h-11 font-black"
-                        onClick={handleSave}
-                        disabled={saving || !name.trim()}
-                    >
+                    <Button variant="outline" className="flex-1 border-zinc-800 h-11" onClick={onClose}>Cancel</Button>
+                    <Button className="flex-1 bg-primary hover:bg-primary/90 h-11 font-black" onClick={handleSave} disabled={saving || !name.trim()}>
                         {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                         Save Template
                     </Button>
@@ -349,7 +334,7 @@ function SaveTemplateModal({
     )
 }
 
-// ─── Templates Panel ──────────────────────────────────────────────────────────
+// ─── TemplatesPanel ───────────────────────────────────────────────────────────
 
 interface ScrapingTemplate {
     id: string
@@ -382,9 +367,7 @@ function TemplatesPanel({
         setLoading(false)
     }
 
-    useEffect(() => {
-        fetchTemplates()
-    }, [refreshSignal])
+    useEffect(() => { fetchTemplates() }, [refreshSignal])
 
     const handleDelete = async (templateId: string, templateName: string) => {
         setDeletingId(templateId)
@@ -400,17 +383,14 @@ function TemplatesPanel({
 
     const handleLoad = (template: ScrapingTemplate) => {
         onLoadTemplate(template.filters)
-        toast.success(`Loaded "${template.name}"`, {
-            description: 'All filters have been applied'
-        })
+        toast.success(`Loaded "${template.name}"`, { description: 'All filters have been applied' })
     }
 
-    // Summarize which filters are set in a template
-    const getTemplateSummary = (filters: LeadSearchFilters): string[] => {
+    const getTemplateSummary = (f: LeadSearchFilters): string[] => {
         const parts: string[] = []
-        if (filters.contact_job_title?.length) parts.push(`${filters.contact_job_title.slice(0, 2).join(', ')}${filters.contact_job_title.length > 2 ? ' +more' : ''}`)
-        if (filters.company_industry?.length) parts.push(filters.company_industry.slice(0, 2).join(', '))
-        if (filters.contact_location?.length) parts.push(filters.contact_location.slice(0, 2).join(', '))
+        if (f.contact_job_title?.length) parts.push(`${f.contact_job_title.slice(0, 2).join(', ')}${f.contact_job_title.length > 2 ? ' +more' : ''}`)
+        if (f.company_industry?.length) parts.push(f.company_industry.slice(0, 2).join(', '))
+        if (f.contact_location?.length) parts.push(f.contact_location.slice(0, 2).join(', '))
         return parts
     }
 
@@ -449,10 +429,7 @@ function TemplatesPanel({
                                 <p className="text-xs font-bold text-zinc-500">No templates yet</p>
                                 <p className="text-[10px] text-zinc-600 mt-1">Configure filters then save as a template</p>
                             </div>
-                            <button
-                                onClick={() => setShowSaveModal(true)}
-                                className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
-                            >
+                            <button onClick={() => setShowSaveModal(true)} className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">
                                 Save Current Filters →
                             </button>
                         </div>
@@ -461,34 +438,20 @@ function TemplatesPanel({
                             const summary = getTemplateSummary(template.filters)
                             const isDeleting = deletingId === template.id
                             return (
-                                <div
-                                    key={template.id}
-                                    className="group relative rounded-xl border border-zinc-900 bg-zinc-900/30 hover:bg-zinc-900/60 hover:border-zinc-700 transition-all duration-200 overflow-hidden"
-                                >
-                                    <button
-                                        className="w-full text-left p-3 pr-10"
-                                        onClick={() => handleLoad(template)}
-                                    >
+                                <div key={template.id} className="group relative rounded-xl border border-zinc-900 bg-zinc-900/30 hover:bg-zinc-900/60 hover:border-zinc-700 transition-all duration-200 overflow-hidden">
+                                    <button className="w-full text-left p-3 pr-10" onClick={() => handleLoad(template)}>
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-xs font-bold text-zinc-200 truncate group-hover:text-white transition-colors">
-                                                    {template.name}
-                                                </p>
+                                                <p className="text-xs font-bold text-zinc-200 truncate group-hover:text-white transition-colors">{template.name}</p>
                                                 {template.description && (
-                                                    <p className="text-[10px] text-zinc-600 mt-0.5 line-clamp-1">
-                                                        {template.description}
-                                                    </p>
+                                                    <p className="text-[10px] text-zinc-600 mt-0.5 line-clamp-1">{template.description}</p>
                                                 )}
                                                 {summary.length > 0 && (
-                                                    <p className="text-[10px] text-zinc-600 mt-1 line-clamp-1">
-                                                        {summary.join(' · ')}
-                                                    </p>
+                                                    <p className="text-[10px] text-zinc-600 mt-1 line-clamp-1">{summary.join(' · ')}</p>
                                                 )}
                                                 <div className="flex items-center gap-2 mt-2">
                                                     {template.filters.fetch_count && (
-                                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 font-mono">
-                                                            {template.filters.fetch_count} leads
-                                                        </span>
+                                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 font-mono">{template.filters.fetch_count} leads</span>
                                                     )}
                                                     <span className="text-[9px] text-zinc-700 flex items-center gap-1">
                                                         <Clock className="h-2.5 w-2.5" />
@@ -499,22 +462,13 @@ function TemplatesPanel({
                                             <ChevronRight className="h-4 w-4 text-zinc-600 group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-0.5" />
                                         </div>
                                     </button>
-
-                                    {/* Delete button */}
                                     <button
                                         className="absolute top-2 right-8 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/10 hover:text-red-500 text-zinc-600"
-                                        onClick={(e) => {
-                                            e.stopPropagation()
-                                            handleDelete(template.id, template.name)
-                                        }}
+                                        onClick={(e) => { e.stopPropagation(); handleDelete(template.id, template.name) }}
                                         disabled={isDeleting}
                                         title="Delete template"
                                     >
-                                        {isDeleting ? (
-                                            <Loader2 className="h-3 w-3 animate-spin" />
-                                        ) : (
-                                            <Trash2 className="h-3 w-3" />
-                                        )}
+                                        {isDeleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
                                     </button>
                                 </div>
                             )
@@ -534,30 +488,25 @@ function TemplatesPanel({
     )
 }
 
-// ─── Main Scraper Content ──────────────────────────────────────────────────────
+// ─── ScraperContent ───────────────────────────────────────────────────────────
 
 function ScraperContent() {
     const searchParams = useSearchParams()
     const orgIdFromQuery = searchParams.get('org')
+
     const [organizations, setOrganizations] = useState<any[]>([])
     const [selectedOrg, setSelectedOrg] = useState<string>('')
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [filters, setFilters] = useState<Partial<LeadSearchFilters>>({ ...BLANK_FILTERS })
     const [showSaveModal, setShowSaveModal] = useState(false)
     const [templateRefreshSignal, setTemplateRefreshSignal] = useState(0)
 
     useEffect(() => {
-        if (orgIdFromQuery) {
-            setSelectedOrg(orgIdFromQuery)
-        }
+        if (orgIdFromQuery) setSelectedOrg(orgIdFromQuery)
     }, [orgIdFromQuery])
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [filters, setFilters] = useState<Partial<LeadSearchFilters>>({ ...BLANK_FILTERS })
 
     useEffect(() => {
-        const fetchOrgs = async () => {
-            const orgs = await getOrganizations()
-            setOrganizations(orgs)
-        }
-        fetchOrgs()
+        getOrganizations().then(setOrganizations)
     }, [])
 
     const handleListChange = (field: keyof LeadSearchFilters, action: 'add' | 'remove', value: string) => {
@@ -572,30 +521,18 @@ function ScraperContent() {
 
     const toggleArrayFilter = (field: keyof LeadSearchFilters, value: any) => {
         const current = (filters[field] as any[]) || []
-        if (current.includes(value)) {
-            setFilters({ ...filters, [field]: current.filter(v => v !== value) })
-        } else {
-            setFilters({ ...filters, [field]: [...current, value] })
-        }
+        setFilters({
+            ...filters,
+            [field]: current.includes(value) ? current.filter(v => v !== value) : [...current, value]
+        })
     }
 
     const handleLoadTemplate = (templateFilters: Partial<LeadSearchFilters>) => {
-        // Sanitize: JSONB from Supabase can return `null` for optional array fields.
-        // Null values would override BLANK_FILTERS defaults and crash `.map()` calls.
-        const ARRAY_FIELDS: (keyof LeadSearchFilters)[] = [
-            'contact_job_title', 'contact_not_job_title',
-            'company_industry', 'company_not_industry',
-            'contact_location', 'contact_not_location',
-            'contact_city', 'contact_not_city',
-            'seniority_level', 'functional_level',
-            'size', 'funding',
-            'company_keywords', 'company_not_keywords',
-            'company_domain', 'email_status',
-        ]
+        // Sanitize JSONB from Supabase — null values override array defaults and crash .map() calls
         const sanitized: Partial<LeadSearchFilters> = { ...templateFilters }
         for (const field of ARRAY_FIELDS) {
             if (!Array.isArray(sanitized[field])) {
-                // @ts-ignore – reset nulls/undefined to empty arrays
+                // @ts-ignore
                 sanitized[field] = []
             }
         }
@@ -604,10 +541,9 @@ function ScraperContent() {
 
     const handleStartJob = async () => {
         if (!selectedOrg) {
-            toast.error('Please select a customer first')
+            toast.error('Please select a customer first', { description: 'Choose a tenant from the dropdown on the left' })
             return
         }
-
         setIsSubmitting(true)
         try {
             const result = await startLeadSearchJob(filters as LeadSearchFilters, selectedOrg)
@@ -626,12 +562,14 @@ function ScraperContent() {
 
     return (
         <div className="space-y-8 pb-20 max-w-7xl mx-auto px-4">
+
+            {/* ── Page Header ─────────────────────────────────────────────── */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="space-y-1">
                     <h1 className="text-4xl font-black tracking-tighter text-white">MACHINE SCRAPER v2</h1>
                     <p className="text-zinc-500 font-medium">Global Lead Finding Infrastructure.</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex items-start gap-3">
                     <Button
                         variant="outline"
                         className="border-zinc-800 gap-2 hover:bg-zinc-900 hover:border-zinc-700"
@@ -640,7 +578,9 @@ function ScraperContent() {
                         <BookmarkPlus className="h-4 w-4" />
                         Save as Template
                     </Button>
-                    <Button variant="ghost" onClick={() => setFilters({ ...BLANK_FILTERS })}>Reset All</Button>
+                    <Button variant="ghost" onClick={() => setFilters({ ...BLANK_FILTERS })}>
+                        Reset All
+                    </Button>
                     <div className="flex flex-col items-end gap-1">
                         <Button
                             className="bg-primary hover:bg-primary/90 text-white font-black px-10 h-12 shadow-2xl shadow-primary/20"
@@ -657,317 +597,241 @@ function ScraperContent() {
                         )}
                     </div>
                 </div>
+            </div>
 
-                <div className="grid gap-8 lg:grid-cols-4">
-                    {/* Configuration Sidebar */}
-                    <div className="space-y-6">
-                        <Card className="bg-zinc-950 border-zinc-900 shadow-none border-2">
-                            <CardHeader className="pb-4 border-b border-zinc-900">
-                                <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">System Parameters</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-8 pt-6">
-                                <div className="space-y-3">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Target Organization</Label>
-                                    <select
-                                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg h-12 px-4 text-sm focus:ring-2 focus:ring-primary/50 outline-none text-zinc-200 transition-all"
-                                        value={selectedOrg}
-                                        onChange={(e) => setSelectedOrg(e.target.value)}
-                                    >
-                                        <option value="">Select Tenant...</option>
-                                        {organizations.map(org => (
-                                            <option key={org.id} value={org.id}>{org.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+            {/* ── Main Grid ───────────────────────────────────────────────── */}
+            <div className="grid gap-8 lg:grid-cols-4">
 
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center">
-                                        <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Lead Volume</Label>
-                                        <div className="flex items-center gap-2">
-                                            <Input
-                                                type="number"
-                                                className="w-20 h-8 bg-zinc-900 border-zinc-800 text-center font-mono text-xs focus-visible:ring-primary"
-                                                value={filters.fetch_count}
-                                                onChange={(e) => setFilters({ ...filters, fetch_count: parseInt(e.target.value) || 0 })}
-                                            />
-                                        </div>
-                                    </div>
-                                    <input
-                                        type="range" min="10" max="5000" step="10"
-                                        className="w-full h-2 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
+                {/* Left Sidebar */}
+                <div className="space-y-6">
+                    <Card className="bg-zinc-950 border-zinc-900 shadow-none border-2">
+                        <CardHeader className="pb-4 border-b border-zinc-900">
+                            <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">System Parameters</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-8 pt-6">
+                            <div className="space-y-3">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Target Organization</Label>
+                                <select
+                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg h-12 px-4 text-sm focus:ring-2 focus:ring-primary/50 outline-none text-zinc-200 transition-all"
+                                    value={selectedOrg}
+                                    onChange={(e) => setSelectedOrg(e.target.value)}
+                                >
+                                    <option value="">Select Tenant...</option>
+                                    {organizations.map(org => (
+                                        <option key={org.id} value={org.id}>{org.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Lead Volume</Label>
+                                    <Input
+                                        type="number"
+                                        className="w-20 h-8 bg-zinc-900 border-zinc-800 text-center font-mono text-xs focus-visible:ring-primary"
                                         value={filters.fetch_count}
-                                        onChange={(e) => setFilters({ ...filters, fetch_count: parseInt(e.target.value) })}
-                                    />
-                                    <div className="flex justify-between text-[10px] text-zinc-600 font-mono">
-                                        <span>10</span>
-                                        <span>2.5K</span>
-                                        <span>5K</span>
-                                    </div>
-                                </div>
-
-                                <div className="p-5 bg-primary/5 rounded-2xl border border-primary/10 space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <Shield className="h-4 w-4 text-primary" />
-                                        <span className="text-[10px] font-black text-primary uppercase tracking-tighter">Machine Status: READY</span>
-                                    </div>
-                                    <p className="text-[10px] text-zinc-500 leading-relaxed font-medium">
-                                        Engine is connected to global proxy network. Catch-all verification enabled.
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Templates Panel */}
-                        <TemplatesPanel
-                            onLoadTemplate={handleLoadTemplate}
-                            currentFilters={filters}
-                            refreshSignal={templateRefreshSignal}
-                        />
-                    </div>
-
-                    {/* Main Filter Hub */}
-                    <div className="lg:col-span-3 space-y-6">
-                        <Tabs defaultValue="people" className="w-full">
-                            <TabsList className="bg-zinc-950 border border-zinc-900 w-full justify-start p-1 h-auto gap-1 border-2">
-                                <TabsTrigger value="people" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
-                                    <Users className="h-4 w-4 mr-2" />
-                                    People
-                                </TabsTrigger>
-                                <TabsTrigger value="company" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
-                                    <Building2 className="h-4 w-4 mr-2" />
-                                    Company
-                                </TabsTrigger>
-                                <TabsTrigger value="geo" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
-                                    <Globe className="h-4 w-4 mr-2" />
-                                    Geo/Location
-                                </TabsTrigger>
-                                <TabsTrigger value="advanced" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
-                                    <Layers className="h-4 w-4 mr-2" />
-                                    Advanced
-                                </TabsTrigger>
-                            </TabsList>
-
-                            {/* People Filters */}
-                            <TabsContent value="people" className="mt-8 space-y-10">
-                                <div className="grid gap-10 md:grid-cols-2">
-                                    <ListInput
-                                        label="Job Titles"
-                                        placeholder="e.g. CEO, Sales Director"
-                                        icon={Briefcase}
-                                        values={filters.contact_job_title || []}
-                                        suggestions={POPULAR_JOB_TITLES}
-                                        onAdd={(v) => handleListChange('contact_job_title', 'add', v)}
-                                        onRemove={(v) => handleListChange('contact_job_title', 'remove', v)}
-                                    />
-                                    <ListInput
-                                        label="Exclude Titles"
-                                        placeholder="e.g. HR, Assistant"
-                                        icon={Briefcase}
-                                        values={filters.contact_not_job_title || []}
-                                        suggestions={POPULAR_JOB_TITLES}
-                                        onAdd={(v) => handleListChange('contact_not_job_title', 'add', v)}
-                                        onRemove={(v) => handleListChange('contact_not_job_title', 'remove', v)}
-                                        isNegative
+                                        onChange={(e) => setFilters({ ...filters, fetch_count: parseInt(e.target.value) || 0 })}
                                     />
                                 </div>
+                                <input
+                                    type="range" min="10" max="5000" step="10"
+                                    className="w-full h-2 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
+                                    value={filters.fetch_count}
+                                    onChange={(e) => setFilters({ ...filters, fetch_count: parseInt(e.target.value) })}
+                                />
+                                <div className="flex justify-between text-[10px] text-zinc-600 font-mono">
+                                    <span>10</span><span>2.5K</span><span>5K</span>
+                                </div>
+                            </div>
 
-                                <div className="space-y-4">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Seniority Levels</Label>
-                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                                        {SENIORITY_OPTIONS.map(opt => (
-                                            <Button
-                                                key={opt.value}
-                                                variant="outline"
-                                                className={`h-12 text-[10px] font-black uppercase tracking-tight transition-all border-2 ${filters.seniority_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-900 bg-black text-zinc-600'}`}
-                                                onClick={() => toggleArrayFilter('seniority_level', opt.value)}
-                                            >
-                                                {opt.label}
-                                            </Button>
-                                        ))}
-                                    </div>
+                            <div className="p-5 bg-primary/5 rounded-2xl border border-primary/10 space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <Shield className="h-4 w-4 text-primary" />
+                                    <span className="text-[10px] font-black text-primary uppercase tracking-tighter">Machine Status: READY</span>
                                 </div>
-                            </TabsContent>
+                                <p className="text-[10px] text-zinc-500 leading-relaxed font-medium">
+                                    Engine is connected to global proxy network. Catch-all verification enabled.
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                            {/* Company Filters */}
-                            <TabsContent value="company" className="mt-8 space-y-10">
-                                <div className="grid gap-10 md:grid-cols-2">
-                                    <ListInput
-                                        label="Industries"
-                                        placeholder="e.g. SaaS, Fintech"
-                                        icon={Building2}
-                                        values={filters.company_industry || []}
-                                        suggestions={POPULAR_INDUSTRIES}
-                                        onAdd={(v) => handleListChange('company_industry', 'add', v)}
-                                        onRemove={(v) => handleListChange('company_industry', 'remove', v)}
-                                    />
-                                    <ListInput
-                                        label="Exclude Industries"
-                                        placeholder="e.g. Real Estate"
-                                        icon={Building2}
-                                        values={filters.company_not_industry || []}
-                                        suggestions={POPULAR_INDUSTRIES}
-                                        onAdd={(v) => handleListChange('company_not_industry', 'add', v)}
-                                        onRemove={(v) => handleListChange('company_not_industry', 'remove', v)}
-                                        isNegative
-                                    />
-                                </div>
-
-                                <div className="grid gap-10 md:grid-cols-2">
-                                    <ListInput
-                                        label="Inclusion Keywords"
-                                        placeholder="e.g. Artificial Intelligence"
-                                        icon={Target}
-                                        values={filters.company_keywords || []}
-                                        onAdd={(v) => handleListChange('company_keywords', 'add', v)}
-                                        onRemove={(v) => handleListChange('company_keywords', 'remove', v)}
-                                    />
-                                    <ListInput
-                                        label="Exclusion Keywords"
-                                        placeholder="e.g. Crypto"
-                                        icon={Target}
-                                        values={filters.company_not_keywords || []}
-                                        onAdd={(v) => handleListChange('company_not_keywords', 'add', v)}
-                                        onRemove={(v) => handleListChange('company_not_keywords', 'remove', v)}
-                                        isNegative
-                                    />
-                                </div>
-
-                                <div className="space-y-4">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Staff Count</Label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {SIZE_OPTIONS.map(size => (
-                                            <Badge
-                                                key={size}
-                                                className={`cursor-pointer px-5 py-2.5 border-2 font-mono text-[10px] font-black transition-all ${filters.size?.includes(size) ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-black text-zinc-600 border-zinc-900 hover:border-zinc-700'}`}
-                                                onClick={() => toggleArrayFilter('size', size)}
-                                            >
-                                                {size}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                </div>
-                            </TabsContent>
-
-                            {/* Geo Filters */}
-                            <TabsContent value="geo" className="mt-8 space-y-10">
-                                <div className="grid gap-10 md:grid-cols-2">
-                                    <ListInput
-                                        label="Countries"
-                                        placeholder="e.g. United Kingdom"
-                                        icon={Globe}
-                                        values={filters.contact_location || []}
-                                        suggestions={POPULAR_LOCATIONS}
-                                        onAdd={(v) => handleListChange('contact_location', 'add', v)}
-                                        onRemove={(v) => handleListChange('contact_location', 'remove', v)}
-                                    />
-                                    <ListInput
-                                        label="Exclude Countries"
-                                        placeholder="e.g. India"
-                                        icon={Globe}
-                                        values={filters.contact_not_location || []}
-                                        suggestions={POPULAR_LOCATIONS}
-                                        onAdd={(v) => handleListChange('contact_not_location', 'add', v)}
-                                        onRemove={(v) => handleListChange('contact_not_location', 'remove', v)}
-                                        isNegative
-                                    />
-                                </div>
-                                <div className="grid gap-10 md:grid-cols-2 border-t border-zinc-900 pt-10">
-                                    <ListInput
-                                        label="Cities"
-                                        placeholder="e.g. London"
-                                        icon={Search}
-                                        values={filters.contact_city || []}
-                                        suggestions={POPULAR_LOCATIONS}
-                                        onAdd={(v) => handleListChange('contact_city', 'add', v)}
-                                        onRemove={(v) => handleListChange('contact_city', 'remove', v)}
-                                    />
-                                    <ListInput
-                                        label="Exclude Cities"
-                                        placeholder="e.g. Manchester"
-                                        icon={Search}
-                                        values={filters.contact_not_city || []}
-                                        suggestions={POPULAR_LOCATIONS}
-                                        onAdd={(v) => handleListChange('contact_not_city', 'add', v)}
-                                        onRemove={(v) => handleListChange('contact_not_city', 'remove', v)}
-                                        isNegative
-                                    />
-                                </div>
-                            </TabsContent>
-
-                            {/* Advanced Filters */}
-                            <TabsContent value="advanced" className="mt-8 space-y-10">
-                                <div className="space-y-4">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Functional Levels</Label>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                        {FUNCTIONAL_OPTIONS.map(opt => (
-                                            <Button
-                                                key={opt.value}
-                                                variant="outline"
-                                                className={`h-12 text-[10px] font-black uppercase tracking-tight border-2 ${filters.functional_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-900 bg-black text-zinc-600'}`}
-                                                onClick={() => toggleArrayFilter('functional_level', opt.value)}
-                                            >
-                                                {opt.label}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4 border-t border-zinc-900 pt-10">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Funding Stages</Label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {FUNDING_OPTIONS.map(opt => (
-                                            <Button
-                                                key={opt.value}
-                                                variant="outline"
-                                                className={`px-8 h-12 text-[10px] font-black uppercase tracking-tight rounded-full border-2 ${filters.funding?.includes(opt.value) ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500' : 'border-zinc-900 bg-black text-zinc-600'}`}
-                                                onClick={() => toggleArrayFilter('funding', opt.value)}
-                                            >
-                                                {opt.label}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="grid gap-10 md:grid-cols-2 border-t border-zinc-900 pt-10">
-                                    <ListInput
-                                        label="Target Domains"
-                                        placeholder="e.g. apple.com"
-                                        icon={Building2}
-                                        values={filters.company_domain || []}
-                                        onAdd={(v) => handleListChange('company_domain', 'add', v)}
-                                        onRemove={(v) => handleListChange('company_domain', 'remove', v)}
-                                    />
-                                    <div className="space-y-4">
-                                        <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Revenue (USD)</Label>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="relative">
-                                                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-zinc-700" />
-                                                <Input placeholder="Min Revenue" className="bg-black border-2 border-zinc-900 pl-10 h-12 text-xs font-mono" onChange={(e) => setFilters({ ...filters, min_revenue: e.target.value })} />
-                                            </div>
-                                            <div className="relative">
-                                                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-zinc-700" />
-                                                <Input placeholder="Max Revenue" className="bg-black border-2 border-zinc-900 pl-10 h-12 text-xs font-mono" onChange={(e) => setFilters({ ...filters, max_revenue: e.target.value })} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </TabsContent>
-                        </Tabs>
-                    </div>
+                    <TemplatesPanel
+                        onLoadTemplate={handleLoadTemplate}
+                        currentFilters={filters}
+                        refreshSignal={templateRefreshSignal}
+                    />
                 </div>
 
-                {/* Save Template Modal (from header button) */}
-                {showSaveModal && (
-                    <SaveTemplateModal
-                        filters={filters}
-                        onClose={() => setShowSaveModal(false)}
-                        onSaved={() => setTemplateRefreshSignal(s => s + 1)}
-                    />
-                )}
+                {/* Main Filter Hub */}
+                <div className="lg:col-span-3 space-y-6">
+                    <Tabs defaultValue="people" className="w-full">
+                        <TabsList className="bg-zinc-950 border border-zinc-900 w-full justify-start p-1 h-auto gap-1 border-2">
+                            <TabsTrigger value="people" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
+                                <Users className="h-4 w-4 mr-2" />People
+                            </TabsTrigger>
+                            <TabsTrigger value="company" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
+                                <Building2 className="h-4 w-4 mr-2" />Company
+                            </TabsTrigger>
+                            <TabsTrigger value="geo" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
+                                <Globe className="h-4 w-4 mr-2" />Geo/Location
+                            </TabsTrigger>
+                            <TabsTrigger value="advanced" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
+                                <Layers className="h-4 w-4 mr-2" />Advanced
+                            </TabsTrigger>
+                        </TabsList>
+
+                        {/* People */}
+                        <TabsContent value="people" className="mt-8 space-y-10">
+                            <div className="grid gap-10 md:grid-cols-2">
+                                <ListInput label="Job Titles" placeholder="e.g. CEO, Sales Director" icon={Briefcase}
+                                    values={filters.contact_job_title || []} suggestions={POPULAR_JOB_TITLES}
+                                    onAdd={(v) => handleListChange('contact_job_title', 'add', v)}
+                                    onRemove={(v) => handleListChange('contact_job_title', 'remove', v)} />
+                                <ListInput label="Exclude Titles" placeholder="e.g. HR, Assistant" icon={Briefcase}
+                                    values={filters.contact_not_job_title || []} suggestions={POPULAR_JOB_TITLES}
+                                    onAdd={(v) => handleListChange('contact_not_job_title', 'add', v)}
+                                    onRemove={(v) => handleListChange('contact_not_job_title', 'remove', v)} isNegative />
+                            </div>
+                            <div className="space-y-4">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Seniority Levels</Label>
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                    {SENIORITY_OPTIONS.map(opt => (
+                                        <Button key={opt.value} variant="outline"
+                                            className={`h-12 text-[10px] font-black uppercase tracking-tight transition-all border-2 ${filters.seniority_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-900 bg-black text-zinc-600'}`}
+                                            onClick={() => toggleArrayFilter('seniority_level', opt.value)}>
+                                            {opt.label}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+                        </TabsContent>
+
+                        {/* Company */}
+                        <TabsContent value="company" className="mt-8 space-y-10">
+                            <div className="grid gap-10 md:grid-cols-2">
+                                <ListInput label="Industries" placeholder="e.g. SaaS, Fintech" icon={Building2}
+                                    values={filters.company_industry || []} suggestions={POPULAR_INDUSTRIES}
+                                    onAdd={(v) => handleListChange('company_industry', 'add', v)}
+                                    onRemove={(v) => handleListChange('company_industry', 'remove', v)} />
+                                <ListInput label="Exclude Industries" placeholder="e.g. Real Estate" icon={Building2}
+                                    values={filters.company_not_industry || []} suggestions={POPULAR_INDUSTRIES}
+                                    onAdd={(v) => handleListChange('company_not_industry', 'add', v)}
+                                    onRemove={(v) => handleListChange('company_not_industry', 'remove', v)} isNegative />
+                            </div>
+                            <div className="grid gap-10 md:grid-cols-2">
+                                <ListInput label="Inclusion Keywords" placeholder="e.g. Artificial Intelligence" icon={Target}
+                                    values={filters.company_keywords || []}
+                                    onAdd={(v) => handleListChange('company_keywords', 'add', v)}
+                                    onRemove={(v) => handleListChange('company_keywords', 'remove', v)} />
+                                <ListInput label="Exclusion Keywords" placeholder="e.g. Crypto" icon={Target}
+                                    values={filters.company_not_keywords || []}
+                                    onAdd={(v) => handleListChange('company_not_keywords', 'add', v)}
+                                    onRemove={(v) => handleListChange('company_not_keywords', 'remove', v)} isNegative />
+                            </div>
+                            <div className="space-y-4">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Staff Count</Label>
+                                <div className="flex flex-wrap gap-2">
+                                    {SIZE_OPTIONS.map(size => (
+                                        <Badge key={size}
+                                            className={`cursor-pointer px-5 py-2.5 border-2 font-mono text-[10px] font-black transition-all ${filters.size?.includes(size) ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-black text-zinc-600 border-zinc-900 hover:border-zinc-700'}`}
+                                            onClick={() => toggleArrayFilter('size', size)}>
+                                            {size}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        </TabsContent>
+
+                        {/* Geo */}
+                        <TabsContent value="geo" className="mt-8 space-y-10">
+                            <div className="grid gap-10 md:grid-cols-2">
+                                <ListInput label="Countries" placeholder="e.g. United Kingdom" icon={Globe}
+                                    values={filters.contact_location || []} suggestions={POPULAR_LOCATIONS}
+                                    onAdd={(v) => handleListChange('contact_location', 'add', v)}
+                                    onRemove={(v) => handleListChange('contact_location', 'remove', v)} />
+                                <ListInput label="Exclude Countries" placeholder="e.g. India" icon={Globe}
+                                    values={filters.contact_not_location || []} suggestions={POPULAR_LOCATIONS}
+                                    onAdd={(v) => handleListChange('contact_not_location', 'add', v)}
+                                    onRemove={(v) => handleListChange('contact_not_location', 'remove', v)} isNegative />
+                            </div>
+                            <div className="grid gap-10 md:grid-cols-2 border-t border-zinc-900 pt-10">
+                                <ListInput label="Cities" placeholder="e.g. London" icon={Search}
+                                    values={filters.contact_city || []} suggestions={POPULAR_LOCATIONS}
+                                    onAdd={(v) => handleListChange('contact_city', 'add', v)}
+                                    onRemove={(v) => handleListChange('contact_city', 'remove', v)} />
+                                <ListInput label="Exclude Cities" placeholder="e.g. Manchester" icon={Search}
+                                    values={filters.contact_not_city || []} suggestions={POPULAR_LOCATIONS}
+                                    onAdd={(v) => handleListChange('contact_not_city', 'add', v)}
+                                    onRemove={(v) => handleListChange('contact_not_city', 'remove', v)} isNegative />
+                            </div>
+                        </TabsContent>
+
+                        {/* Advanced */}
+                        <TabsContent value="advanced" className="mt-8 space-y-10">
+                            <div className="space-y-4">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Functional Levels</Label>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    {FUNCTIONAL_OPTIONS.map(opt => (
+                                        <Button key={opt.value} variant="outline"
+                                            className={`h-12 text-[10px] font-black uppercase tracking-tight border-2 ${filters.functional_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-900 bg-black text-zinc-600'}`}
+                                            onClick={() => toggleArrayFilter('functional_level', opt.value)}>
+                                            {opt.label}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="space-y-4 border-t border-zinc-900 pt-10">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Funding Stages</Label>
+                                <div className="flex flex-wrap gap-2">
+                                    {FUNDING_OPTIONS.map(opt => (
+                                        <Button key={opt.value} variant="outline"
+                                            className={`px-8 h-12 text-[10px] font-black uppercase tracking-tight rounded-full border-2 ${filters.funding?.includes(opt.value) ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500' : 'border-zinc-900 bg-black text-zinc-600'}`}
+                                            onClick={() => toggleArrayFilter('funding', opt.value)}>
+                                            {opt.label}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="grid gap-10 md:grid-cols-2 border-t border-zinc-900 pt-10">
+                                <ListInput label="Target Domains" placeholder="e.g. apple.com" icon={Building2}
+                                    values={filters.company_domain || []}
+                                    onAdd={(v) => handleListChange('company_domain', 'add', v)}
+                                    onRemove={(v) => handleListChange('company_domain', 'remove', v)} />
+                                <div className="space-y-4">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Revenue (USD)</Label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="relative">
+                                            <DollarSign className="absolute left-3 top-3 h-4 w-4 text-zinc-700" />
+                                            <Input placeholder="Min Revenue" className="bg-black border-2 border-zinc-900 pl-10 h-12 text-xs font-mono"
+                                                onChange={(e) => setFilters({ ...filters, min_revenue: e.target.value })} />
+                                        </div>
+                                        <div className="relative">
+                                            <DollarSign className="absolute left-3 top-3 h-4 w-4 text-zinc-700" />
+                                            <Input placeholder="Max Revenue" className="bg-black border-2 border-zinc-900 pl-10 h-12 text-xs font-mono"
+                                                onChange={(e) => setFilters({ ...filters, max_revenue: e.target.value })} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </TabsContent>
+                    </Tabs>
+                </div>
             </div>
+
+            {/* Save Template Modal */}
+            {showSaveModal && (
+                <SaveTemplateModal
+                    filters={filters}
+                    onClose={() => setShowSaveModal(false)}
+                    onSaved={() => setTemplateRefreshSignal(s => s + 1)}
+                />
+            )}
         </div>
     )
 }
+
+// ─── Page Export ──────────────────────────────────────────────────────────────
 
 export default function ScraperPage() {
     return (
