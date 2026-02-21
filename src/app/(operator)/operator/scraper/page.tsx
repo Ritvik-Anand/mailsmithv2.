@@ -641,323 +641,330 @@ function ScraperContent() {
                         Save as Template
                     </Button>
                     <Button variant="ghost" onClick={() => setFilters({ ...BLANK_FILTERS })}>Reset All</Button>
-                    <Button
-                        className="bg-primary hover:bg-primary/90 text-white font-black px-10 h-12 shadow-2xl shadow-primary/20"
-                        onClick={handleStartJob}
-                        disabled={isSubmitting || !selectedOrg}
-                    >
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
-                        INITIALIZE SCRAPE
-                    </Button>
-                </div>
-            </div>
-
-            <div className="grid gap-8 lg:grid-cols-4">
-                {/* Configuration Sidebar */}
-                <div className="space-y-6">
-                    <Card className="bg-zinc-950 border-zinc-900 shadow-none border-2">
-                        <CardHeader className="pb-4 border-b border-zinc-900">
-                            <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">System Parameters</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-8 pt-6">
-                            <div className="space-y-3">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Target Organization</Label>
-                                <select
-                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg h-12 px-4 text-sm focus:ring-2 focus:ring-primary/50 outline-none text-zinc-200 transition-all"
-                                    value={selectedOrg}
-                                    onChange={(e) => setSelectedOrg(e.target.value)}
-                                >
-                                    <option value="">Select Tenant...</option>
-                                    {organizations.map(org => (
-                                        <option key={org.id} value={org.id}>{org.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Lead Volume</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Input
-                                            type="number"
-                                            className="w-20 h-8 bg-zinc-900 border-zinc-800 text-center font-mono text-xs focus-visible:ring-primary"
-                                            value={filters.fetch_count}
-                                            onChange={(e) => setFilters({ ...filters, fetch_count: parseInt(e.target.value) || 0 })}
-                                        />
-                                    </div>
-                                </div>
-                                <input
-                                    type="range" min="10" max="5000" step="10"
-                                    className="w-full h-2 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
-                                    value={filters.fetch_count}
-                                    onChange={(e) => setFilters({ ...filters, fetch_count: parseInt(e.target.value) })}
-                                />
-                                <div className="flex justify-between text-[10px] text-zinc-600 font-mono">
-                                    <span>10</span>
-                                    <span>2.5K</span>
-                                    <span>5K</span>
-                                </div>
-                            </div>
-
-                            <div className="p-5 bg-primary/5 rounded-2xl border border-primary/10 space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <Shield className="h-4 w-4 text-primary" />
-                                    <span className="text-[10px] font-black text-primary uppercase tracking-tighter">Machine Status: READY</span>
-                                </div>
-                                <p className="text-[10px] text-zinc-500 leading-relaxed font-medium">
-                                    Engine is connected to global proxy network. Catch-all verification enabled.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Templates Panel */}
-                    <TemplatesPanel
-                        onLoadTemplate={handleLoadTemplate}
-                        currentFilters={filters}
-                        refreshSignal={templateRefreshSignal}
-                    />
+                    <div className="flex flex-col items-end gap-1">
+                        <Button
+                            className="bg-primary hover:bg-primary/90 text-white font-black px-10 h-12 shadow-2xl shadow-primary/20"
+                            onClick={handleStartJob}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
+                            INITIALIZE SCRAPE
+                        </Button>
+                        {!selectedOrg && (
+                            <p className="text-[9px] text-amber-500/80 font-bold uppercase tracking-widest animate-pulse">
+                                ↑ Select a tenant first
+                            </p>
+                        )}
+                    </div>
                 </div>
 
-                {/* Main Filter Hub */}
-                <div className="lg:col-span-3 space-y-6">
-                    <Tabs defaultValue="people" className="w-full">
-                        <TabsList className="bg-zinc-950 border border-zinc-900 w-full justify-start p-1 h-auto gap-1 border-2">
-                            <TabsTrigger value="people" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
-                                <Users className="h-4 w-4 mr-2" />
-                                People
-                            </TabsTrigger>
-                            <TabsTrigger value="company" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
-                                <Building2 className="h-4 w-4 mr-2" />
-                                Company
-                            </TabsTrigger>
-                            <TabsTrigger value="geo" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
-                                <Globe className="h-4 w-4 mr-2" />
-                                Geo/Location
-                            </TabsTrigger>
-                            <TabsTrigger value="advanced" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
-                                <Layers className="h-4 w-4 mr-2" />
-                                Advanced
-                            </TabsTrigger>
-                        </TabsList>
-
-                        {/* People Filters */}
-                        <TabsContent value="people" className="mt-8 space-y-10">
-                            <div className="grid gap-10 md:grid-cols-2">
-                                <ListInput
-                                    label="Job Titles"
-                                    placeholder="e.g. CEO, Sales Director"
-                                    icon={Briefcase}
-                                    values={filters.contact_job_title || []}
-                                    suggestions={POPULAR_JOB_TITLES}
-                                    onAdd={(v) => handleListChange('contact_job_title', 'add', v)}
-                                    onRemove={(v) => handleListChange('contact_job_title', 'remove', v)}
-                                />
-                                <ListInput
-                                    label="Exclude Titles"
-                                    placeholder="e.g. HR, Assistant"
-                                    icon={Briefcase}
-                                    values={filters.contact_not_job_title || []}
-                                    suggestions={POPULAR_JOB_TITLES}
-                                    onAdd={(v) => handleListChange('contact_not_job_title', 'add', v)}
-                                    onRemove={(v) => handleListChange('contact_not_job_title', 'remove', v)}
-                                    isNegative
-                                />
-                            </div>
-
-                            <div className="space-y-4">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Seniority Levels</Label>
-                                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                                    {SENIORITY_OPTIONS.map(opt => (
-                                        <Button
-                                            key={opt.value}
-                                            variant="outline"
-                                            className={`h-12 text-[10px] font-black uppercase tracking-tight transition-all border-2 ${filters.seniority_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-900 bg-black text-zinc-600'}`}
-                                            onClick={() => toggleArrayFilter('seniority_level', opt.value)}
-                                        >
-                                            {opt.label}
-                                        </Button>
-                                    ))}
+                <div className="grid gap-8 lg:grid-cols-4">
+                    {/* Configuration Sidebar */}
+                    <div className="space-y-6">
+                        <Card className="bg-zinc-950 border-zinc-900 shadow-none border-2">
+                            <CardHeader className="pb-4 border-b border-zinc-900">
+                                <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">System Parameters</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-8 pt-6">
+                                <div className="space-y-3">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Target Organization</Label>
+                                    <select
+                                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg h-12 px-4 text-sm focus:ring-2 focus:ring-primary/50 outline-none text-zinc-200 transition-all"
+                                        value={selectedOrg}
+                                        onChange={(e) => setSelectedOrg(e.target.value)}
+                                    >
+                                        <option value="">Select Tenant...</option>
+                                        {organizations.map(org => (
+                                            <option key={org.id} value={org.id}>{org.name}</option>
+                                        ))}
+                                    </select>
                                 </div>
-                            </div>
-                        </TabsContent>
 
-                        {/* Company Filters */}
-                        <TabsContent value="company" className="mt-8 space-y-10">
-                            <div className="grid gap-10 md:grid-cols-2">
-                                <ListInput
-                                    label="Industries"
-                                    placeholder="e.g. SaaS, Fintech"
-                                    icon={Building2}
-                                    values={filters.company_industry || []}
-                                    suggestions={POPULAR_INDUSTRIES}
-                                    onAdd={(v) => handleListChange('company_industry', 'add', v)}
-                                    onRemove={(v) => handleListChange('company_industry', 'remove', v)}
-                                />
-                                <ListInput
-                                    label="Exclude Industries"
-                                    placeholder="e.g. Real Estate"
-                                    icon={Building2}
-                                    values={filters.company_not_industry || []}
-                                    suggestions={POPULAR_INDUSTRIES}
-                                    onAdd={(v) => handleListChange('company_not_industry', 'add', v)}
-                                    onRemove={(v) => handleListChange('company_not_industry', 'remove', v)}
-                                    isNegative
-                                />
-                            </div>
-
-                            <div className="grid gap-10 md:grid-cols-2">
-                                <ListInput
-                                    label="Inclusion Keywords"
-                                    placeholder="e.g. Artificial Intelligence"
-                                    icon={Target}
-                                    values={filters.company_keywords || []}
-                                    onAdd={(v) => handleListChange('company_keywords', 'add', v)}
-                                    onRemove={(v) => handleListChange('company_keywords', 'remove', v)}
-                                />
-                                <ListInput
-                                    label="Exclusion Keywords"
-                                    placeholder="e.g. Crypto"
-                                    icon={Target}
-                                    values={filters.company_not_keywords || []}
-                                    onAdd={(v) => handleListChange('company_not_keywords', 'add', v)}
-                                    onRemove={(v) => handleListChange('company_not_keywords', 'remove', v)}
-                                    isNegative
-                                />
-                            </div>
-
-                            <div className="space-y-4">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Staff Count</Label>
-                                <div className="flex flex-wrap gap-2">
-                                    {SIZE_OPTIONS.map(size => (
-                                        <Badge
-                                            key={size}
-                                            className={`cursor-pointer px-5 py-2.5 border-2 font-mono text-[10px] font-black transition-all ${filters.size?.includes(size) ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-black text-zinc-600 border-zinc-900 hover:border-zinc-700'}`}
-                                            onClick={() => toggleArrayFilter('size', size)}
-                                        >
-                                            {size}
-                                        </Badge>
-                                    ))}
-                                </div>
-                            </div>
-                        </TabsContent>
-
-                        {/* Geo Filters */}
-                        <TabsContent value="geo" className="mt-8 space-y-10">
-                            <div className="grid gap-10 md:grid-cols-2">
-                                <ListInput
-                                    label="Countries"
-                                    placeholder="e.g. United Kingdom"
-                                    icon={Globe}
-                                    values={filters.contact_location || []}
-                                    suggestions={POPULAR_LOCATIONS}
-                                    onAdd={(v) => handleListChange('contact_location', 'add', v)}
-                                    onRemove={(v) => handleListChange('contact_location', 'remove', v)}
-                                />
-                                <ListInput
-                                    label="Exclude Countries"
-                                    placeholder="e.g. India"
-                                    icon={Globe}
-                                    values={filters.contact_not_location || []}
-                                    suggestions={POPULAR_LOCATIONS}
-                                    onAdd={(v) => handleListChange('contact_not_location', 'add', v)}
-                                    onRemove={(v) => handleListChange('contact_not_location', 'remove', v)}
-                                    isNegative
-                                />
-                            </div>
-                            <div className="grid gap-10 md:grid-cols-2 border-t border-zinc-900 pt-10">
-                                <ListInput
-                                    label="Cities"
-                                    placeholder="e.g. London"
-                                    icon={Search}
-                                    values={filters.contact_city || []}
-                                    suggestions={POPULAR_LOCATIONS}
-                                    onAdd={(v) => handleListChange('contact_city', 'add', v)}
-                                    onRemove={(v) => handleListChange('contact_city', 'remove', v)}
-                                />
-                                <ListInput
-                                    label="Exclude Cities"
-                                    placeholder="e.g. Manchester"
-                                    icon={Search}
-                                    values={filters.contact_not_city || []}
-                                    suggestions={POPULAR_LOCATIONS}
-                                    onAdd={(v) => handleListChange('contact_not_city', 'add', v)}
-                                    onRemove={(v) => handleListChange('contact_not_city', 'remove', v)}
-                                    isNegative
-                                />
-                            </div>
-                        </TabsContent>
-
-                        {/* Advanced Filters */}
-                        <TabsContent value="advanced" className="mt-8 space-y-10">
-                            <div className="space-y-4">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Functional Levels</Label>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                    {FUNCTIONAL_OPTIONS.map(opt => (
-                                        <Button
-                                            key={opt.value}
-                                            variant="outline"
-                                            className={`h-12 text-[10px] font-black uppercase tracking-tight border-2 ${filters.functional_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-900 bg-black text-zinc-600'}`}
-                                            onClick={() => toggleArrayFilter('functional_level', opt.value)}
-                                        >
-                                            {opt.label}
-                                        </Button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="space-y-4 border-t border-zinc-900 pt-10">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Funding Stages</Label>
-                                <div className="flex flex-wrap gap-2">
-                                    {FUNDING_OPTIONS.map(opt => (
-                                        <Button
-                                            key={opt.value}
-                                            variant="outline"
-                                            className={`px-8 h-12 text-[10px] font-black uppercase tracking-tight rounded-full border-2 ${filters.funding?.includes(opt.value) ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500' : 'border-zinc-900 bg-black text-zinc-600'}`}
-                                            onClick={() => toggleArrayFilter('funding', opt.value)}
-                                        >
-                                            {opt.label}
-                                        </Button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="grid gap-10 md:grid-cols-2 border-t border-zinc-900 pt-10">
-                                <ListInput
-                                    label="Target Domains"
-                                    placeholder="e.g. apple.com"
-                                    icon={Building2}
-                                    values={filters.company_domain || []}
-                                    onAdd={(v) => handleListChange('company_domain', 'add', v)}
-                                    onRemove={(v) => handleListChange('company_domain', 'remove', v)}
-                                />
                                 <div className="space-y-4">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Revenue (USD)</Label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="relative">
-                                            <DollarSign className="absolute left-3 top-3 h-4 w-4 text-zinc-700" />
-                                            <Input placeholder="Min Revenue" className="bg-black border-2 border-zinc-900 pl-10 h-12 text-xs font-mono" onChange={(e) => setFilters({ ...filters, min_revenue: e.target.value })} />
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Lead Volume</Label>
+                                        <div className="flex items-center gap-2">
+                                            <Input
+                                                type="number"
+                                                className="w-20 h-8 bg-zinc-900 border-zinc-800 text-center font-mono text-xs focus-visible:ring-primary"
+                                                value={filters.fetch_count}
+                                                onChange={(e) => setFilters({ ...filters, fetch_count: parseInt(e.target.value) || 0 })}
+                                            />
                                         </div>
-                                        <div className="relative">
-                                            <DollarSign className="absolute left-3 top-3 h-4 w-4 text-zinc-700" />
-                                            <Input placeholder="Max Revenue" className="bg-black border-2 border-zinc-900 pl-10 h-12 text-xs font-mono" onChange={(e) => setFilters({ ...filters, max_revenue: e.target.value })} />
+                                    </div>
+                                    <input
+                                        type="range" min="10" max="5000" step="10"
+                                        className="w-full h-2 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
+                                        value={filters.fetch_count}
+                                        onChange={(e) => setFilters({ ...filters, fetch_count: parseInt(e.target.value) })}
+                                    />
+                                    <div className="flex justify-between text-[10px] text-zinc-600 font-mono">
+                                        <span>10</span>
+                                        <span>2.5K</span>
+                                        <span>5K</span>
+                                    </div>
+                                </div>
+
+                                <div className="p-5 bg-primary/5 rounded-2xl border border-primary/10 space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <Shield className="h-4 w-4 text-primary" />
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-tighter">Machine Status: READY</span>
+                                    </div>
+                                    <p className="text-[10px] text-zinc-500 leading-relaxed font-medium">
+                                        Engine is connected to global proxy network. Catch-all verification enabled.
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Templates Panel */}
+                        <TemplatesPanel
+                            onLoadTemplate={handleLoadTemplate}
+                            currentFilters={filters}
+                            refreshSignal={templateRefreshSignal}
+                        />
+                    </div>
+
+                    {/* Main Filter Hub */}
+                    <div className="lg:col-span-3 space-y-6">
+                        <Tabs defaultValue="people" className="w-full">
+                            <TabsList className="bg-zinc-950 border border-zinc-900 w-full justify-start p-1 h-auto gap-1 border-2">
+                                <TabsTrigger value="people" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
+                                    <Users className="h-4 w-4 mr-2" />
+                                    People
+                                </TabsTrigger>
+                                <TabsTrigger value="company" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
+                                    <Building2 className="h-4 w-4 mr-2" />
+                                    Company
+                                </TabsTrigger>
+                                <TabsTrigger value="geo" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
+                                    <Globe className="h-4 w-4 mr-2" />
+                                    Geo/Location
+                                </TabsTrigger>
+                                <TabsTrigger value="advanced" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
+                                    <Layers className="h-4 w-4 mr-2" />
+                                    Advanced
+                                </TabsTrigger>
+                            </TabsList>
+
+                            {/* People Filters */}
+                            <TabsContent value="people" className="mt-8 space-y-10">
+                                <div className="grid gap-10 md:grid-cols-2">
+                                    <ListInput
+                                        label="Job Titles"
+                                        placeholder="e.g. CEO, Sales Director"
+                                        icon={Briefcase}
+                                        values={filters.contact_job_title || []}
+                                        suggestions={POPULAR_JOB_TITLES}
+                                        onAdd={(v) => handleListChange('contact_job_title', 'add', v)}
+                                        onRemove={(v) => handleListChange('contact_job_title', 'remove', v)}
+                                    />
+                                    <ListInput
+                                        label="Exclude Titles"
+                                        placeholder="e.g. HR, Assistant"
+                                        icon={Briefcase}
+                                        values={filters.contact_not_job_title || []}
+                                        suggestions={POPULAR_JOB_TITLES}
+                                        onAdd={(v) => handleListChange('contact_not_job_title', 'add', v)}
+                                        onRemove={(v) => handleListChange('contact_not_job_title', 'remove', v)}
+                                        isNegative
+                                    />
+                                </div>
+
+                                <div className="space-y-4">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Seniority Levels</Label>
+                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                        {SENIORITY_OPTIONS.map(opt => (
+                                            <Button
+                                                key={opt.value}
+                                                variant="outline"
+                                                className={`h-12 text-[10px] font-black uppercase tracking-tight transition-all border-2 ${filters.seniority_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-900 bg-black text-zinc-600'}`}
+                                                onClick={() => toggleArrayFilter('seniority_level', opt.value)}
+                                            >
+                                                {opt.label}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </TabsContent>
+
+                            {/* Company Filters */}
+                            <TabsContent value="company" className="mt-8 space-y-10">
+                                <div className="grid gap-10 md:grid-cols-2">
+                                    <ListInput
+                                        label="Industries"
+                                        placeholder="e.g. SaaS, Fintech"
+                                        icon={Building2}
+                                        values={filters.company_industry || []}
+                                        suggestions={POPULAR_INDUSTRIES}
+                                        onAdd={(v) => handleListChange('company_industry', 'add', v)}
+                                        onRemove={(v) => handleListChange('company_industry', 'remove', v)}
+                                    />
+                                    <ListInput
+                                        label="Exclude Industries"
+                                        placeholder="e.g. Real Estate"
+                                        icon={Building2}
+                                        values={filters.company_not_industry || []}
+                                        suggestions={POPULAR_INDUSTRIES}
+                                        onAdd={(v) => handleListChange('company_not_industry', 'add', v)}
+                                        onRemove={(v) => handleListChange('company_not_industry', 'remove', v)}
+                                        isNegative
+                                    />
+                                </div>
+
+                                <div className="grid gap-10 md:grid-cols-2">
+                                    <ListInput
+                                        label="Inclusion Keywords"
+                                        placeholder="e.g. Artificial Intelligence"
+                                        icon={Target}
+                                        values={filters.company_keywords || []}
+                                        onAdd={(v) => handleListChange('company_keywords', 'add', v)}
+                                        onRemove={(v) => handleListChange('company_keywords', 'remove', v)}
+                                    />
+                                    <ListInput
+                                        label="Exclusion Keywords"
+                                        placeholder="e.g. Crypto"
+                                        icon={Target}
+                                        values={filters.company_not_keywords || []}
+                                        onAdd={(v) => handleListChange('company_not_keywords', 'add', v)}
+                                        onRemove={(v) => handleListChange('company_not_keywords', 'remove', v)}
+                                        isNegative
+                                    />
+                                </div>
+
+                                <div className="space-y-4">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Staff Count</Label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {SIZE_OPTIONS.map(size => (
+                                            <Badge
+                                                key={size}
+                                                className={`cursor-pointer px-5 py-2.5 border-2 font-mono text-[10px] font-black transition-all ${filters.size?.includes(size) ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-black text-zinc-600 border-zinc-900 hover:border-zinc-700'}`}
+                                                onClick={() => toggleArrayFilter('size', size)}
+                                            >
+                                                {size}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            </TabsContent>
+
+                            {/* Geo Filters */}
+                            <TabsContent value="geo" className="mt-8 space-y-10">
+                                <div className="grid gap-10 md:grid-cols-2">
+                                    <ListInput
+                                        label="Countries"
+                                        placeholder="e.g. United Kingdom"
+                                        icon={Globe}
+                                        values={filters.contact_location || []}
+                                        suggestions={POPULAR_LOCATIONS}
+                                        onAdd={(v) => handleListChange('contact_location', 'add', v)}
+                                        onRemove={(v) => handleListChange('contact_location', 'remove', v)}
+                                    />
+                                    <ListInput
+                                        label="Exclude Countries"
+                                        placeholder="e.g. India"
+                                        icon={Globe}
+                                        values={filters.contact_not_location || []}
+                                        suggestions={POPULAR_LOCATIONS}
+                                        onAdd={(v) => handleListChange('contact_not_location', 'add', v)}
+                                        onRemove={(v) => handleListChange('contact_not_location', 'remove', v)}
+                                        isNegative
+                                    />
+                                </div>
+                                <div className="grid gap-10 md:grid-cols-2 border-t border-zinc-900 pt-10">
+                                    <ListInput
+                                        label="Cities"
+                                        placeholder="e.g. London"
+                                        icon={Search}
+                                        values={filters.contact_city || []}
+                                        suggestions={POPULAR_LOCATIONS}
+                                        onAdd={(v) => handleListChange('contact_city', 'add', v)}
+                                        onRemove={(v) => handleListChange('contact_city', 'remove', v)}
+                                    />
+                                    <ListInput
+                                        label="Exclude Cities"
+                                        placeholder="e.g. Manchester"
+                                        icon={Search}
+                                        values={filters.contact_not_city || []}
+                                        suggestions={POPULAR_LOCATIONS}
+                                        onAdd={(v) => handleListChange('contact_not_city', 'add', v)}
+                                        onRemove={(v) => handleListChange('contact_not_city', 'remove', v)}
+                                        isNegative
+                                    />
+                                </div>
+                            </TabsContent>
+
+                            {/* Advanced Filters */}
+                            <TabsContent value="advanced" className="mt-8 space-y-10">
+                                <div className="space-y-4">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Functional Levels</Label>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        {FUNCTIONAL_OPTIONS.map(opt => (
+                                            <Button
+                                                key={opt.value}
+                                                variant="outline"
+                                                className={`h-12 text-[10px] font-black uppercase tracking-tight border-2 ${filters.functional_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-900 bg-black text-zinc-600'}`}
+                                                onClick={() => toggleArrayFilter('functional_level', opt.value)}
+                                            >
+                                                {opt.label}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 border-t border-zinc-900 pt-10">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Funding Stages</Label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {FUNDING_OPTIONS.map(opt => (
+                                            <Button
+                                                key={opt.value}
+                                                variant="outline"
+                                                className={`px-8 h-12 text-[10px] font-black uppercase tracking-tight rounded-full border-2 ${filters.funding?.includes(opt.value) ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500' : 'border-zinc-900 bg-black text-zinc-600'}`}
+                                                onClick={() => toggleArrayFilter('funding', opt.value)}
+                                            >
+                                                {opt.label}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-10 md:grid-cols-2 border-t border-zinc-900 pt-10">
+                                    <ListInput
+                                        label="Target Domains"
+                                        placeholder="e.g. apple.com"
+                                        icon={Building2}
+                                        values={filters.company_domain || []}
+                                        onAdd={(v) => handleListChange('company_domain', 'add', v)}
+                                        onRemove={(v) => handleListChange('company_domain', 'remove', v)}
+                                    />
+                                    <div className="space-y-4">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Revenue (USD)</Label>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="relative">
+                                                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-zinc-700" />
+                                                <Input placeholder="Min Revenue" className="bg-black border-2 border-zinc-900 pl-10 h-12 text-xs font-mono" onChange={(e) => setFilters({ ...filters, min_revenue: e.target.value })} />
+                                            </div>
+                                            <div className="relative">
+                                                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-zinc-700" />
+                                                <Input placeholder="Max Revenue" className="bg-black border-2 border-zinc-900 pl-10 h-12 text-xs font-mono" onChange={(e) => setFilters({ ...filters, max_revenue: e.target.value })} />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </TabsContent>
-                    </Tabs>
+                            </TabsContent>
+                        </Tabs>
+                    </div>
                 </div>
-            </div>
 
-            {/* Save Template Modal (from header button) */}
-            {showSaveModal && (
-                <SaveTemplateModal
-                    filters={filters}
-                    onClose={() => setShowSaveModal(false)}
-                    onSaved={() => setTemplateRefreshSignal(s => s + 1)}
-                />
-            )}
+                {/* Save Template Modal (from header button) */}
+                {showSaveModal && (
+                    <SaveTemplateModal
+                        filters={filters}
+                        onClose={() => setShowSaveModal(false)}
+                        onSaved={() => setTemplateRefreshSignal(s => s + 1)}
+                    />
+                )}
+            </div>
         </div>
     )
 }
