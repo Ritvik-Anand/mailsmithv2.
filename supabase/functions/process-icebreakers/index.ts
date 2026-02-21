@@ -31,7 +31,6 @@ Deno.serve(async (req: Request) => {
 
     try {
         const payload = await req.json()
-        // Supabase DB webhook sends { record: { ... } }
         const record = payload?.record
         if (!record?.id) {
             return new Response('No record in payload', { status: 400 })
@@ -39,10 +38,7 @@ Deno.serve(async (req: Request) => {
         jobId = record.id
         configOrgId = record.icebreaker_config_org_id ?? null
 
-        // ── Early exit: only process when status transitions TO 'queued' ──────
-        // The webhook fires on every scrape_jobs UPDATE. Without this guard,
-        // our own writes to 'running'/'completed' would re-trigger the function
-        // in an infinite loop.
+        // Early exit: only attempt to process when webhook shows status='queued'
         if (record.icebreaker_generation_status !== 'queued') {
             return new Response('Skipped — status is not queued', { status: 200 })
         }
@@ -56,21 +52,32 @@ Deno.serve(async (req: Request) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // ── DeepSeek Client ────────────────────────────────────────────────────────
-    const deepseek = new OpenAI({
-        apiKey: Deno.env.get('DEEPSEEK_API_KEY')!,
-        baseURL: 'https://api.deepseek.com',
-    })
-
-    // ── Mark job as running ────────────────────────────────────────────────────
-    await supabase
+    // ── Atomic claim: only ONE invocation can win this race ───────────────────
+    // The self-chain sets status='queued' which can fire multiple concurrent
+    // webhook invocations. We use a conditional UPDATE (WHERE status='queued')
+    // so only the first invocation to execute this wins — PostgreSQL guarantees
+    // the UPDATE is atomic. All other concurrent invocations get 0 rows back
+    // and exit immediately.
+    const { data: claimed } = await supabase
         .from('scrape_jobs')
         .update({
             icebreaker_generation_status: 'running',
             icebreaker_generation_started_at: new Date().toISOString()
         })
         .eq('id', jobId)
-        .in('icebreaker_generation_status', ['queued', 'running']) // idempotent
+        .eq('icebreaker_generation_status', 'queued') // ← atomic test-and-set
+        .select('id')
+
+    if (!claimed || claimed.length === 0) {
+        // Another invocation already claimed this job
+        return new Response('Skipped — job already claimed by another invocation', { status: 200 })
+    }
+
+    // ── DeepSeek Client ────────────────────────────────────────────────────────
+    const deepseek = new OpenAI({
+        apiKey: Deno.env.get('DEEPSEEK_API_KEY')!,
+        baseURL: 'https://api.deepseek.com',
+    })
 
     // ── Fetch customer context once (shared across all leads in this job) ──────
     const orgIdToUse = configOrgId ?? (await getJobOrgId(supabase, jobId))
