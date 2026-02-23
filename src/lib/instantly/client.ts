@@ -343,12 +343,36 @@ export class InstantlyClient {
     }
 
     /**
-     * Update campaign options
+     * Update campaign options — maps our internal field names to Instantly V2 API names.
+     * Only sends fields that are explicitly provided (not undefined).
      */
-    async updateCampaignOptions(campaignId: string, options: InstantlyCampaignOptions): Promise<any> {
+    async updateCampaignOptions(campaignId: string, options: InstantlyCampaignOptions & Record<string, any>): Promise<any> {
+        // Build a clean payload with only defined values, using correct V2 API field names
+        const payload: Record<string, any> = {}
+
+        if (options.daily_limit !== undefined) payload.daily_limit = options.daily_limit
+        if (options.stop_on_reply !== undefined) payload.stop_on_reply = options.stop_on_reply
+        if (options.stop_on_auto_reply !== undefined) payload.stop_on_auto_reply = options.stop_on_auto_reply
+        if (options.open_tracking !== undefined) payload.open_tracking = options.open_tracking
+        if (options.link_tracking !== undefined) payload.link_tracking = options.link_tracking
+        if (options.delivery_optimization !== undefined) payload.delivery_optimization = options.delivery_optimization
+        if (options.prioritize_new_leads !== undefined) payload.prioritize_new_leads = options.prioritize_new_leads
+        if (options.first_email_text_only !== undefined) payload.first_email_text_only = options.first_email_text_only
+        if (options.show_unsubscribe !== undefined) payload.insert_unsubscribe_header = options.show_unsubscribe
+        // V2 uses email_gap / random_wait_max for these
+        if (options.minimum_wait_time !== undefined) payload.email_gap = options.minimum_wait_time
+        if (options.random_variance !== undefined) payload.random_wait_max = options.random_variance
+        if (options.cc_email_list !== undefined) payload.cc_email_list = options.cc_email_list
+        if (options.bcc_email_list !== undefined) payload.bcc_email_list = options.bcc_email_list
+        // Extra fields
+        if (options.send_as_text !== undefined) payload.send_as_plain_text = options.send_as_text
+        if (options.stop_campaign_for_company !== undefined) payload.stop_campaign_for_company = options.stop_campaign_for_company
+        if (options.allow_risky_emails !== undefined) payload.allow_risky_emails = options.allow_risky_emails
+        if (options.disable_bounce_protect !== undefined) payload.disable_bounce_protect = options.disable_bounce_protect
+
         return this.request(`/campaigns/${campaignId}`, {
             method: 'PATCH',
-            body: JSON.stringify(options),
+            body: JSON.stringify(payload),
         })
     }
 

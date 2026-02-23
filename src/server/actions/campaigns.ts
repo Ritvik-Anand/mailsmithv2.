@@ -588,21 +588,42 @@ export async function syncCampaignStats(campaignId: string) {
             return 0
         }
 
+        // 5. Also fetch the campaign object to get the actual running status
+        let instantlyStatus: string | undefined
+        try {
+            const remoteCampaign: any = await instantly.getCampaign(verifiedInstantlyId)
+            // Instantly V2: status 1 = active, 0 = paused, -1 = completed, 2 = draft
+            const s = remoteCampaign?.status ?? remoteCampaign?.campaign_status
+            if (s === 1 || s === 'active') instantlyStatus = 'active'
+            else if (s === 0 || s === 'paused') instantlyStatus = 'paused'
+            else if (s === -1 || s === 'completed') instantlyStatus = 'paused'
+        } catch (statusErr) {
+            console.warn('[syncCampaignStats] Could not fetch campaign status from Instantly:', statusErr)
+        }
+
+        const updatePayload: Record<string, any> = {
+            emails_sent: getVal(['total_sent', 'sent_count', 'sent']),
+            emails_opened: getVal(['open_count_unique', 'open_count', 'total_opened', 'unique_opens', 'opened']),
+            emails_replied: getVal(['reply_count_unique', 'reply_count', 'total_replied', 'unique_replies', 'replied']),
+            emails_bounced: getVal(['bounced_count', 'total_bounced', 'bounced']),
+            emails_clicked: getVal(['link_click_count_unique', 'link_click_count', 'total_clicked', 'unique_clicks', 'clicked']),
+            emails_interested: getVal(['total_interested', 'total_opportunities', 'interested_count', 'interested']),
+            emails_uninterested: getVal(['total_uninterested', 'uninterested_count', 'uninterested']),
+            emails_unsubscribed: getVal(['unsubscribed_count', 'total_unsubscribed', 'unsubscribed']),
+            last_synced_at: new Date().toISOString(),
+            last_stats_sync_at: new Date().toISOString(),
+            sync_error: null
+        }
+
+        // Sync status from Instantly so "Pause/Resume" button reflects reality
+        if (instantlyStatus) {
+            updatePayload.status = instantlyStatus
+            updatePayload.instantly_status = instantlyStatus
+        }
+
         const { error: updateError } = await supabase
             .from('campaigns')
-            .update({
-                emails_sent: getVal(['total_sent', 'sent_count', 'sent']),
-                emails_opened: getVal(['open_count_unique', 'open_count', 'total_opened', 'unique_opens', 'opened']),
-                emails_replied: getVal(['reply_count_unique', 'reply_count', 'total_replied', 'unique_replies', 'replied']),
-                emails_bounced: getVal(['bounced_count', 'total_bounced', 'bounced']),
-                emails_clicked: getVal(['link_click_count_unique', 'link_click_count', 'total_clicked', 'unique_clicks', 'clicked']),
-                emails_interested: getVal(['total_interested', 'total_opportunities', 'interested_count', 'interested']),
-                emails_uninterested: getVal(['total_uninterested', 'uninterested_count', 'uninterested']),
-                emails_unsubscribed: getVal(['unsubscribed_count', 'total_unsubscribed', 'unsubscribed']),
-                last_synced_at: new Date().toISOString(),
-                last_stats_sync_at: new Date().toISOString(),
-                sync_error: null
-            } as any)
+            .update(updatePayload as any)
             .eq('id', campaignId)
 
         if (updateError) throw updateError
@@ -610,6 +631,7 @@ export async function syncCampaignStats(campaignId: string) {
         revalidatePath(`/operator/campaigns/${campaignId}`)
         revalidatePath('/operator/campaigns')
         return { success: true, stats }
+
     } catch (error: any) {
         console.error('Error syncing campaign stats:', error)
         return { success: false, error: error.message }

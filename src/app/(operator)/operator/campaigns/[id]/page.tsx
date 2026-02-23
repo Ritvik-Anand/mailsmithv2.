@@ -1762,91 +1762,101 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
 // ============================================================================
 function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any }) {
     const [isSaving, setIsSaving] = useState(false)
-    const [showAdvanced, setShowAdvanced] = useState(false)
-    const [advancedOptions, setAdvancedOptions] = useState<any>({})
-    const [isLoadingAdvanced, setIsLoadingAdvanced] = useState(false)
-
+    const [opts, setOpts] = useState<any>({})
+    const [isLoadingOpts, setIsLoadingOpts] = useState(false)
     const [availableAccounts, setAvailableAccounts] = useState<any[]>([])
     const [selectedEmails, setSelectedEmails] = useState<string[]>([])
     const [isLoadingAccounts, setIsLoadingAccounts] = useState(false)
 
     useEffect(() => {
-        async function loadAccountsAndOptions() {
+        async function load() {
             if (!campaign?.organization_id) return
 
-            // 1. Load Accounts
+            // Load sending accounts
             setIsLoadingAccounts(true)
             try {
                 const nodes = await getOrganizationNodes(campaign.organization_id)
                 setAvailableAccounts(nodes || [])
-
                 if (campaign.instantly_campaign_id) {
                     const assigned = await getCampaignAccountsFromInstantly(campaign.id)
                     if (assigned.success && Array.isArray(assigned.emails)) {
                         setSelectedEmails(assigned.emails)
                     }
                 }
-            } catch (error) {
-                console.error('Error loading accounts:', error)
-                toast.error('Failed to load accounts')
             } finally {
                 setIsLoadingAccounts(false)
             }
 
-            // 2. Load Advanced Options
+            // Load all options from Instantly (source of truth)
             if (campaign.instantly_campaign_id) {
-                setIsLoadingAdvanced(true)
+                setIsLoadingOpts(true)
                 try {
                     const adv = await getCampaignAdvancedOptionsFromInstantly(campaign.id)
                     if (adv.success && adv.options) {
-                        setAdvancedOptions(adv.options)
+                        // Merge with local campaign values as fallback
+                        setOpts({
+                            daily_limit: adv.options.daily_limit ?? campaign.daily_limit ?? 50,
+                            stop_on_reply: adv.options.stop_on_reply ?? campaign.stop_on_reply ?? true,
+                            open_tracking: adv.options.open_tracking ?? campaign.open_tracking ?? true,
+                            link_tracking: adv.options.link_tracking ?? campaign.link_tracking ?? false,
+                            send_as_text: adv.options.send_as_text ?? campaign.send_as_text ?? false,
+                            delivery_optimization: adv.options.delivery_optimization ?? campaign.delivery_optimization ?? false,
+                            first_email_text_only: adv.options.first_email_text_only ?? false,
+                            prioritize_new_leads: adv.options.prioritize_new_leads ?? true,
+                            stop_on_auto_reply: adv.options.stop_on_auto_reply ?? true,
+                            show_unsubscribe: adv.options.show_unsubscribe ?? false,
+                            minimum_wait_time: adv.options.minimum_wait_time ?? 9,
+                            random_variance: adv.options.random_variance ?? 5,
+                            stop_campaign_for_company: (adv.options as any).stop_campaign_for_company ?? false,
+                        })
                     }
-                } catch (error) {
-                    console.error('Error loading advanced options:', error)
                 } finally {
-                    setIsLoadingAdvanced(false)
+                    setIsLoadingOpts(false)
                 }
+            } else {
+                // Not linked yet — use local values
+                setOpts({
+                    daily_limit: campaign.daily_limit ?? 50,
+                    stop_on_reply: campaign.stop_on_reply ?? true,
+                    open_tracking: campaign.open_tracking ?? true,
+                    link_tracking: campaign.link_tracking ?? false,
+                    send_as_text: campaign.send_as_text ?? false,
+                    delivery_optimization: campaign.delivery_optimization ?? false,
+                    first_email_text_only: false,
+                    prioritize_new_leads: true,
+                    stop_on_auto_reply: true,
+                    show_unsubscribe: false,
+                    minimum_wait_time: 9,
+                    random_variance: 5,
+                    stop_campaign_for_company: false,
+                })
             }
         }
-        loadAccountsAndOptions()
+        load()
     }, [campaign?.id, campaign?.organization_id])
 
     const handleSaveOptions = async () => {
         setIsSaving(true)
         try {
-            const result = await updateCampaign(campaign.id, {
-                daily_limit: campaign.daily_limit,
-                stop_on_reply: campaign.stop_on_reply,
-                open_tracking: campaign.open_tracking,
-                link_tracking: campaign.link_tracking,
-                send_as_text: campaign.send_as_text
-            })
-
-            if (result.success) {
-                // Update assigned accounts
-                const accResult = await updateCampaignAccountsInInstantly(campaign.id, selectedEmails)
-                if (!accResult.success) {
-                    toast.error('Failed to update accounts: ' + accResult.error)
-                }
-
-                // Update advanced options
-                const advResult = await updateCampaignAdvancedOptionsInInstantly(campaign.id, advancedOptions)
-                if (!advResult.success) {
-                    toast.error('Failed to update advanced options: ' + advResult.error)
-                }
-
-                toast.success('Campaign options saved')
-
-                // If it was a draft locally (no ID), refresh to get the new ID
-                if (!campaign.instantly_campaign_id) {
-                    const refined = await getCampaignById(campaign.id)
-                    if (refined.success && refined.campaign) {
-                        setCampaign(refined.campaign)
-                    }
-                }
-            } else {
-                toast.error(result.error || 'Failed to save options')
+            // Update assigned accounts
+            const accResult = await updateCampaignAccountsInInstantly(campaign.id, selectedEmails)
+            if (!accResult.success) {
+                toast.error('Failed to update accounts: ' + accResult.error)
+                return
             }
+
+            // Push ALL options to Instantly in one PATCH call
+            const advResult = await updateCampaignAdvancedOptionsInInstantly(campaign.id, opts)
+            if (!advResult.success) {
+                toast.error('Failed to sync options to Instantly: ' + advResult.error)
+                return
+            }
+
+            toast.success('Campaign options saved and synced to Instantly ✓')
+
+            // Refresh campaign to reflect saved state
+            const refined = await getCampaignById(campaign.id)
+            if (refined.success && refined.campaign) setCampaign(refined.campaign)
         } catch (error) {
             console.error('Error saving options:', error)
             toast.error('Failed to save options')
@@ -1856,16 +1866,43 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
     }
 
     const toggleEmail = (email: string, checked: boolean) => {
-        if (checked) {
-            setSelectedEmails(prev => [...prev, email])
-        } else {
-            setSelectedEmails(prev => prev.filter(e => e !== email))
-        }
+        setSelectedEmails(prev => checked ? [...prev, email] : prev.filter(e => e !== email))
+    }
+
+    // Reusable toggle button pair
+    const ToggleButtons = ({ field }: { field: string }) => (
+        <div className="flex items-center gap-2">
+            <Button
+                variant="outline"
+                size="sm"
+                className={cn("border-zinc-800 min-w-[80px]", !opts[field] && "bg-zinc-800 text-white")}
+                onClick={() => setOpts({ ...opts, [field]: false })}
+            >
+                Disable
+            </Button>
+            <Button
+                size="sm"
+                className={cn("min-w-[80px]", opts[field] ? "bg-emerald-500 hover:bg-emerald-600 text-white" : "bg-zinc-900 text-zinc-400")}
+                onClick={() => setOpts({ ...opts, [field]: true })}
+            >
+                Enable
+            </Button>
+        </div>
+    )
+
+    if (isLoadingOpts) {
+        return (
+            <div className="flex items-center justify-center py-16">
+                <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+                <span className="ml-3 text-sm text-zinc-500">Loading options from Instantly...</span>
+            </div>
+        )
     }
 
     return (
-        <div className="max-w-3xl space-y-6">
-            {/* Accounts */}
+        <div className="max-w-3xl space-y-4">
+
+            {/* Accounts to use */}
             <Card className="bg-zinc-950 border-zinc-800">
                 <CardContent className="p-6">
                     <div className="flex flex-col gap-4">
@@ -1878,7 +1915,6 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                                 {selectedEmails.length} selected
                             </Badge>
                         </div>
-
                         {isLoadingAccounts ? (
                             <div className="flex items-center justify-center py-8">
                                 <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
@@ -1886,7 +1922,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                         ) : availableAccounts.length === 0 ? (
                             <p className="text-sm text-zinc-500 italic">No email accounts found for this organization.</p>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto p-1 custom-scrollbar">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto p-1">
                                 {availableAccounts.map((acc) => {
                                     const isSelected = selectedEmails.includes(acc.email_address)
                                     return (
@@ -1894,9 +1930,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                                             key={acc.id}
                                             className={cn(
                                                 "flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                                                isSelected
-                                                    ? "bg-primary/10 border-primary/50"
-                                                    : "bg-zinc-900/50 border-zinc-800 hover:border-zinc-700"
+                                                isSelected ? "bg-primary/10 border-primary/50" : "bg-zinc-900/50 border-zinc-800 hover:border-zinc-700"
                                             )}
                                         >
                                             <Checkbox
@@ -1907,9 +1941,9 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                                                 <span className={cn("text-xs font-medium truncate", isSelected ? "text-primary" : "text-zinc-300")}>
                                                     {acc.email_address}
                                                 </span>
-                                                <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+                                                <span className="text-[10px] text-zinc-500">
                                                     Score: {acc.reputation_score || 0}
-                                                    {acc.status === 'paused' && <span className="text-amber-500">• Paused</span>}
+                                                    {acc.status === 'paused' && <span className="text-amber-500 ml-1">• Paused</span>}
                                                 </span>
                                             </div>
                                         </label>
@@ -1929,30 +1963,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                             <h3 className="font-bold text-white">Stop sending emails on reply</h3>
                             <p className="text-sm text-zinc-500 mt-1">Stop sending emails to a lead if a response has been received</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className={cn(
-                                    "border-zinc-800",
-                                    !campaign.stop_on_reply && "bg-zinc-900 text-white"
-                                )}
-                                onClick={() => setCampaign({ ...campaign, stop_on_reply: false })}
-                            >
-                                Disable
-                            </Button>
-                            <Button
-                                size="sm"
-                                className={cn(
-                                    campaign.stop_on_reply
-                                        ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                                        : "bg-zinc-900 text-zinc-400"
-                                )}
-                                onClick={() => setCampaign({ ...campaign, stop_on_reply: true })}
-                            >
-                                Enable
-                            </Button>
-                        </div>
+                        <ToggleButtons field="stop_on_reply" />
                     </div>
                 </CardContent>
             </Card>
@@ -1968,35 +1979,12 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                         <div className="flex items-center gap-4">
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <Checkbox
-                                    checked={campaign.link_tracking}
-                                    onCheckedChange={(checked) => setCampaign({ ...campaign, link_tracking: !!checked })}
+                                    checked={opts.link_tracking}
+                                    onCheckedChange={(c) => setOpts({ ...opts, link_tracking: !!c })}
                                 />
                                 <span className="text-sm text-zinc-400">Link tracking</span>
                             </label>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className={cn(
-                                        "border-zinc-800",
-                                        !campaign.open_tracking && "bg-zinc-900 text-white"
-                                    )}
-                                    onClick={() => setCampaign({ ...campaign, open_tracking: false })}
-                                >
-                                    Disable
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    className={cn(
-                                        campaign.open_tracking
-                                            ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                                            : "bg-zinc-900 text-zinc-400"
-                                    )}
-                                    onClick={() => setCampaign({ ...campaign, open_tracking: true })}
-                                >
-                                    Enable
-                                </Button>
-                            </div>
+                            <ToggleButtons field="open_tracking" />
                         </div>
                     </div>
                 </CardContent>
@@ -2009,24 +1997,24 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                         <div className="flex items-center gap-3">
                             <div>
                                 <h3 className="font-bold text-white">Delivery Optimization</h3>
-                                <p className="text-sm text-zinc-500 mt-1">Disables open tracking</p>
+                                <p className="text-sm text-zinc-500 mt-1">Disables open tracking for better deliverability</p>
                             </div>
-                            <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[10px]">
-                                Recommended
-                            </Badge>
+                            <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[10px]">Recommended</Badge>
                         </div>
                         <div className="flex flex-col gap-2 items-end">
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <Checkbox
-                                    checked={campaign.send_as_text}
-                                    onCheckedChange={(checked) => setCampaign({ ...campaign, send_as_text: !!checked })}
+                                    checked={opts.send_as_text}
+                                    onCheckedChange={(c) => setOpts({ ...opts, send_as_text: !!c })}
                                 />
                                 <span className="text-sm text-zinc-400">Send emails as text-only (no HTML)</span>
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <Checkbox />
+                                <Checkbox
+                                    checked={opts.first_email_text_only}
+                                    onCheckedChange={(c) => setOpts({ ...opts, first_email_text_only: !!c })}
+                                />
                                 <span className="text-sm text-zinc-400">Send first email as text-only</span>
-                                <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[10px]">Pro</Badge>
                             </label>
                         </div>
                     </div>
@@ -2043,134 +2031,127 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                         </div>
                         <Input
                             type="number"
-                            value={campaign.daily_limit}
-                            onChange={(e) => setCampaign({ ...campaign, daily_limit: parseInt(e.target.value) })}
+                            value={opts.daily_limit ?? 50}
+                            onChange={(e) => setOpts({ ...opts, daily_limit: parseInt(e.target.value) || 0 })}
                             className="w-24 bg-zinc-900 border-zinc-800 text-right"
                         />
                     </div>
                 </CardContent>
             </Card>
 
-            {/* Advanced Options Section */}
-            {showAdvanced && (
-                <div className="space-y-6 pt-4 border-t border-zinc-800 animate-in fade-in slide-in-from-top-4 duration-300">
-                    <h3 className="text-lg font-semibold text-white">Advanced Settings</h3>
+            {/* Sending Pattern */}
+            <Card className="bg-zinc-950 border-zinc-800">
+                <CardContent className="p-6 space-y-5">
+                    <h3 className="font-bold text-white">Sending Pattern</h3>
+                    <p className="text-sm text-zinc-500 -mt-3">Specify how you want your emails to go</p>
 
-                    {isLoadingAdvanced ? (
-                        <div className="flex items-center justify-center py-8">
-                            <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+                    {/* Time gap between emails */}
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-zinc-300">Time gap between emails</p>
+                            <p className="text-xs text-zinc-500 mt-0.5">Minimum and random additional time per email</p>
                         </div>
-                    ) : (
-                        <>
-                            {/* Prioritize New Leads */}
-                            <Card className="bg-zinc-950 border-zinc-800">
-                                <CardContent className="p-6 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-bold text-white">Prioritize New Leads</h3>
-                                        <p className="text-sm text-zinc-500 mt-1">Send first emails to new leads before sending follow-ups.</p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            size="sm"
-                                            variant={advancedOptions.prioritize_new_leads ? "default" : "secondary"}
-                                            className={cn(advancedOptions.prioritize_new_leads ? "bg-primary text-primary-foreground" : "bg-zinc-800 text-zinc-400")}
-                                            onClick={() => setAdvancedOptions({ ...advancedOptions, prioritize_new_leads: true })}
-                                        >
-                                            Enable
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant={!advancedOptions.prioritize_new_leads ? "default" : "outline"}
-                                            className={cn(!advancedOptions.prioritize_new_leads ? "bg-zinc-900 text-white" : "border-zinc-800 text-zinc-400")}
-                                            onClick={() => setAdvancedOptions({ ...advancedOptions, prioritize_new_leads: false })}
-                                        >
-                                            Disable
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="number"
+                                    value={opts.minimum_wait_time ?? 9}
+                                    onChange={(e) => setOpts({ ...opts, minimum_wait_time: parseInt(e.target.value) || 0 })}
+                                    className="w-20 bg-zinc-900 border-zinc-800 text-right"
+                                />
+                                <span className="text-xs text-zinc-500">min</span>
+                            </div>
+                            <span className="text-zinc-600">+</span>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="number"
+                                    value={opts.random_variance ?? 5}
+                                    onChange={(e) => setOpts({ ...opts, random_variance: parseInt(e.target.value) || 0 })}
+                                    className="w-20 bg-zinc-900 border-zinc-800 text-right"
+                                />
+                                <span className="text-xs text-zinc-500">min random</span>
+                            </div>
+                        </div>
+                    </div>
 
-                            {/* Stop on Auto-Reply */}
-                            <Card className="bg-zinc-950 border-zinc-800">
-                                <CardContent className="p-6 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-bold text-white">Stop on Auto-Reply</h3>
-                                        <p className="text-sm text-zinc-500 mt-1">Stop sending emails if an auto-reply (OOO) is received.</p>
-                                    </div>
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <Checkbox
-                                            checked={advancedOptions.stop_on_auto_reply}
-                                            onCheckedChange={(c) => setAdvancedOptions({ ...advancedOptions, stop_on_auto_reply: !!c })}
-                                        />
-                                        <span className="text-sm text-zinc-400">Enable</span>
-                                    </label>
-                                </CardContent>
-                            </Card>
+                    {/* Prioritize New Leads */}
+                    <div className="flex items-center justify-between border-t border-zinc-900 pt-4">
+                        <div>
+                            <p className="text-sm font-medium text-zinc-300">Prioritize New Leads</p>
+                            <p className="text-xs text-zinc-500 mt-0.5">Prioritize reaching out to new leads over scheduled follow-ups</p>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                                checked={opts.prioritize_new_leads}
+                                onCheckedChange={(c) => setOpts({ ...opts, prioritize_new_leads: !!c })}
+                            />
+                            <span className="text-sm text-zinc-400">Enable</span>
+                        </label>
+                    </div>
+                </CardContent>
+            </Card>
 
-                            {/* Show Unsubscribe Header */}
-                            <Card className="bg-zinc-950 border-zinc-800">
-                                <CardContent className="p-6 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-bold text-white">Unsubscribe Header</h3>
-                                        <p className="text-sm text-zinc-500 mt-1">Include 'List-Unsubscribe' header in emails.</p>
-                                    </div>
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <Checkbox
-                                            checked={advancedOptions.show_unsubscribe}
-                                            onCheckedChange={(c) => setAdvancedOptions({ ...advancedOptions, show_unsubscribe: !!c })}
-                                        />
-                                        <span className="text-sm text-zinc-400">Enable</span>
-                                    </label>
-                                </CardContent>
-                            </Card>
+            {/* Stop on Auto-Reply */}
+            <Card className="bg-zinc-950 border-zinc-800">
+                <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="font-bold text-white">Stop Sending Emails on Auto-Reply</h3>
+                            <p className="text-sm text-zinc-500 mt-1">Stop sending if an automatic response (e.g. out-of-office) is received</p>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                                checked={opts.stop_on_auto_reply}
+                                onCheckedChange={(c) => setOpts({ ...opts, stop_on_auto_reply: !!c })}
+                            />
+                            <span className="text-sm text-zinc-400">Stop on auto-reply</span>
+                        </label>
+                    </div>
+                </CardContent>
+            </Card>
 
-                            {/* Wait Time & Variance */}
-                            <Card className="bg-zinc-950 border-zinc-800">
-                                <CardContent className="p-6 space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h3 className="font-bold text-white">Minimum Wait Time</h3>
-                                            <p className="text-sm text-zinc-500 mt-1">Minimum minutes between emails sent from same account.</p>
-                                        </div>
-                                        <Input
-                                            type="number"
-                                            className="w-24 bg-zinc-900 border-zinc-800 text-right"
-                                            value={advancedOptions.minimum_wait_time || 0}
-                                            onChange={(e) => setAdvancedOptions({ ...advancedOptions, minimum_wait_time: parseInt(e.target.value) })}
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between border-t border-zinc-900 pt-4">
-                                        <div>
-                                            <h3 className="font-bold text-white">Random Variance</h3>
-                                            <p className="text-sm text-zinc-500 mt-1">Max additional random minutes to wait.</p>
-                                        </div>
-                                        <Input
-                                            type="number"
-                                            className="w-24 bg-zinc-900 border-zinc-800 text-right"
-                                            value={advancedOptions.random_variance || 0}
-                                            onChange={(e) => setAdvancedOptions({ ...advancedOptions, random_variance: parseInt(e.target.value) })}
-                                        />
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </>
-                    )}
-                </div>
-            )}
+            {/* Stop for Company on Reply */}
+            <Card className="bg-zinc-950 border-zinc-800">
+                <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="font-bold text-white">Stop Campaign for Company on Reply</h3>
+                            <p className="text-sm text-zinc-500 mt-1">Stops the campaign for all leads from a company if any of them replies</p>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                                checked={opts.stop_campaign_for_company}
+                                onCheckedChange={(c) => setOpts({ ...opts, stop_campaign_for_company: !!c })}
+                            />
+                            <span className="text-sm text-zinc-400">Enable company reply stop</span>
+                        </label>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Insert Unsubscribe Link Header */}
+            <Card className="bg-zinc-950 border-zinc-800">
+                <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="font-bold text-white">Insert Unsubscribe Link Header</h3>
+                            <p className="text-sm text-zinc-500 mt-1">Automatically adds an unsubscribe link to email headers for one-click unsubscription</p>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                                checked={opts.show_unsubscribe}
+                                onCheckedChange={(c) => setOpts({ ...opts, show_unsubscribe: !!c })}
+                            />
+                            <span className="text-sm text-zinc-400">Insert unsubscribe header</span>
+                        </label>
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Action Bar */}
-            <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
+            <div className="flex items-center justify-end pt-4 border-t border-zinc-800">
                 <Button
-                    variant="ghost"
-                    className="text-zinc-500 hover:text-white gap-2"
-                    onClick={() => setShowAdvanced(!showAdvanced)}
-                >
-                    <Settings className="h-4 w-4" />
-                    {showAdvanced ? 'Hide advanced options' : 'Show advanced options'}
-                </Button>
-
-                <Button
-                    className="bg-primary hover:bg-primary/90 min-w-[140px]"
+                    className="bg-primary hover:bg-primary/90 min-w-[160px]"
                     onClick={handleSaveOptions}
                     disabled={isSaving}
                 >
@@ -2179,7 +2160,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             Saving...
                         </>
-                    ) : 'Save Changes'}
+                    ) : 'Save & Sync to Instantly'}
                 </Button>
             </div>
         </div>

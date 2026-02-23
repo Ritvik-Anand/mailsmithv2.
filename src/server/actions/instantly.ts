@@ -958,13 +958,46 @@ export async function getCampaignAdvancedOptionsFromInstantly(campaignId: string
 }
 
 /**
- * Update advanced options for a campaign in Instantly
+ * Update ALL campaign options in Instantly + local DB in one call.
+ * Merges basic options (daily_limit, stop_on_reply, open_tracking, etc.)
+ * with advanced options (minimum_wait_time, prioritize_new_leads, etc.)
+ * so a single Save button press syncs everything.
  */
-export async function updateCampaignAdvancedOptionsInInstantly(campaignId: string, options: InstantlyCampaignOptions) {
+export async function updateCampaignAdvancedOptionsInInstantly(campaignId: string, options: InstantlyCampaignOptions & Record<string, any>) {
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+    let supabase = supabaseClient
+    if (user) {
+        const { data: userData } = await supabaseClient.from('users').select('role').eq('id', user.id).single()
+        if (userData?.role === 'operator' || userData?.role === 'super_admin') {
+            supabase = createAdminClient()
+        }
+    }
+
     try {
         const instantlyId = await ensureInstantlyCampaignExists(campaignId)
 
+        // Push ALL options to Instantly in one PATCH call
         await instantly.updateCampaignOptions(instantlyId, options)
+
+        // Persist to local DB so our state matches Instantly
+        const dbUpdate: Record<string, any> = {}
+        if (options.daily_limit !== undefined) dbUpdate.daily_limit = options.daily_limit
+        if (options.stop_on_reply !== undefined) dbUpdate.stop_on_reply = options.stop_on_reply
+        if (options.open_tracking !== undefined) dbUpdate.open_tracking = options.open_tracking
+        if (options.link_tracking !== undefined) dbUpdate.link_tracking = options.link_tracking
+        if (options.send_as_text !== undefined) dbUpdate.send_as_text = options.send_as_text
+        if (options.delivery_optimization !== undefined) dbUpdate.delivery_optimization = options.delivery_optimization
+        if (options.prioritize_new_leads !== undefined) dbUpdate.prioritize_new_leads = options.prioritize_new_leads
+        if (options.stop_on_auto_reply !== undefined) dbUpdate.stop_on_auto_reply = options.stop_on_auto_reply
+        if (options.show_unsubscribe !== undefined) dbUpdate.show_unsubscribe = options.show_unsubscribe
+        if (options.minimum_wait_time !== undefined) dbUpdate.minimum_wait_time = options.minimum_wait_time
+        if (options.random_variance !== undefined) dbUpdate.random_variance = options.random_variance
+        if (options.first_email_text_only !== undefined) dbUpdate.first_email_text_only = options.first_email_text_only
+
+        if (Object.keys(dbUpdate).length > 0) {
+            await supabase.from('campaigns').update(dbUpdate).eq('id', campaignId)
+        }
 
         revalidatePath(`/operator/campaigns/${campaignId}`)
         return { success: true }
@@ -973,6 +1006,7 @@ export async function updateCampaignAdvancedOptionsInInstantly(campaignId: strin
         return { success: false, error: error.message }
     }
 }
+
 
 /**
  * Toggle campaign status (Active/Paused)
