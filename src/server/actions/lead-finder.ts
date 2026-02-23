@@ -681,32 +681,54 @@ export async function getLeadsFromJob(
             .select('*', { count: 'exact', head: true })
             .eq('scrape_job_id', jobId)
 
-        // Get leads - if pageSize is -1 or 0, get ALL leads
-        let query = supabase
-            .from('leads')
-            .select('*')
-            .eq('scrape_job_id', jobId)
-            .order('created_at', { ascending: false })
-
-        // Only apply pagination if pageSize is positive.
-        // When fetching all (pageSize <= 0), explicitly set the limit to the exact
-        // row count so we bypass Supabase/PostgREST's default 1000-row server cap.
+        // ── Paginated mode ────────────────────────────────────────────────────
         if (pageSize > 0) {
-            query = query.range(offset, offset + pageSize - 1)
-        } else if (count && count > 0) {
-            query = query.limit(count)
+            const offset = (page - 1) * pageSize
+            const { data, error } = await supabase
+                .from('leads')
+                .select('*')
+                .eq('scrape_job_id', jobId)
+                .order('created_at', { ascending: false })
+                .range(offset, offset + pageSize - 1)
+
+            if (error) {
+                console.error('Get leads error:', error)
+                return { success: false, error: 'Failed to fetch leads' }
+            }
+
+            return { success: true, leads: data as Lead[], total: count || 0 }
         }
 
-        const { data, error } = await query
+        // ── "Fetch all" mode (pageSize <= 0) ──────────────────────────────────
+        // Supabase's PostgREST has a server-level max_rows = 1000 that cannot be
+        // overridden by .limit(). The only reliable fix is to paginate in chunks.
+        const PAGE_CHUNK = 1000
+        const total = count || 0
+        const allLeads: Lead[] = []
 
-        if (error) {
-            console.error('Get leads error:', error)
-            return { success: false, error: 'Failed to fetch leads' }
+        for (let chunkOffset = 0; chunkOffset < total; chunkOffset += PAGE_CHUNK) {
+            const { data: chunk, error: chunkError } = await supabase
+                .from('leads')
+                .select('*')
+                .eq('scrape_job_id', jobId)
+                .order('created_at', { ascending: false })
+                .range(chunkOffset, chunkOffset + PAGE_CHUNK - 1)
+
+            if (chunkError) {
+                console.error(`Get leads chunk error at offset ${chunkOffset}:`, chunkError)
+                return { success: false, error: 'Failed to fetch leads' }
+            }
+
+            if (!chunk || chunk.length === 0) break
+            allLeads.push(...(chunk as Lead[]))
+            if (chunk.length < PAGE_CHUNK) break
         }
+
+        console.log(`[getLeadsFromJob] Fetched all ${allLeads.length} leads (total count: ${total})`)
 
         return {
             success: true,
-            leads: data as Lead[],
+            leads: allLeads,
             total: count || 0,
         }
     } catch (error) {
