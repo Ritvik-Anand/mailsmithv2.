@@ -251,7 +251,7 @@ export function SearchJobsList({ onViewJob, refreshKey }: SearchJobsListProps) {
                                         )}
                                         {job.status === 'completed' && (
                                             <div className="flex gap-2">
-                                                {job.leads_found > 0 && job.leads_imported === 0 && (
+                                                {job.leads_found > 0 && (
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
@@ -262,7 +262,7 @@ export function SearchJobsList({ onViewJob, refreshKey }: SearchJobsListProps) {
                                                         }}
                                                     >
                                                         <RefreshCw className="h-3 w-3 mr-1" />
-                                                        Retry Sync
+                                                        {job.leads_imported === 0 ? 'Retry Sync' : 'Re-sync'}
                                                     </Button>
                                                 )}
                                                 <Button

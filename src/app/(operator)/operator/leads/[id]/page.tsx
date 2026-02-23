@@ -621,8 +621,8 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                 </div>
 
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full md:w-auto">
-                    {/* Show Retry Sync button if job has apify_run_id but no leads imported */}
-                    {job?.apify_run_id && (job?.leads_imported || 0) === 0 && (
+                    {/* Show Retry Sync button for any completed job with an apify_run_id */}
+                    {job?.apify_run_id && job?.status === 'completed' && (
                         <Button
                             variant="outline"
                             className="bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20 hover:text-amber-400"
@@ -630,7 +630,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                             disabled={isSyncing}
                         >
                             {isSyncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-                            Retry Sync from Apify
+                            {(job?.leads_imported || 0) === 0 ? 'Retry Sync from Apify' : 'Re-sync from Apify'}
                         </Button>
                     )}
                     <Button
