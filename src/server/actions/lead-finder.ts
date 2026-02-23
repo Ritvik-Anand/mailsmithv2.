@@ -688,9 +688,13 @@ export async function getLeadsFromJob(
             .eq('scrape_job_id', jobId)
             .order('created_at', { ascending: false })
 
-        // Only apply pagination if pageSize is positive
+        // Only apply pagination if pageSize is positive.
+        // When fetching all (pageSize <= 0), explicitly set the limit to the exact
+        // row count so we bypass Supabase/PostgREST's default 1000-row server cap.
         if (pageSize > 0) {
             query = query.range(offset, offset + pageSize - 1)
+        } else if (count && count > 0) {
+            query = query.limit(count)
         }
 
         const { data, error } = await query

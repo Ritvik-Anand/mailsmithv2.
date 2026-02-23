@@ -569,11 +569,13 @@ export async function addLeadsToInstantlyCampaign(
             throw new Error('Campaign not found')
         }
 
-        // 2. Get lead details
+        // 2. Get lead details — set an explicit limit so we don't hit the
+        //    PostgREST default 1000-row cap for large batches.
         const { data: leads, error: leadsError } = await supabase
             .from('leads')
             .select('*')
             .in('id', leadIds)
+            .limit(leadIds.length)
 
         if (leadsError || !leads || leads.length === 0) {
             throw new Error('No leads found to add')
