@@ -532,11 +532,13 @@ export async function getAllOutreachNodes() {
 }
 
 /**
- * Pushes MailSmith leads to an Instantly campaign
+ * Pushes MailSmith leads to an Instantly campaign.
+ * Accepts a scrapeJobId and fetches leads server-side to avoid URL length
+ * limits that occur when passing thousands of IDs via .in().
  */
 export async function addLeadsToInstantlyCampaign(
     campaignId: string, // Internal ID of campaign in our DB
-    leadIds: string[]
+    scrapeJobId: string  // Fetch ready leads from this job server-side
 ) {
     // Check user role to determine which client to use
     const supabaseClient = await createClient()
@@ -569,54 +571,83 @@ export async function addLeadsToInstantlyCampaign(
             throw new Error('Campaign not found')
         }
 
-        // 2. Get lead details — set an explicit limit so we don't hit the
-        //    PostgREST default 1000-row cap for large batches.
-        const { data: leads, error: leadsError } = await supabase
+        // 2. Get total count of ready leads for this job
+        const { count: total } = await supabase
             .from('leads')
-            .select('*')
-            .in('id', leadIds)
-            .limit(leadIds.length)
+            .select('id', { count: 'exact', head: true })
+            .eq('scrape_job_id', scrapeJobId)
+            .eq('icebreaker_status', 'completed')
+            .eq('campaign_status', 'not_added')
 
-        if (leadsError || !leads || leads.length === 0) {
+        if (!total || total === 0) {
             throw new Error('No leads found to add')
         }
 
-        // 3. If campaign is linked to Instantly, push leads there
-        if (campaign.instantly_campaign_id) {
-            // Ensure leads have email (Instantly requirement)
-            const validLeads = leads.filter(l => l.email && l.email.trim() !== '')
+        // 3. Fetch leads in chunks (avoids .in() URL length limits and Supabase max_rows cap)
+        const CHUNK_SIZE = 500
+        const allLeads: any[] = []
 
+        for (let offset = 0; offset < total; offset += CHUNK_SIZE) {
+            const { data: chunk, error: chunkError } = await supabase
+                .from('leads')
+                .select('*')
+                .eq('scrape_job_id', scrapeJobId)
+                .eq('icebreaker_status', 'completed')
+                .eq('campaign_status', 'not_added')
+                .range(offset, offset + CHUNK_SIZE - 1)
+
+            if (chunkError) throw new Error(`Failed to fetch leads chunk at offset ${offset}`)
+            if (!chunk || chunk.length === 0) break
+            allLeads.push(...chunk)
+            if (chunk.length < CHUNK_SIZE) break
+        }
+
+        if (allLeads.length === 0) {
+            throw new Error('No leads found to add')
+        }
+
+        const validLeads = allLeads.filter((l: any) => l.email && l.email.trim() !== '')
+
+        // 4. If campaign is linked to Instantly, push leads in batches
+        if (campaign.instantly_campaign_id) {
             if (validLeads.length === 0) {
-                // If we filtered out all leads because of missing emails, throw consistent error
                 throw new Error('No leads with valid emails found')
             }
 
-            // Call Instantly API with raw DB leads (client handles formatting)
-            await instantly.addLeadsToCampaign(campaign.instantly_campaign_id, validLeads)
+            // Instantly API also has limits — push in batches of 500
+            const INSTANTLY_BATCH = 500
+            for (let i = 0; i < validLeads.length; i += INSTANTLY_BATCH) {
+                const batch = validLeads.slice(i, i + INSTANTLY_BATCH)
+                await instantly.addLeadsToCampaign(campaign.instantly_campaign_id, batch)
+            }
         }
 
-        // 4. Update lead status in our DB (whether or not it's linked to Instantly)
-        await supabase
-            .from('leads')
-            .update({
-                campaign_id: campaignId,
-                campaign_status: campaign.instantly_campaign_id ? 'queued' : 'not_added'
-            })
-            .in('id', leadIds)
+        // 5. Update lead statuses in our DB in chunks (avoids URL length limits)
+        const allIds = allLeads.map((l: any) => l.id)
+        const newStatus = campaign.instantly_campaign_id ? 'queued' : 'not_added'
+
+        for (let i = 0; i < allIds.length; i += CHUNK_SIZE) {
+            const idBatch = allIds.slice(i, i + CHUNK_SIZE)
+            await supabase
+                .from('leads')
+                .update({ campaign_id: campaignId, campaign_status: newStatus })
+                .in('id', idBatch)
+        }
 
         revalidatePath('/operator/leads')
         return {
             success: true,
-            count: leads.length,
+            count: allLeads.length,
             message: campaign.instantly_campaign_id
-                ? `Added ${leads.length} leads to campaign`
-                : `Assigned ${leads.length} leads to draft campaign. Link to Instantly to send emails.`
+                ? `Added ${allLeads.length} leads to campaign`
+                : `Assigned ${allLeads.length} leads to draft campaign. Link to Instantly to send emails.`
         }
     } catch (error: any) {
         console.error('Error adding leads to campaign:', error)
         return { success: false, error: error.message }
     }
 }
+
 
 /**
  * Sync ALL leads for a campaign to Instantly

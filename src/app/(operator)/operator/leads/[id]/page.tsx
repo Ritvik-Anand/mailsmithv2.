@@ -321,21 +321,9 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
 
         setIsPushing(true)
         try {
-            // Always fetch ALL leads from the server — the local `leads` state only
-            // holds the current page, so we'd miss most leads in large jobs.
-            const allLeadsRes = await getLeadsFromJob(jobId, { pageSize: -1 })
-            if (!allLeadsRes.success || !allLeadsRes.leads) {
-                toast.error(allLeadsRes.error || 'Failed to fetch leads')
-                return
-            }
-
-            const readyLeads = allLeadsRes.leads.filter(l => l.icebreaker_status === 'completed' && l.campaign_status === 'not_added')
-            if (readyLeads.length === 0) {
-                toast.warning('No leads ready to push. Ensure icebreakers are generated first.')
-                return
-            }
-
-            const result = await addLeadsToInstantlyCampaign(selectedCampaign, readyLeads.map(l => l.id))
+            // Pass jobId — the server fetches all ready leads in chunks server-side,
+            // avoiding URL length limits from passing thousands of IDs.
+            const result = await addLeadsToInstantlyCampaign(selectedCampaign, jobId)
             if (result.success) {
                 toast.success(result.message || `Successfully pushed ${result.count} leads to campaign`)
                 fetchData()
