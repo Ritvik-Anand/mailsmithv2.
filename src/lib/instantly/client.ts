@@ -66,10 +66,8 @@ export class InstantlyClient {
         this.apiKey = key
     }
 
-    private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    private async request<T>(endpoint: string, options: RequestInit = {}, retries = 3): Promise<T> {
         const url = new URL(`${INSTANTLY_BASE_URL}${endpoint}`)
-        // V2 uses Authorization header, query param not needed/might interfere
-
 
         const response = await fetch(url.toString(), {
             ...options,
@@ -79,6 +77,17 @@ export class InstantlyClient {
                 ...options.headers,
             },
         })
+
+        // Retry with exponential backoff on rate limit errors
+        if (response.status === 429 && retries > 0) {
+            const retryAfterHeader = response.headers.get('Retry-After')
+            const waitMs = retryAfterHeader
+                ? parseInt(retryAfterHeader) * 1000
+                : (4 - retries) * 2000 // 2s, 4s, 6s
+            console.warn(`[Instantly] 429 Rate limited. Retrying in ${waitMs}ms... (${retries} retries left)`)
+            await new Promise(resolve => setTimeout(resolve, waitMs))
+            return this.request<T>(endpoint, options, retries - 1)
+        }
 
         if (!response.ok) {
             const errorText = await response.text()
@@ -189,8 +198,11 @@ export class InstantlyClient {
             } : lead.custom_variables
         }))
 
-        // Process sequentially
-        const batchSize = 10
+        // Process in small concurrent batches with a delay between each
+        // to avoid Instantly's rate limit (429 Too Many Requests).
+        // 5 concurrent + 200ms pause = ~20 req/s, well under typical API limits.
+        const batchSize = 5
+        const BATCH_DELAY_MS = 200
         const results = []
 
         for (let i = 0; i < formattedLeads.length; i += batchSize) {
@@ -199,16 +211,21 @@ export class InstantlyClient {
                 this.request('/leads', {
                     method: 'POST',
                     body: JSON.stringify({
-                        campaign: campaignId, // PRIMARY V2 PARAMETER
-                        campaign_id: campaignId, // Legacy backup
+                        campaign: campaignId,
+                        campaign_id: campaignId,
                         skip_if_in_workspace: false,
                         skip_if_in_campaign: true,
                         ...lead
                     })
                 })
             )
-            const batchResults = await Promise.all(batchPromises)
+            const batchResults = await Promise.allSettled(batchPromises)
             results.push(...batchResults)
+
+            // Pause between batches to respect rate limits
+            if (i + batchSize < formattedLeads.length) {
+                await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS))
+            }
         }
 
         return results
