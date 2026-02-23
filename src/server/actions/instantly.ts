@@ -915,9 +915,55 @@ export async function updateCampaignAccountsInInstantly(campaignId: string, emai
 }
 
 /**
+ * Fetch the live status of a campaign from Instantly and update the local DB.
+ * Returns the resolved status: 'active' | 'paused' | null (if not linked).
+ * Calling this on page load keeps the Pause/Resume button accurate.
+ */
+export async function getLiveCampaignStatusFromInstantly(campaignId: string): Promise<{ status: 'active' | 'paused' | null }> {
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+    let supabase = supabaseClient
+    if (user) {
+        const { data: userData } = await supabaseClient.from('users').select('role').eq('id', user.id).single()
+        if (userData?.role === 'operator' || userData?.role === 'super_admin') {
+            supabase = createAdminClient()
+        }
+    }
+
+    try {
+        const { data: local, error } = await supabase
+            .from('campaigns')
+            .select('instantly_campaign_id')
+            .eq('id', campaignId)
+            .single()
+
+        if (error || !local?.instantly_campaign_id) return { status: null }
+
+        const remoteCampaign: any = await instantly.getCampaign(local.instantly_campaign_id)
+
+        // Instantly V2: status 1 = active, 0 = paused/draft, 2 = draft, -1 = completed
+        const s = remoteCampaign?.status ?? remoteCampaign?.campaign_status
+        const liveStatus: 'active' | 'paused' = (s === 1 || s === 'active') ? 'active' : 'paused'
+
+        // Patch local DB silently so future page loads are accurate
+        await supabase
+            .from('campaigns')
+            .update({ status: liveStatus, instantly_status: liveStatus })
+            .eq('id', campaignId)
+
+        revalidatePath(`/operator/campaigns/${campaignId}`)
+        return { status: liveStatus }
+    } catch (err) {
+        console.warn('[getLiveCampaignStatusFromInstantly] Failed:', err)
+        return { status: null }
+    }
+}
+
+/**
  * Get advanced options for a campaign from Instantly
  */
 export async function getCampaignAdvancedOptionsFromInstantly(campaignId: string) {
+
     const supabase = await createClient()
 
     try {

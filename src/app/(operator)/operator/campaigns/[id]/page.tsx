@@ -52,7 +52,7 @@ import {
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { getCampaignById, getCampaignLeads, getCampaignSequences, upsertSequenceStep, deleteSequenceStep, getCampaignSchedules, upsertSchedule, updateCampaign, syncCampaignStats } from '@/server/actions/campaigns'
-import { getOrganizationNodes, getCampaignAccountsFromInstantly, updateCampaignAccountsInInstantly, getCampaignAdvancedOptionsFromInstantly, updateCampaignAdvancedOptionsInInstantly, toggleCampaignStatus, syncAllCampaignLeads } from '@/server/actions/instantly'
+import { getOrganizationNodes, getCampaignAccountsFromInstantly, updateCampaignAccountsInInstantly, getCampaignAdvancedOptionsFromInstantly, updateCampaignAdvancedOptionsInInstantly, toggleCampaignStatus, syncAllCampaignLeads, getLiveCampaignStatusFromInstantly } from '@/server/actions/instantly'
 import { cn } from '@/lib/utils'
 
 const TABS = [
@@ -82,6 +82,16 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 const result = await getCampaignById(resolvedParams.id)
                 if (result.success && result.campaign) {
                     setCampaign(result.campaign)
+
+                    // Silently fetch the live status from Instantly in the background
+                    // so the Pause/Resume button reflects reality even if the DB is stale.
+                    if (result.campaign.instantly_campaign_id) {
+                        getLiveCampaignStatusFromInstantly(resolvedParams.id).then(({ status }) => {
+                            if (status) {
+                                setCampaign((prev: any) => prev ? { ...prev, status } : prev)
+                            }
+                        }).catch(() => { /* non-fatal — button falls back to DB value */ })
+                    }
                 } else {
                     toast.error('Campaign not found')
                     router.push('/operator/campaigns')
