@@ -181,7 +181,8 @@ export async function getLeadSearchStatus(runId: string): Promise<{
 }
 
 /**
- * Fetch results from a completed lead search
+ * Fetch results from a completed lead search.
+ * Paginates automatically so ALL items are returned regardless of dataset size.
  */
 export async function fetchLeadSearchResults(
     datasetId: string,
@@ -189,31 +190,61 @@ export async function fetchLeadSearchResults(
 ): Promise<{ items: ApifyLeadResult[]; total: number }> {
     validateConfig();
 
-    const { limit = 1000, offset = 0 } = options;
-    const url = `${APIFY_BASE_URL}/datasets/${datasetId}/items?token=${APIFY_API_TOKEN}&limit=${limit}&offset=${offset}&format=json`;
+    // If a specific limit/offset was requested (e.g. for a quick preview), honour it.
+    // Otherwise fetch every item in the dataset by paginating through in batches.
+    const explicitLimit = options.limit;
+    const PAGE_SIZE = 1000;
 
-    const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    });
-
-    if (!response.ok) {
-        throw new Error('Failed to fetch search results. Please try again.');
-    }
-
-    // Apify returns items as a direct array when using /items endpoint
-    const items: ApifyLeadResult[] = await response.json();
-
-    // Get dataset info for total count
+    // ── 1. Get total item count from dataset metadata ─────────────────────────
     const infoUrl = `${APIFY_BASE_URL}/datasets/${datasetId}?token=${APIFY_API_TOKEN}`;
     const infoResponse = await fetch(infoUrl);
+    if (!infoResponse.ok) {
+        throw new Error('Failed to fetch dataset info. Please try again.');
+    }
     const infoData = await infoResponse.json();
+    const total: number = infoData.data?.itemCount || 0;
+
+    console.log(`[Apify] Dataset ${datasetId} has ${total} total items.`);
+
+    // ── 2. Determine fetch strategy ───────────────────────────────────────────
+    if (explicitLimit !== undefined) {
+        // Caller asked for a specific window – single request, no pagination.
+        const offset = options.offset ?? 0;
+        const url = `${APIFY_BASE_URL}/datasets/${datasetId}/items?token=${APIFY_API_TOKEN}&limit=${explicitLimit}&offset=${offset}&format=json`;
+        const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+        if (!response.ok) throw new Error('Failed to fetch search results. Please try again.');
+        const items: ApifyLeadResult[] = await response.json();
+        return { items, total };
+    }
+
+    // ── 3. Paginate through ALL items ─────────────────────────────────────────
+    const allItems: ApifyLeadResult[] = [];
+    let offset = 0;
+
+    while (offset < total || (total === 0 && offset === 0)) {
+        const url = `${APIFY_BASE_URL}/datasets/${datasetId}/items?token=${APIFY_API_TOKEN}&limit=${PAGE_SIZE}&offset=${offset}&format=json`;
+        const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch search results at offset ${offset}. Please try again.`);
+        }
+
+        const page: ApifyLeadResult[] = await response.json();
+        console.log(`[Apify] Fetched page offset=${offset}, got ${page.length} items.`);
+
+        if (page.length === 0) break; // nothing left
+
+        allItems.push(...page);
+        offset += page.length;
+
+        if (page.length < PAGE_SIZE) break; // last partial page
+    }
+
+    console.log(`[Apify] Total items fetched across all pages: ${allItems.length} (dataset total: ${total})`);
 
     return {
-        items,
-        total: infoData.data?.itemCount || items.length,
+        items: allItems,
+        total: total || allItems.length,
     };
 }
 

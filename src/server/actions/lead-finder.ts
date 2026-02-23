@@ -553,10 +553,13 @@ export async function processJobResults(
             return acc
         }, [] as Partial<Lead>[])
 
-        // Insert leads (ignore duplicates based on org + email unique constraint)
+        // Insert leads in batches to handle large datasets without hitting Supabase row limits.
+        // Supabase/PostgREST caps a single request at ~1 000 rows returned, so we chunk the
+        // upserts and count from the number of rows we sent (not the truncated response).
+        const BATCH_SIZE = 500
         let imported = 0
         if (uniqueLeads.length > 0) {
-            console.log(`[Lead Finder] Upserting ${uniqueLeads.length} unique leads`);
+            console.log(`[Lead Finder] Upserting ${uniqueLeads.length} unique leads in batches of ${BATCH_SIZE}`);
 
             // Explicitly map only the columns that exist in the database
             // This prevents TypeScript type fields from breaking the insert
@@ -577,21 +580,26 @@ export async function processJobResults(
                 updated_at: new Date().toISOString(),
             }));
 
-            const { data: insertedLeads, error: insertError } = await supabaseAdmin
-                .from('leads')
-                .upsert(leadsToInsert, {
-                    onConflict: 'organization_id,email',
-                    ignoreDuplicates: false
-                })
-                .select('id')
+            for (let i = 0; i < leadsToInsert.length; i += BATCH_SIZE) {
+                const batch = leadsToInsert.slice(i, i + BATCH_SIZE)
+                console.log(`[Lead Finder] Inserting batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(leadsToInsert.length / BATCH_SIZE)} (${batch.length} rows)`)
 
-            if (insertError) {
-                console.error('[Lead Finder] Lead insert error:', insertError)
-                return { success: false, error: `Database error: ${insertError.message}` }
-            } else {
-                imported = insertedLeads?.length || 0
-                console.log(`[Lead Finder] Successfully imported ${imported} leads`);
+                const { error: insertError } = await supabaseAdmin
+                    .from('leads')
+                    .upsert(batch, {
+                        onConflict: 'organization_id,email',
+                        ignoreDuplicates: false
+                    })
+
+                if (insertError) {
+                    console.error(`[Lead Finder] Lead insert error at batch offset ${i}:`, insertError)
+                    return { success: false, error: `Database error: ${insertError.message}` }
+                }
+
+                imported += batch.length
             }
+
+            console.log(`[Lead Finder] Successfully imported ${imported} leads`);
         } else if (items.length > 0) {
             console.warn('[Lead Finder] No leads were suitable for import (missing emails?) among ' + items.length + ' items');
             // Check if items actually have data
