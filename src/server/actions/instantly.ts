@@ -571,16 +571,20 @@ export async function addLeadsToInstantlyCampaign(
             throw new Error('Campaign not found')
         }
 
-        // 2. Get total count of ready leads for this job
+        // 2. Get total count of pushable leads for this job.
+        // We push ALL leads with a valid email that haven't been added yet.
+        // The icebreaker is used as personalization if it exists, but is not
+        // required — this prevents partial pushes when icebreakers are still generating.
         const { count: total } = await supabase
             .from('leads')
             .select('id', { count: 'exact', head: true })
             .eq('scrape_job_id', scrapeJobId)
-            .eq('icebreaker_status', 'completed')
             .eq('campaign_status', 'not_added')
+            .not('email', 'is', null)
+            .neq('email', '')
 
         if (!total || total === 0) {
-            throw new Error('No leads found to add')
+            throw new Error('No leads available to push. They may have already been added to a campaign.')
         }
 
         // 3. Fetch leads in chunks (avoids .in() URL length limits and Supabase max_rows cap)
@@ -592,8 +596,9 @@ export async function addLeadsToInstantlyCampaign(
                 .from('leads')
                 .select('*')
                 .eq('scrape_job_id', scrapeJobId)
-                .eq('icebreaker_status', 'completed')
                 .eq('campaign_status', 'not_added')
+                .not('email', 'is', null)
+                .neq('email', '')
                 .range(offset, offset + CHUNK_SIZE - 1)
 
             if (chunkError) throw new Error(`Failed to fetch leads chunk at offset ${offset}`)
