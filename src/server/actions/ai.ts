@@ -70,12 +70,43 @@ export async function getIcebreakerGenerationStatus(jobId: string): Promise<{
     try {
         const { data, error } = await supabase
             .from('scrape_jobs')
-            .select('icebreaker_generation_status, icebreaker_generation_progress')
+            .select('icebreaker_generation_status, icebreaker_generation_progress, icebreaker_generation_started_at')
             .eq('id', jobId)
             .single()
 
         if (error || !data) {
             return { success: false, error: 'Job not found' }
+        }
+
+        // ── Self-heal stale 'running' jobs ─────────────────────────────────────
+        // If the Edge Function crashed, timed out, or the self-chain broke, the
+        // job stays stuck as 'running' forever. Detect this by checking if it has
+        // been 'running' for more than 5 minutes, then automatically re-queue.
+        if (data.icebreaker_generation_status === 'running' && data.icebreaker_generation_started_at) {
+            const startedAt = new Date(data.icebreaker_generation_started_at).getTime()
+            const staleDurationMs = 5 * 60 * 1000 // 5 minutes
+            if (Date.now() - startedAt > staleDurationMs) {
+                console.log(`[getIcebreakerGenerationStatus] Job ${jobId} has been 'running' for >5min. Auto-recovering...`)
+
+                // Reset stuck 'generating' leads back to 'pending'
+                await supabase
+                    .from('leads')
+                    .update({ icebreaker_status: 'pending' })
+                    .eq('scrape_job_id', jobId)
+                    .eq('icebreaker_status', 'generating')
+
+                // Re-queue the job to trigger the webhook again
+                await supabase
+                    .from('scrape_jobs')
+                    .update({
+                        icebreaker_generation_status: 'queued',
+                        icebreaker_generation_started_at: new Date().toISOString()
+                    })
+                    .eq('id', jobId)
+
+                // Return 'queued' so the UI shows it's restarting
+                data.icebreaker_generation_status = 'queued'
+            }
         }
 
         // Also get live counts from leads table for accurate real-time progress

@@ -85,6 +85,24 @@ Deno.serve(async (req: Request) => {
         ? await getCustomerContext(supabase, orgIdToUse)
         : null
 
+    // ── Recover stuck leads ────────────────────────────────────────────────────
+    // If a previous invocation crashed or timed out, some leads may be stuck in
+    // 'generating' state. Reset them to 'pending' so they get retried.
+    const { count: stuckCount } = await supabase
+        .from('leads')
+        .select('id', { count: 'exact', head: true })
+        .eq('scrape_job_id', jobId)
+        .eq('icebreaker_status', 'generating')
+
+    if (stuckCount && stuckCount > 0) {
+        await supabase
+            .from('leads')
+            .update({ icebreaker_status: 'pending' })
+            .eq('scrape_job_id', jobId)
+            .eq('icebreaker_status', 'generating')
+        console.log(`[process-icebreakers] Recovered ${stuckCount} stuck 'generating' leads back to 'pending'`)
+    }
+
     // ── Processing loop ────────────────────────────────────────────────────────
     const startTime = Date.now()
     let totalCompleted = 0
