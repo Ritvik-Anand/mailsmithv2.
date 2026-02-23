@@ -252,18 +252,25 @@ export function SearchJobsList({ onViewJob, refreshKey }: SearchJobsListProps) {
                                         {job.status === 'completed' && (
                                             <div className="flex gap-2">
                                                 {job.leads_found > 0 && (
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="text-xs"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            onViewJob?.(job.id)
-                                                        }}
-                                                    >
-                                                        <RefreshCw className="h-3 w-3 mr-1" />
-                                                        {job.leads_imported === 0 ? 'Retry Sync' : 'Re-sync'}
-                                                    </Button>
+                                                    <div className="flex flex-col gap-1 items-end">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="text-xs"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                onViewJob?.(job.id)
+                                                            }}
+                                                        >
+                                                            <RefreshCw className="h-3 w-3 mr-1" />
+                                                            {job.leads_imported === 0 ? 'Retry with Scraper' : 'Re-sync with Scraper'}
+                                                        </Button>
+                                                        {job.leads_imported > 0 && (
+                                                            <span className="text-[10px] text-amber-500/80 max-w-[120px] text-right leading-tight">
+                                                                Warning: removes icebreakers
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 )}
                                                 <Button
                                                     variant="secondary"
