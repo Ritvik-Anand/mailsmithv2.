@@ -581,6 +581,8 @@ export async function syncCampaignStats(campaignId: string) {
         }
 
         // 4. Map V2 field names to local columns
+        console.log('[syncCampaignStats] Raw Instantly analytics response:', JSON.stringify(stats, null, 2))
+
         const getVal = (fields: string[]) => {
             for (const f of fields) {
                 if (stats[f] !== undefined && stats[f] !== null) return Number(stats[f])
@@ -602,14 +604,50 @@ export async function syncCampaignStats(campaignId: string) {
         }
 
         const updatePayload: Record<string, any> = {
-            emails_sent: getVal(['total_sent', 'sent_count', 'sent']),
-            emails_opened: getVal(['open_count_unique', 'open_count', 'total_opened', 'unique_opens', 'opened']),
-            emails_replied: getVal(['reply_count_unique', 'reply_count', 'total_replied', 'unique_replies', 'replied']),
-            emails_bounced: getVal(['bounced_count', 'total_bounced', 'bounced']),
-            emails_clicked: getVal(['link_click_count_unique', 'link_click_count', 'total_clicked', 'unique_clicks', 'clicked']),
-            emails_interested: getVal(['total_interested', 'total_opportunities', 'interested_count', 'interested']),
-            emails_uninterested: getVal(['total_uninterested', 'uninterested_count', 'uninterested']),
-            emails_unsubscribed: getVal(['unsubscribed_count', 'total_unsubscribed', 'unsubscribed']),
+            emails_sent: getVal([
+                'new_leads_contacted',      // V2 primary field (Sequence Started)
+                'total_leads_contacted',
+                'leads_contacted',
+                'total_sent',               // aggregate fallback
+                'sent_count', 'sent'
+            ]),
+            emails_opened: getVal([
+                'leads_who_read',           // V2 primary unique opens
+                'unique_reads',
+                'open_count_unique',
+                'unique_opens',
+                'open_count', 'total_opened', 'opened'
+            ]),
+            emails_replied: getVal([
+                'leads_who_replied',        // V2 primary unique replies
+                'unique_replies',
+                'reply_count_unique',
+                'reply_count', 'total_replied', 'replied'
+            ]),
+            emails_bounced: getVal([
+                'leads_who_bounced',        // V2 primary
+                'bounced_count', 'total_bounced', 'bounced'
+            ]),
+            emails_clicked: getVal([
+                'leads_who_clicked',        // V2 primary
+                'link_click_count_unique',
+                'unique_clicks',
+                'link_click_count', 'total_clicked', 'clicked'
+            ]),
+            emails_interested: getVal([
+                'total_opportunities',      // V2 with expand_crm_events
+                'total_interested',
+                'leads_who_are_interested',
+                'interested_count', 'interested'
+            ]),
+            emails_uninterested: getVal([
+                'total_uninterested',
+                'uninterested_count', 'uninterested'
+            ]),
+            emails_unsubscribed: getVal([
+                'leads_who_unsubscribed',   // V2 primary
+                'unsubscribed_count', 'total_unsubscribed', 'unsubscribed'
+            ]),
             last_synced_at: new Date().toISOString(),
             last_stats_sync_at: new Date().toISOString(),
             sync_error: null
@@ -674,12 +712,50 @@ export async function syncAllCampaignsLiveStats() {
             const { data, error } = await supabase
                 .from('campaigns')
                 .update({
-                    emails_sent: getVal(['total_sent', 'sent_count', 'sent', 'emails_sent']),
-                    emails_opened: getVal(['total_opened', 'open_count_unique', 'unique_opens', 'open_count', 'opened']),
-                    emails_replied: getVal(['total_replied', 'reply_count_unique', 'unique_replies', 'reply_count', 'replied']),
-                    emails_bounced: getVal(['total_bounced', 'bounced_count', 'bounced']),
-                    emails_clicked: getVal(['total_clicked', 'link_click_count_unique', 'unique_clicks', 'link_click_count']),
-                    emails_interested: getVal(['total_interested', 'total_opportunities', 'interested_count', 'interested']),
+                    emails_sent: getVal([
+                        'new_leads_contacted',
+                        'total_leads_contacted',
+                        'leads_contacted',
+                        'total_sent',
+                        'sent_count', 'sent', 'emails_sent'
+                    ]),
+                    emails_opened: getVal([
+                        'leads_who_read',
+                        'unique_reads',
+                        'open_count_unique',
+                        'unique_opens',
+                        'open_count', 'total_opened', 'opened'
+                    ]),
+                    emails_replied: getVal([
+                        'leads_who_replied',
+                        'unique_replies',
+                        'reply_count_unique',
+                        'reply_count', 'total_replied', 'replied'
+                    ]),
+                    emails_bounced: getVal([
+                        'leads_who_bounced',
+                        'bounced_count', 'total_bounced', 'bounced'
+                    ]),
+                    emails_clicked: getVal([
+                        'leads_who_clicked',
+                        'link_click_count_unique',
+                        'unique_clicks',
+                        'link_click_count', 'total_clicked', 'clicked'
+                    ]),
+                    emails_interested: getVal([
+                        'total_opportunities',
+                        'total_interested',
+                        'leads_who_are_interested',
+                        'interested_count', 'interested'
+                    ]),
+                    emails_uninterested: getVal([
+                        'total_uninterested',
+                        'uninterested_count', 'uninterested'
+                    ]),
+                    emails_unsubscribed: getVal([
+                        'leads_who_unsubscribed',
+                        'unsubscribed_count', 'total_unsubscribed', 'unsubscribed'
+                    ]),
                     last_synced_at: new Date().toISOString(),
                     last_stats_sync_at: new Date().toISOString()
                 } as any)
