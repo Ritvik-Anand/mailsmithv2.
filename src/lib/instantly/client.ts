@@ -99,30 +99,79 @@ export class InstantlyClient {
     }
 
     /**
-     * Lists all email accounts in the master account
+     * Lists all email accounts in the master account.
+     * Paginates through all pages using the V2 cursor (next_starting_after)
+     * so we never hit the default 20-item page cap.
      */
     async getAccounts(): Promise<InstantlyAccount[]> {
-        const response: any = await this.request<any>('/accounts')
+        const allAccounts: InstantlyAccount[] = []
+        let startingAfter: string | undefined = undefined
 
-        // V2 uses 'items' for the array of results
-        if (Array.isArray(response)) return response
-        if (response.items && Array.isArray(response.items)) return response.items
-        if (response.data && Array.isArray(response.data)) return response.data
-        if (response.accounts && Array.isArray(response.accounts)) return response.accounts
-        return []
+        while (true) {
+            const endpoint = startingAfter
+                ? `/accounts?limit=100&starting_after=${encodeURIComponent(startingAfter)}`
+                : '/accounts?limit=100'
+
+            const response: any = await this.request<any>(endpoint)
+
+            // Normalise to an array of items
+            let items: InstantlyAccount[] = []
+            if (Array.isArray(response)) {
+                items = response
+            } else if (response.items && Array.isArray(response.items)) {
+                items = response.items
+            } else if (response.data && Array.isArray(response.data)) {
+                items = response.data
+            } else if (response.accounts && Array.isArray(response.accounts)) {
+                items = response.accounts
+            }
+
+            allAccounts.push(...items)
+
+            // Stop if the page was not full or there is no next cursor
+            const nextCursor = response?.next_starting_after
+            if (!nextCursor || items.length < 100) break
+            startingAfter = nextCursor
+        }
+
+        return allAccounts
     }
 
     /**
-     * Lists all campaigns in the master account
+     * Lists all campaigns in the master account.
+     * Paginates through all pages using the V2 cursor (next_starting_after)
+     * so we never hit the default 20-item page cap.
      */
     async getCampaigns(): Promise<InstantlyCampaign[]> {
-        const response: any = await this.request<any>('/campaigns')
+        const allCampaigns: InstantlyCampaign[] = []
+        let startingAfter: string | undefined = undefined
 
-        if (Array.isArray(response)) return response
-        if (response.items && Array.isArray(response.items)) return response.items
-        if (response.data && Array.isArray(response.data)) return response.data
-        if (response.campaigns && Array.isArray(response.campaigns)) return response.campaigns
-        return []
+        while (true) {
+            const endpoint = startingAfter
+                ? `/campaigns?limit=100&starting_after=${encodeURIComponent(startingAfter)}`
+                : '/campaigns?limit=100'
+
+            const response: any = await this.request<any>(endpoint)
+
+            let items: InstantlyCampaign[] = []
+            if (Array.isArray(response)) {
+                items = response
+            } else if (response.items && Array.isArray(response.items)) {
+                items = response.items
+            } else if (response.data && Array.isArray(response.data)) {
+                items = response.data
+            } else if (response.campaigns && Array.isArray(response.campaigns)) {
+                items = response.campaigns
+            }
+
+            allCampaigns.push(...items)
+
+            const nextCursor = response?.next_starting_after
+            if (!nextCursor || items.length < 100) break
+            startingAfter = nextCursor
+        }
+
+        return allCampaigns
     }
 
     /**
