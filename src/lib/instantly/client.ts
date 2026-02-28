@@ -128,9 +128,9 @@ export class InstantlyClient {
 
             allAccounts.push(...items)
 
-            // Stop if the page was not full or there is no next cursor
+            // Stop only when there is no next cursor or the page is empty
             const nextCursor = response?.next_starting_after
-            if (!nextCursor || items.length < 100) break
+            if (!nextCursor || items.length === 0) break
             startingAfter = nextCursor
         }
 
@@ -167,7 +167,7 @@ export class InstantlyClient {
             allCampaigns.push(...items)
 
             const nextCursor = response?.next_starting_after
-            if (!nextCursor || items.length < 100) break
+            if (!nextCursor || items.length === 0) break
             startingAfter = nextCursor
         }
 
