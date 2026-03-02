@@ -147,7 +147,6 @@ function ListInput({
 
     const filteredSuggestions = suggestions
         .filter(s => s.toLowerCase().includes(input.toLowerCase()) && !values.includes(s))
-        .slice(0, 8)
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -184,7 +183,7 @@ function ListInput({
                         onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
                     />
                     {showSuggestions && filteredSuggestions.length > 0 && (
-                        <div className="absolute z-50 mt-1 w-full bg-zinc-950 border border-zinc-900 rounded-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="absolute z-50 mt-1 w-full bg-zinc-950 border border-zinc-900 rounded-lg shadow-2xl overflow-y-auto max-h-60 animate-in fade-in zoom-in-95 duration-200">
                             {filteredSuggestions.map((s, i) => (
                                 <button
                                     key={i}
