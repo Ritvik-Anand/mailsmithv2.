@@ -166,6 +166,10 @@ function ListInput({
         }
     }
 
+    // When a suggestions list is provided, block free-text — only exact matches allowed
+    const strictMode = suggestions.length > 0
+    const isValidInput = !strictMode || suggestions.includes(input.trim())
+
     return (
         <div className="space-y-3 relative" ref={containerRef}>
             <Label className={`text-[10px] font-black uppercase tracking-widest ${isNegative ? 'text-red-500/70' : 'text-zinc-500'}`}>
@@ -180,11 +184,11 @@ function ListInput({
                         value={input}
                         onChange={(e) => { setInput(e.target.value); setShowSuggestions(true) }}
                         onFocus={() => setShowSuggestions(true)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+                        onKeyDown={(e) => e.key === 'Enter' && isValidInput && handleAdd()}
                     />
-                    {showSuggestions && filteredSuggestions.length > 0 && (
+                    {showSuggestions && (filteredSuggestions.length > 0 || (strictMode && input.length > 0)) && (
                         <div className="absolute z-50 mt-1 w-full bg-zinc-950 border border-zinc-900 rounded-lg shadow-2xl overflow-y-auto max-h-60 animate-in fade-in zoom-in-95 duration-200">
-                            {filteredSuggestions.map((s, i) => (
+                            {filteredSuggestions.length > 0 ? filteredSuggestions.map((s, i) => (
                                 <button
                                     key={i}
                                     className="w-full text-left px-4 py-2.5 text-xs text-zinc-400 hover:bg-zinc-900 hover:text-white flex items-center justify-between group transition-colors"
@@ -193,14 +197,17 @@ function ListInput({
                                     {s}
                                     <Check className="h-3 w-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
                                 </button>
-                            ))}
+                            )) : (
+                                <div className="px-4 py-3 text-xs text-zinc-600 italic">No matching options found</div>
+                            )}
                         </div>
                     )}
                 </div>
                 <Button
                     variant="outline"
                     className={`h-10 border-zinc-800 ${isNegative ? 'hover:bg-red-500/10 hover:text-red-500' : ''}`}
-                    onClick={() => handleAdd()}
+                    onClick={() => isValidInput && handleAdd()}
+                    disabled={strictMode && !isValidInput}
                 >
                     {isNegative ? <MinusCircle className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 </Button>
