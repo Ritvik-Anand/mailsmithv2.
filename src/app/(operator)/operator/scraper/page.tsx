@@ -130,7 +130,8 @@ function ListInput({
     onAdd,
     onRemove,
     suggestions = [],
-    isNegative = false
+    isNegative = false,
+    strict = false
 }: {
     label: string
     placeholder: string
@@ -140,6 +141,7 @@ function ListInput({
     onRemove: (val: string) => void
     suggestions?: string[]
     isNegative?: boolean
+    strict?: boolean
 }) {
     const [input, setInput] = useState('')
     const [showSuggestions, setShowSuggestions] = useState(false)
@@ -166,9 +168,8 @@ function ListInput({
         }
     }
 
-    // When a suggestions list is provided, block free-text — only exact matches allowed
-    const strictMode = suggestions.length > 0
-    const isValidInput = !strictMode || suggestions.includes(input.trim())
+    // Only block free-text when strict=true (e.g. industry fields with Apify enum)
+    const isValidInput = !strict || suggestions.includes(input.trim())
 
     return (
         <div className="space-y-3 relative" ref={containerRef}>
@@ -186,7 +187,7 @@ function ListInput({
                         onFocus={() => setShowSuggestions(true)}
                         onKeyDown={(e) => e.key === 'Enter' && isValidInput && handleAdd()}
                     />
-                    {showSuggestions && (filteredSuggestions.length > 0 || (strictMode && input.length > 0)) && (
+                    {showSuggestions && (filteredSuggestions.length > 0 || (strict && input.length > 0)) && (
                         <div className="absolute z-50 mt-1 w-full bg-zinc-950 border border-zinc-900 rounded-lg shadow-2xl overflow-y-auto max-h-60 animate-in fade-in zoom-in-95 duration-200">
                             {filteredSuggestions.length > 0 ? filteredSuggestions.map((s, i) => (
                                 <button
@@ -207,7 +208,7 @@ function ListInput({
                     variant="outline"
                     className={`h-10 border-zinc-800 ${isNegative ? 'hover:bg-red-500/10 hover:text-red-500' : ''}`}
                     onClick={() => isValidInput && handleAdd()}
-                    disabled={strictMode && !isValidInput}
+                    disabled={strict && !isValidInput}
                 >
                     {isNegative ? <MinusCircle className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 </Button>
@@ -717,11 +718,11 @@ function ScraperContent() {
                         <TabsContent value="company" className="mt-8 space-y-10">
                             <div className="grid gap-10 md:grid-cols-2">
                                 <ListInput label="Industries" placeholder="e.g. SaaS, Fintech" icon={Building2}
-                                    values={filters.company_industry || []} suggestions={POPULAR_INDUSTRIES}
+                                    values={filters.company_industry || []} suggestions={POPULAR_INDUSTRIES} strict
                                     onAdd={(v) => handleListChange('company_industry', 'add', v)}
                                     onRemove={(v) => handleListChange('company_industry', 'remove', v)} />
                                 <ListInput label="Exclude Industries" placeholder="e.g. Real Estate" icon={Building2}
-                                    values={filters.company_not_industry || []} suggestions={POPULAR_INDUSTRIES}
+                                    values={filters.company_not_industry || []} suggestions={POPULAR_INDUSTRIES} strict
                                     onAdd={(v) => handleListChange('company_not_industry', 'add', v)}
                                     onRemove={(v) => handleListChange('company_not_industry', 'remove', v)} isNegative />
                             </div>
