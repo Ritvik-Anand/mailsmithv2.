@@ -162,7 +162,7 @@ function ListInput({
         if (val.trim()) {
             onAdd(val.trim())
             setInput('')
-            setShowSuggestions(false)
+            // Keep dropdown open so user can keep selecting — closes on click-outside
         }
     }
 
