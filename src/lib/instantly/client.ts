@@ -546,7 +546,7 @@ export interface InstantlyEmail {
     from_name?: string
     to_address_list?: string[]
     subject?: string
-    body?: string
+    body?: any              // string | { html, text } | other — varies by email type
     body_preview?: string
     timestamp?: string
     created_at?: string

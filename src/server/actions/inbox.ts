@@ -38,18 +38,40 @@ async function getCustomerOrgId(): Promise<string | null> {
 }
 
 // -----------------------------------------------------------------------------
+// Helper: safely extract a string from whatever shape the Instantly API returns
+// for the body field (string | { html, text } | { text } | unknown)
+// -----------------------------------------------------------------------------
+function extractBodyText(raw: any): string {
+    if (!raw) return ''
+    if (typeof raw === 'string') return raw
+    // Object with html/text keys (Instantly Unibox format)
+    if (typeof raw === 'object') {
+        if (typeof raw.html === 'string' && raw.html) return raw.html
+        if (typeof raw.text === 'string' && raw.text) return raw.text
+        if (typeof raw.body === 'string' && raw.body) return raw.body
+    }
+    // Fallback: stringify whatever we got
+    try { return String(raw) } catch { return '' }
+}
+
+// -----------------------------------------------------------------------------
 // Helper: normalise a raw Instantly email to our InboxEmail shape
 // -----------------------------------------------------------------------------
 function normaliseEmail(raw: InstantlyEmail): InboxEmail {
     const id = raw.id ?? raw.uuid ?? ''
+    const bodyText = extractBodyText(raw.body)
+    const preview = typeof raw.body_preview === 'string'
+        ? raw.body_preview
+        : bodyText.replace(/<[^>]*>/g, ' ').slice(0, 200).trim()
+
     return {
         id,
         fromAddress: raw.from_address ?? '',
         fromName: raw.from_name ?? raw.from_address ?? 'Unknown',
         toAddresses: raw.to_address_list ?? [],
         subject: raw.subject ?? '(no subject)',
-        body: raw.body ?? '',
-        bodyPreview: raw.body_preview ?? (raw.body ?? '').slice(0, 200),
+        body: bodyText,
+        bodyPreview: preview,
         timestamp: raw.timestamp ?? raw.created_at ?? new Date().toISOString(),
         isReply: raw.is_reply ?? false,
         isRead: raw.is_read ?? false,
