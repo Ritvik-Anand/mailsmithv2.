@@ -125,18 +125,36 @@ export async function getInboxEmails(params: {
             }
         }
 
-        // 2. Fetch replies from Instantly for all accounts in parallel.
-        // type: 'reply' ensures we only get inbound replies from leads,
-        // not the outbound campaign emails we sent.
+        // 2. Fetch all emails from Instantly for the org's accounts.
+        // We omit the 'type' param — Instantly appears to ignore it.
         const rawEmails = await instantly.getEmailsForAccounts(accountEmails, {
-            limit: params.limit ?? 50,
+            limit: params.limit ?? 100,
             campaign_id: params.campaignId,
-            type: params.type ?? 'reply',
         })
 
-        // Secondary guard: filter out any outbound emails the API may still return
+        // Debug: log raw shape of first email so we can inspect Instantly's fields
+        if (rawEmails.length > 0) {
+            console.log('[Inbox] Sample raw email:', JSON.stringify({
+                id: rawEmails[0].id ?? rawEmails[0].uuid,
+                from_address: rawEmails[0].from_address,
+                to_address_list: rawEmails[0].to_address_list,
+                eaccount: rawEmails[0].eaccount,
+                is_reply: rawEmails[0].is_reply,
+                keys: Object.keys(rawEmails[0] as any),
+            }, null, 2))
+        }
+
+        // ── Definitive inbound filter ──────────────────────────────────────────
+        // Outbound emails (sent by us) have one of our accounts as from_address.
+        // Inbound replies (from leads) have a lead's email as from_address.
+        // This filter is reliable regardless of what API params Instantly supports.
+        const ownAccounts = new Set(accountEmails.map(e => e.toLowerCase()))
+
         const emails = rawEmails
-            .filter(e => e.is_reply !== false)  // keep is_reply=true or undefined (API inconsistency)
+            .filter(e => {
+                const from = (e.from_address ?? '').toLowerCase()
+                return from && !ownAccounts.has(from)
+            })
             .map(normaliseEmail)
 
         return {
