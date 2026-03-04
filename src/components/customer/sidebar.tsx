@@ -18,6 +18,7 @@ import {
     Sparkles,
     TrendingUp,
     Users,
+    Inbox,
 } from 'lucide-react'
 import type { UserWithRole } from '@/server/actions/roles'
 
@@ -43,6 +44,12 @@ const navItems = [
         href: '/portal/leads',
         icon: Users,
         description: 'View your leads',
+    },
+    {
+        title: 'Inbox',
+        href: '/portal/inbox',
+        icon: Inbox,
+        description: 'Read & reply to responses',
     },
     {
         title: 'Analytics',

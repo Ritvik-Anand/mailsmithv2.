@@ -433,7 +433,129 @@ export class InstantlyClient {
             method: 'DELETE',
         })
     }
+
+    // =========================================================================
+    // INBOX / EMAIL METHODS
+    // =========================================================================
+
+    /**
+     * List emails visible in the Unibox (replies, sent, etc.)
+     * Supports filtering by account, campaign, and type.
+     * Paginates using next_starting_after cursor.
+     */
+    async getEmails(params: {
+        limit?: number
+        starting_after?: string
+        email_account?: string   // filter to a specific sending account
+        campaign_id?: string     // filter to a specific campaign
+        type?: 'reply' | 'sent' | 'all'
+        is_read?: boolean
+    } = {}): Promise<InstantlyEmail[]> {
+        const { limit = 50, starting_after, email_account, campaign_id, type, is_read } = params
+
+        const query = new URLSearchParams()
+        query.set('limit', String(limit))
+        if (starting_after) query.set('starting_after', starting_after)
+        if (email_account) query.set('email_account', email_account)
+        if (campaign_id) query.set('campaign_id', campaign_id)
+        if (type && type !== 'all') query.set('type', type)
+        if (is_read !== undefined) query.set('is_read', String(is_read))
+
+        const response = await this.request<any>(`/emails?${query.toString()}`)
+
+        // Normalise to array
+        if (Array.isArray(response)) return response
+        if (response?.items && Array.isArray(response.items)) return response.items
+        if (response?.data && Array.isArray(response.data)) return response.data
+        return []
+    }
+
+    /**
+     * Get all emails across multiple accounts.
+     * Fetches in parallel and merges / sorts by timestamp desc.
+     */
+    async getEmailsForAccounts(accountEmails: string[], params: {
+        limit?: number
+        campaign_id?: string
+        type?: 'reply' | 'sent' | 'all'
+    } = {}): Promise<InstantlyEmail[]> {
+        if (accountEmails.length === 0) return []
+
+        const results = await Promise.allSettled(
+            accountEmails.map(email =>
+                this.getEmails({ ...params, email_account: email, limit: params.limit ?? 50 })
+            )
+        )
+
+        const all: InstantlyEmail[] = []
+        for (const result of results) {
+            if (result.status === 'fulfilled') all.push(...result.value)
+        }
+
+        // De-dupe by ID and sort newest first
+        const seen = new Set<string>()
+        return all
+            .filter(email => {
+                const id = email.id ?? email.uuid
+                if (!id || seen.has(id)) return false
+                seen.add(id)
+                return true
+            })
+            .sort((a, b) => {
+                const tA = new Date(a.timestamp ?? a.created_at ?? 0).getTime()
+                const tB = new Date(b.timestamp ?? b.created_at ?? 0).getTime()
+                return tB - tA
+            })
+    }
+
+    /**
+     * Get a single email by ID (for thread view / detail).
+     */
+    async getEmail(emailId: string): Promise<InstantlyEmail> {
+        return this.request<InstantlyEmail>(`/emails/${emailId}`)
+    }
+
+    /**
+     * Reply to an email in the Unibox.
+     * - reply_to_uuid: ID of the email you are replying to
+     * - eaccount: the from-address sending the reply (must be a connected account)
+     * - subject: email subject (typically "Re: <original subject>")
+     * - body: reply body (plain text or HTML)
+     */
+    async replyToEmail(params: {
+        reply_to_uuid: string
+        eaccount: string
+        subject: string
+        body: string
+    }): Promise<any> {
+        return this.request('/emails/reply', {
+            method: 'POST',
+            body: JSON.stringify(params),
+        })
+    }
+}
+
+// =============================================================================
+// INTERFACES
+// =============================================================================
+
+export interface InstantlyEmail {
+    id?: string
+    uuid?: string
+    from_address?: string
+    from_name?: string
+    to_address_list?: string[]
+    subject?: string
+    body?: string
+    body_preview?: string
+    timestamp?: string
+    created_at?: string
+    is_reply?: boolean
+    is_read?: boolean
+    campaign_id?: string
+    eaccount?: string          // the receiving/sending account address
+    interest_value?: string    // AI-predicted intent label e.g. 'Interested'
+    reply_to_uuid?: string     // thread parent ID
 }
 
 export const instantly = new InstantlyClient()
-
