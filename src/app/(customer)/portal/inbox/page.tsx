@@ -8,7 +8,7 @@ export const metadata = {
 }
 
 export default async function InboxPage() {
-    const result = await getInboxEmails({ type: 'all', limit: 50 })
+    const result = await getInboxEmails({ type: 'reply', limit: 50 })
 
     const emails = result.success ? (result.emails ?? []) : []
     const accounts = result.success ? (result.accounts ?? []) : []

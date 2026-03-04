@@ -125,14 +125,19 @@ export async function getInboxEmails(params: {
             }
         }
 
-        // 2. Fetch emails from Instantly for all accounts in parallel
+        // 2. Fetch replies from Instantly for all accounts in parallel.
+        // type: 'reply' ensures we only get inbound replies from leads,
+        // not the outbound campaign emails we sent.
         const rawEmails = await instantly.getEmailsForAccounts(accountEmails, {
             limit: params.limit ?? 50,
             campaign_id: params.campaignId,
-            type: params.type ?? 'all',
+            type: params.type ?? 'reply',
         })
 
-        const emails = rawEmails.map(normaliseEmail)
+        // Secondary guard: filter out any outbound emails the API may still return
+        const emails = rawEmails
+            .filter(e => e.is_reply !== false)  // keep is_reply=true or undefined (API inconsistency)
+            .map(normaliseEmail)
 
         return {
             success: true,
