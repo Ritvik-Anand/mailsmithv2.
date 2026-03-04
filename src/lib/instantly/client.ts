@@ -496,14 +496,14 @@ export class InstantlyClient {
         const seen = new Set<string>()
         return all
             .filter(email => {
-                const id = email.id ?? email.uuid
+                const id = email.id
                 if (!id || seen.has(id)) return false
                 seen.add(id)
                 return true
             })
             .sort((a, b) => {
-                const tA = new Date(a.timestamp ?? a.created_at ?? 0).getTime()
-                const tB = new Date(b.timestamp ?? b.created_at ?? 0).getTime()
+                const tA = new Date(a.timestamp_created ?? a.timestamp_email ?? 0).getTime()
+                const tB = new Date(b.timestamp_created ?? b.timestamp_email ?? 0).getTime()
                 return tB - tA
             })
     }
@@ -541,21 +541,28 @@ export class InstantlyClient {
 
 export interface InstantlyEmail {
     id?: string
-    uuid?: string
-    from_address?: string
-    from_name?: string
-    to_address_list?: string[]
+    // Real field names from Instantly v2 /emails endpoint (confirmed via debug)
+    timestamp_created?: string          // when created in system
+    timestamp_email?: string            // actual email timestamp
+    message_id?: string
     subject?: string
-    body?: any              // string | { html, text } | other — varies by email type
-    body_preview?: string
-    timestamp?: string
-    created_at?: string
-    is_reply?: boolean
-    is_read?: boolean
+    to_address_email_list?: string      // recipient — STRING, not array
+    body?: any                          // { html } for outbound, { text } for inbound
+    organization_id?: string
+    eaccount?: string                   // the account this belongs to
+    from_address_email?: string         // sender email
     campaign_id?: string
-    eaccount?: string          // the receiving/sending account address
-    interest_value?: string    // AI-predicted intent label e.g. 'Interested'
-    reply_to_uuid?: string     // thread parent ID
+    lead?: string                       // lead email address
+    ue_type?: number                    // 1 = outbound, 2 = inbound reply
+    step?: string
+    is_unread?: number                  // 0 = read, 1 = unread
+    is_focused?: number
+    thread_id?: string
+    ai_interest_value?: number          // AI interest label (numeric)
+    i_status?: number
+    content_preview?: string            // text preview (inbound only)
+    from_address_json?: Array<{ address: string; name: string }>  // inbound only
+    to_address_json?: Array<{ address: string; name: string }>    // inbound only
 }
 
 export const instantly = new InstantlyClient()

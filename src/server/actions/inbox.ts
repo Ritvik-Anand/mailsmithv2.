@@ -38,48 +38,69 @@ async function getCustomerOrgId(): Promise<string | null> {
 }
 
 // -----------------------------------------------------------------------------
-// Helper: safely extract a string from whatever shape the Instantly API returns
-// for the body field (string | { html, text } | { text } | unknown)
+// Helper: safely extract string from body object
 // -----------------------------------------------------------------------------
-function extractBodyText(raw: any): string {
-    if (!raw) return ''
-    if (typeof raw === 'string') return raw
-    // Object with html/text keys (Instantly Unibox format)
-    if (typeof raw === 'object') {
-        if (typeof raw.html === 'string' && raw.html) return raw.html
-        if (typeof raw.text === 'string' && raw.text) return raw.text
-        if (typeof raw.body === 'string' && raw.body) return raw.body
+function extractBodyText(body: any): string {
+    if (!body) return ''
+    if (typeof body === 'string') return body
+    if (typeof body === 'object') {
+        if (typeof body.html === 'string' && body.html) return body.html
+        if (typeof body.text === 'string' && body.text) return body.text
     }
-    // Fallback: stringify whatever we got
-    try { return String(raw) } catch { return '' }
+    try { return String(body) } catch { return '' }
 }
 
 // -----------------------------------------------------------------------------
 // Helper: normalise a raw Instantly email to our InboxEmail shape
+// Uses the CONFIRMED field names from the /api/v2/emails response.
 // -----------------------------------------------------------------------------
 function normaliseEmail(raw: InstantlyEmail): InboxEmail {
-    const id = raw.id ?? raw.uuid ?? ''
     const bodyText = extractBodyText(raw.body)
-    const preview = typeof raw.body_preview === 'string'
-        ? raw.body_preview
-        : bodyText.replace(/<[^>]*>/g, ' ').slice(0, 200).trim()
+    // Strip HTML tags for the preview
+    const cleanBody = bodyText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+    const preview = raw.content_preview ?? cleanBody.slice(0, 200)
+
+    // Sender name — from_address_json is only present on inbound emails
+    const fromJson = raw.from_address_json?.[0]
+    const fromName = fromJson?.name || raw.from_address_email || 'Unknown'
+    const fromAddress = fromJson?.address || raw.from_address_email || raw.lead || ''
+
+    // Recipient — to_address_email_list is a plain string in Instantly's response
+    const toAddress = raw.to_address_json?.[0]?.address
+        ?? raw.to_address_email_list
+        ?? ''
 
     return {
-        id,
-        fromAddress: raw.from_address ?? '',
-        fromName: raw.from_name ?? raw.from_address ?? 'Unknown',
-        toAddresses: raw.to_address_list ?? [],
+        id: raw.id ?? '',
+        fromAddress,
+        fromName,
+        toAddresses: toAddress ? [toAddress] : [],
         subject: raw.subject ?? '(no subject)',
         body: bodyText,
         bodyPreview: preview,
-        timestamp: raw.timestamp ?? raw.created_at ?? new Date().toISOString(),
-        isReply: raw.is_reply ?? false,
-        isRead: raw.is_read ?? false,
+        timestamp: raw.timestamp_email ?? raw.timestamp_created ?? new Date().toISOString(),
+        isReply: raw.ue_type === 2,
+        isRead: raw.is_unread === 0,
         campaignId: raw.campaign_id ?? null,
         eaccount: raw.eaccount ?? '',
-        interestLabel: raw.interest_value ?? null,
-        replyToId: raw.reply_to_uuid ?? null,
+        interestLabel: raw.ai_interest_value != null
+            ? mapInterestValue(raw.ai_interest_value)
+            : null,
+        replyToId: raw.thread_id ?? null,
     }
+}
+
+// Instantly stores interest as a numeric value — map to label
+function mapInterestValue(val: number): string | null {
+    const map: Record<number, string> = {
+        0: 'Not Interested',
+        1: 'Interested',
+        2: 'Meeting Booked',
+        3: 'Out of Office',
+        4: 'Do Not Contact',
+        5: 'Wrong Person',
+    }
+    return map[val] ?? null
 }
 
 // =============================================================================
@@ -132,42 +153,13 @@ export async function getInboxEmails(params: {
             campaign_id: params.campaignId,
         })
 
-        // ── Debug: log ALL keys + first 5 emails so we can see exact field names ──
-        console.log('[Inbox] Total raw emails from Instantly:', rawEmails.length)
-        if (rawEmails.length > 0) {
-            console.log('[Inbox] All keys on email[0]:', Object.keys(rawEmails[0] as any).join(', '))
-            rawEmails.slice(0, 5).forEach((e, i) => {
-                console.log(`[Inbox] email[${i}]:`, JSON.stringify(e))
-            })
-        }
-
-        // ── Filter strategy: to_address_list ──────────────────────────────────
-        // from_address is null in Instantly's response (confirmed by 0-result test).
-        // For INBOUND replies: the lead sends TO our account → to_address_list contains our account.
-        // For OUTBOUND emails: we send TO the lead → to_address_list is the lead's email, not ours.
-        const ownAccounts = new Set(accountEmails.map(e => e.toLowerCase()))
-
-        const inbound = rawEmails.filter(e => {
-            const raw = e as any
-            // Collect the 'to' addresses — try all plausible field names
-            const toList: any[] = (
-                e.to_address_list ??
-                raw.to_address ??
-                raw.to ??
-                raw.recipients ??
-                []
-            )
-            return toList.some((addr: any) => {
-                const str = typeof addr === 'string' ? addr : (addr?.email ?? addr?.address ?? '')
-                return ownAccounts.has(str.toLowerCase())
-            })
-        })
-
-        console.log('[Inbox] Inbound emails after to_address filter:', inbound.length)
-
-        // If the to_address filter returns nothing (field might be named differently),
-        // fall back to showing all so the inbox is never broken while we debug.
-        const emails = (inbound.length > 0 ? inbound : rawEmails).map(normaliseEmail)
+        // ── THE definitive filter: ue_type === 2 means inbound reply ──────────
+        // Confirmed from raw API data:
+        //   ue_type 1 = outbound email we sent to a lead
+        //   ue_type 2 = inbound reply from a lead
+        const emails = rawEmails
+            .filter(e => e.ue_type === 2)
+            .map(normaliseEmail)
 
         return {
             success: true,
