@@ -132,44 +132,42 @@ export async function getInboxEmails(params: {
             campaign_id: params.campaignId,
         })
 
-        // Debug: log the raw shape of the first email — check Vercel logs to see
-        // which field names Instantly actually uses for the sender address
+        // ── Debug: log ALL keys + first 5 emails so we can see exact field names ──
+        console.log('[Inbox] Total raw emails from Instantly:', rawEmails.length)
         if (rawEmails.length > 0) {
-            console.log('[Inbox] First raw email (full):', JSON.stringify(rawEmails[0], null, 2))
-            console.log('[Inbox] All email count before filter:', rawEmails.length)
+            console.log('[Inbox] All keys on email[0]:', Object.keys(rawEmails[0] as any).join(', '))
+            rawEmails.slice(0, 5).forEach((e, i) => {
+                console.log(`[Inbox] email[${i}]:`, JSON.stringify(e))
+            })
         }
 
-        // ── Definitive inbound filter ──────────────────────────────────────────
-        // Outbound emails have one of our accounts as the sender.
-        // We check multiple possible field names because the Instantly API
-        // field name may differ from what we expect.
-        // IMPORTANT: If we cannot determine the sender, we KEEP the email
-        // (inclusive-by-default) rather than drop it.
+        // ── Filter strategy: to_address_list ──────────────────────────────────
+        // from_address is null in Instantly's response (confirmed by 0-result test).
+        // For INBOUND replies: the lead sends TO our account → to_address_list contains our account.
+        // For OUTBOUND emails: we send TO the lead → to_address_list is the lead's email, not ours.
         const ownAccounts = new Set(accountEmails.map(e => e.toLowerCase()))
 
-        const emails = rawEmails
-            .filter(e => {
-                const raw = e as any
-                // Try every field name Instantly might use for the sender
-                const from = (
-                    e.from_address ??
-                    raw.from_email ??
-                    raw.from ??
-                    raw.sender ??
-                    raw.sender_address ??
-                    raw.sender_email ??
-                    null
-                )
-
-                // Can't determine sender → keep (be inclusive)
-                if (!from || typeof from !== 'string') return true
-
-                // Drop only if sender is definitively one of our own accounts
-                return !ownAccounts.has(from.toLowerCase())
+        const inbound = rawEmails.filter(e => {
+            const raw = e as any
+            // Collect the 'to' addresses — try all plausible field names
+            const toList: any[] = (
+                e.to_address_list ??
+                raw.to_address ??
+                raw.to ??
+                raw.recipients ??
+                []
+            )
+            return toList.some((addr: any) => {
+                const str = typeof addr === 'string' ? addr : (addr?.email ?? addr?.address ?? '')
+                return ownAccounts.has(str.toLowerCase())
             })
-            .map(normaliseEmail)
+        })
 
-        console.log('[Inbox] Emails after inbound filter:', emails.length)
+        console.log('[Inbox] Inbound emails after to_address filter:', inbound.length)
+
+        // If the to_address filter returns nothing (field might be named differently),
+        // fall back to showing all so the inbox is never broken while we debug.
+        const emails = (inbound.length > 0 ? inbound : rawEmails).map(normaliseEmail)
 
         return {
             success: true,
