@@ -10,8 +10,6 @@ import type { InstantlyEmail } from '@/lib/instantly/client'
 // INBOX SERVER ACTIONS
 // =============================================================================
 
-// Re-export the type so UI can import it from one place
-export type { InstantlyEmail }
 
 export interface InboxEmail {
     id: string
