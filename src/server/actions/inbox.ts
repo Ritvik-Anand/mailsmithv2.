@@ -270,6 +270,18 @@ export async function getNewInboxEmails(since: string): Promise<{
 }
 
 // =============================================================================
+// ACTION: Mark an email as read in Instantly (clears unread dot + badge)
+// =============================================================================
+export async function markEmailRead(emailId: string): Promise<{ success: boolean }> {
+    try {
+        await instantly.markEmailRead(emailId)
+        return { success: true }
+    } catch {
+        return { success: false }
+    }
+}
+
+// =============================================================================
 // ACTION: Update a lead's interest/intent status (one-click pipeline)
 // =============================================================================
 export async function updateLeadStatus(params: {

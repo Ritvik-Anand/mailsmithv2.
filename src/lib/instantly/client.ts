@@ -571,6 +571,21 @@ export class InstantlyClient {
     }
 
     /**
+     * Mark one or more emails as read in the Instantly Unibox.
+     * Instantly v2: PATCH /emails with { ids, is_unread: 0 }
+     */
+    async markEmailRead(emailId: string): Promise<void> {
+        try {
+            await this.request('/emails', {
+                method: 'PATCH',
+                body: JSON.stringify({ ids: [emailId], is_unread: 0 }),
+            })
+        } catch {
+            // Non-fatal — if this fails the UI still shows it as read locally
+        }
+    }
+
+    /**
      * Reply to an email in the Unibox.
      */
     async replyToEmail(params: {

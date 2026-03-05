@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useTransition } from 'react'
 import type { InboxEmail } from '@/server/actions/inbox'
-import { replyToInboxEmail, updateLeadStatus } from '@/server/actions/inbox'
+import { replyToInboxEmail, updateLeadStatus, markEmailRead } from '@/server/actions/inbox'
 import { createClient } from '@/lib/supabase/client'
 import {
     Inbox,
@@ -89,9 +89,12 @@ export function InboxLayout({ initialEmails, accounts }: InboxLayoutProps) {
     // ── Mark email as read when it becomes selected ───────────────────────────
     useEffect(() => {
         if (!selectedId) return
+        // 1. Optimistic local update — clears the dot immediately
         setEmails(prev => prev.map(e =>
             e.id === selectedId && !e.isRead ? { ...e, isRead: true } : e
         ))
+        // 2. Tell Instantly so their API reflects it (clears sidebar badge count)
+        markEmailRead(selectedId)
     }, [selectedId])
 
     // ── Full re-fetch helper — returns the complete current email list ────────
@@ -109,9 +112,20 @@ export function InboxLayout({ initialEmails, accounts }: InboxLayoutProps) {
             const fresh = await fetchAll()
             if (!fresh.length) return
             setEmails(prev => {
-                // Merge: keep any optimistic label/read state from prev, add new emails
+                // Merge: local state (isRead, label changes) WINS over server
+                // so the dot doesn't flicker back after we clear it.
                 const prevMap = new Map(prev.map(e => [e.id, e]))
-                const merged = fresh.map(e => prevMap.has(e.id) ? { ...e, ...prevMap.get(e.id)! } : e)
+                const merged = fresh.map(freshEmail => {
+                    const local = prevMap.get(freshEmail.id)
+                    if (!local) return freshEmail
+                    // Keep local isRead=true even if server still says unread
+                    return {
+                        ...freshEmail,
+                        isRead: local.isRead || freshEmail.isRead,
+                        interestLabel: local.interestLabel ?? freshEmail.interestLabel,
+                        interestColor: local.interestColor ?? freshEmail.interestColor,
+                    }
+                })
                 return merged
             })
         } catch { /* silent */ }
