@@ -64,11 +64,11 @@ export default function OperatorDashboardPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="space-y-2">
-                    <h1 className="text-3xl font-bold tracking-tight text-white">Operator Dashboard</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Operator Dashboard</h1>
                     <p className="text-zinc-500 font-medium">Manage outreach operations for your assigned customers.</p>
                 </div>
                 <Link href="/operator/scraper">
-                    <Button className="bg-primary hover:bg-primary/90 text-white font-bold px-6 shadow-lg shadow-primary/20">
+                    <Button className="bg-primary hover:bg-primary/90 text-foreground font-bold px-6 shadow-lg shadow-primary/20">
                         <Target className="mr-2 h-4 w-4" />
                         Launch Scraper
                     </Button>

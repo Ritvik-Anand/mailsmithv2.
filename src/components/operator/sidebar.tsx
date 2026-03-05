@@ -22,6 +22,7 @@ import {
     Shield,
 } from 'lucide-react'
 import type { UserWithRole } from '@/server/actions/roles'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 interface OperatorSidebarProps {
     user: UserWithRole
@@ -75,7 +76,7 @@ export function OperatorSidebar({ user }: OperatorSidebarProps) {
             <div className="flex h-16 items-center border-b px-4">
                 <Link href="/operator" className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 overflow-hidden">
-                        <Zap className="h-5 w-5 text-white" />
+                        <Zap className="h-5 w-5 text-foreground" />
                     </div>
                     {!collapsed && (
                         <div className="flex flex-col">
@@ -141,11 +142,11 @@ export function OperatorSidebar({ user }: OperatorSidebarProps) {
             </div>
 
             {/* Collapse Toggle */}
-            <div className="border-t p-2">
+            <div className="border-t p-2 flex items-center justify-between gap-2">
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start"
+                    className="flex-1 justify-start"
                     onClick={() => setCollapsed(!collapsed)}
                 >
                     <ChevronLeft
@@ -153,6 +154,7 @@ export function OperatorSidebar({ user }: OperatorSidebarProps) {
                     />
                     {!collapsed && <span className="ml-2">Collapse</span>}
                 </Button>
+                <ThemeToggle />
             </div>
         </aside>
     )
@@ -173,7 +175,7 @@ export function OperatorMobileSidebar({ user }: OperatorSidebarProps) {
                 <div className="flex h-16 items-center border-b px-4">
                     <Link href="/operator" className="flex items-center gap-2">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500">
-                            <Zap className="h-5 w-5 text-white" />
+                            <Zap className="h-5 w-5 text-foreground" />
                         </div>
                         <span className="font-semibold text-lg">MailSmith</span>
                     </Link>

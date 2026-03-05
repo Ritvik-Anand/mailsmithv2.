@@ -54,7 +54,7 @@ export function CustomerHeader({ user }: CustomerHeaderProps) {
     }
 
     return (
-        <header className="sticky top-0 z-40 border-b border-white/5 bg-black/50 backdrop-blur-xl">
+        <header className="sticky top-0 z-40 border-b border-foreground/5 bg-background/50 backdrop-blur-xl">
             <div className="flex h-16 items-center justify-between px-4 md:px-6">
                 {/* Mobile sidebar trigger */}
                 <CustomerMobileSidebar user={user} />
@@ -68,10 +68,10 @@ export function CustomerHeader({ user }: CustomerHeaderProps) {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="relative text-white/60 hover:text-white hover:bg-white/5"
+                        className="relative text-foreground/60 hover:text-foreground hover:bg-foreground/5"
                     >
                         <Bell className="h-5 w-5" />
-                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-foreground">
                             3
                         </span>
                         <span className="sr-only">Notifications</span>
@@ -82,7 +82,7 @@ export function CustomerHeader({ user }: CustomerHeaderProps) {
                         <DropdownMenuTrigger asChild>
                             <Button
                                 variant="ghost"
-                                className="flex items-center gap-2 px-2 hover:bg-white/5"
+                                className="flex items-center gap-2 px-2 hover:bg-foreground/5"
                             >
                                 <Avatar className="h-8 w-8">
                                     <AvatarImage src="" alt={user.fullName || 'User'} />
@@ -90,26 +90,26 @@ export function CustomerHeader({ user }: CustomerHeaderProps) {
                                         {initials}
                                     </AvatarFallback>
                                 </Avatar>
-                                <span className="hidden md:block text-sm font-medium text-white">
+                                <span className="hidden md:block text-sm font-medium text-foreground">
                                     {user.fullName || user.email}
                                 </span>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56 bg-black/95 border-white/10">
-                            <DropdownMenuLabel className="text-white/60">
+                        <DropdownMenuContent align="end" className="w-56 bg-background/95 border-foreground/10">
+                            <DropdownMenuLabel className="text-foreground/60">
                                 <div className="flex flex-col space-y-1">
-                                    <p className="text-sm font-medium text-white">{user.fullName || 'User'}</p>
-                                    <p className="text-xs text-white/40">{user.email}</p>
+                                    <p className="text-sm font-medium text-foreground">{user.fullName || 'User'}</p>
+                                    <p className="text-xs text-foreground/40">{user.email}</p>
                                 </div>
                             </DropdownMenuLabel>
-                            <DropdownMenuSeparator className="bg-white/10" />
-                            <DropdownMenuItem className="text-white/80 focus:bg-white/5 focus:text-white cursor-pointer">
+                            <DropdownMenuSeparator className="bg-foreground/10" />
+                            <DropdownMenuItem className="text-foreground/80 focus:bg-foreground/5 focus:text-foreground cursor-pointer">
                                 Profile Settings
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-white/80 focus:bg-white/5 focus:text-white cursor-pointer">
+                            <DropdownMenuItem className="text-foreground/80 focus:bg-foreground/5 focus:text-foreground cursor-pointer">
                                 Notification Preferences
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator className="bg-white/10" />
+                            <DropdownMenuSeparator className="bg-foreground/10" />
                             <DropdownMenuItem
                                 onClick={handleSignOut}
                                 disabled={isLoading}

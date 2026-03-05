@@ -281,7 +281,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     <Button
                         variant="outline"
                         size="sm"
-                        className="gap-2 h-9 px-4 border border-zinc-800 bg-zinc-950 text-zinc-300 hover:text-white hover:bg-zinc-900 shadow-sm"
+                        className="gap-2 h-9 px-4 border border-zinc-800 bg-zinc-950 text-zinc-300 hover:text-foreground hover:bg-zinc-900 shadow-sm"
                         onClick={handleSyncStats}
                         disabled={isSyncingStat}
                     >
@@ -327,7 +327,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                                 "flex items-center gap-2 py-4 text-sm font-medium border-b-2 transition-all",
                                 activeTab === tab.id
                                     ? "text-primary border-primary"
-                                    : "text-muted-foreground border-transparent hover:text-white hover:border-zinc-700"
+                                    : "text-muted-foreground border-transparent hover:text-foreground hover:border-zinc-700"
                             )}
                         >
                             <tab.icon className="h-4 w-4" />
@@ -427,7 +427,7 @@ function AnalyticsTab({ campaign }: { campaign: any }) {
                                 <metric.icon className={cn("h-3.5 w-3.5", metric.color)} />
                                 {metric.label}
                             </div>
-                            <div className="text-2xl font-bold text-white">{metric.value}</div>
+                            <div className="text-2xl font-bold text-foreground">{metric.value}</div>
                             {metric.subValue && (
                                 <div className="text-xs text-zinc-500 mt-1">
                                     {metric.subValue}
@@ -506,7 +506,7 @@ function AnalyticsTab({ campaign }: { campaign: any }) {
                             </thead>
                             <tbody>
                                 <tr className="border-b border-zinc-900">
-                                    <td className="py-3 font-medium text-white">Step 1</td>
+                                    <td className="py-3 font-medium text-foreground">Step 1</td>
                                     <td className="py-3 text-zinc-300">{emailsSent.toLocaleString()}</td>
                                     <td className="py-3">
                                         <span className="text-zinc-300">{emailsOpened.toLocaleString()}</span>
@@ -1156,7 +1156,7 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                             )}
                         >
                             <div className="flex items-center justify-between mb-2">
-                                <h4 className="font-bold text-white">Step {seq.step}</h4>
+                                <h4 className="font-bold text-foreground">Step {seq.step}</h4>
                                 <Trash2
                                     className="h-4 w-4 text-zinc-600 hover:text-red-400 cursor-pointer transition-colors"
                                     onClick={(e) => deleteStep(e, seq)}
@@ -1203,7 +1203,7 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                 ))}
                 <Button
                     variant="outline"
-                    className="w-full border-dashed border-zinc-700 text-zinc-500 hover:text-white"
+                    className="w-full border-dashed border-zinc-700 text-zinc-500 hover:text-foreground"
                     onClick={addStep}
                 >
                     <Plus className="h-4 w-4 mr-2" />
@@ -1225,7 +1225,7 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                                         className={cn(
                                             "px-4 py-2 text-xs font-medium border-b-2 transition-colors",
                                             activeVariantId === v.id
-                                                ? "border-primary text-white"
+                                                ? "border-primary text-foreground"
                                                 : "border-transparent text-zinc-500 hover:text-zinc-300"
                                         )}
                                     >
@@ -1334,7 +1334,7 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
             <Dialog open={showPreview} onOpenChange={(open) => { setShowPreview(open); if (!open) setSelectedLeadId('sample') }}>
                 <DialogContent className="sm:max-w-2xl bg-zinc-950 border-zinc-800 max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle className="text-white">Email Preview</DialogTitle>
+                        <DialogTitle className="text-foreground">Email Preview</DialogTitle>
                         <DialogDescription className="text-zinc-500">
                             See how this email will look for a specific lead.
                         </DialogDescription>
@@ -1346,7 +1346,7 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                             <select
                                 value={selectedLeadId}
                                 onChange={(e) => setSelectedLeadId(e.target.value)}
-                                className="w-full h-9 px-3 text-sm bg-zinc-900 border border-zinc-800 rounded-md text-white focus:border-primary focus:outline-none"
+                                className="w-full h-9 px-3 text-sm bg-zinc-900 border border-zinc-800 rounded-md text-foreground focus:border-primary focus:outline-none"
                             >
                                 <option value="sample">📋 Sample Data (Alex Johnson)</option>
                                 {loadingPreviewLeads ? (
@@ -1363,14 +1363,14 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                         {/* Subject */}
                         <div className="space-y-1">
                             <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Subject</span>
-                            <div className="p-3 bg-zinc-900 rounded-lg border border-zinc-800 text-sm text-white font-medium">
+                            <div className="p-3 bg-zinc-900 rounded-lg border border-zinc-800 text-sm text-foreground font-medium">
                                 {replaceVariables(activeVariant?.subject || '') || <span className="text-zinc-600 italic">No subject</span>}
                             </div>
                         </div>
                         {/* Body */}
                         <div className="space-y-1">
                             <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Body</span>
-                            <div className="p-4 bg-white rounded-lg text-zinc-900 text-sm leading-relaxed whitespace-pre-wrap min-h-[200px]">
+                            <div className="p-4 bg-foreground rounded-lg text-zinc-900 text-sm leading-relaxed whitespace-pre-wrap min-h-[200px]">
                                 {replaceVariables(activeVariant?.body || '') || <span className="text-zinc-400 italic">No body content</span>}
                             </div>
                         </div>
@@ -1617,12 +1617,12 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm">
                         <Calendar className="h-4 w-4 text-zinc-500" />
-                        <span className="font-medium text-white">Start</span>
+                        <span className="font-medium text-foreground">Start</span>
                         <span className="text-primary">Now</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                         <Calendar className="h-4 w-4 text-zinc-500" />
-                        <span className="font-medium text-white">End</span>
+                        <span className="font-medium text-foreground">End</span>
                         <span className="text-primary">No end date</span>
                     </div>
                 </div>
@@ -1630,7 +1630,7 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                 <div className="border-t border-zinc-800 pt-4">
                     <div className="flex items-center gap-2 text-sm p-2 bg-zinc-900/50 rounded-lg border border-zinc-800">
                         <Calendar className="h-4 w-4 text-zinc-500" />
-                        <span className="font-medium text-white">{schedule.name}</span>
+                        <span className="font-medium text-foreground">{schedule.name}</span>
                     </div>
                     <Button
                         variant="ghost"
@@ -1885,7 +1885,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
             <Button
                 variant="outline"
                 size="sm"
-                className={cn("border-zinc-800 min-w-[80px]", !opts[field] && "bg-zinc-800 text-white")}
+                className={cn("border-zinc-800 min-w-[80px]", !opts[field] && "bg-zinc-800 text-foreground")}
                 onClick={() => setOpts({ ...opts, [field]: false })}
             >
                 Disable
@@ -1918,7 +1918,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                     <div className="flex flex-col gap-4">
                         <div className="flex items-start justify-between">
                             <div>
-                                <h3 className="font-bold text-white">Accounts to use</h3>
+                                <h3 className="font-bold text-foreground">Accounts to use</h3>
                                 <p className="text-sm text-zinc-500 mt-1">Select accounts to send emails from</p>
                             </div>
                             <Badge variant="outline" className="bg-zinc-900 border-zinc-800 text-zinc-500 text-xs">
@@ -1970,7 +1970,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="font-bold text-white">Stop sending emails on reply</h3>
+                            <h3 className="font-bold text-foreground">Stop sending emails on reply</h3>
                             <p className="text-sm text-zinc-500 mt-1">Stop sending emails to a lead if a response has been received</p>
                         </div>
                         <ToggleButtons field="stop_on_reply" />
@@ -1983,7 +1983,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="font-bold text-white">Open Tracking</h3>
+                            <h3 className="font-bold text-foreground">Open Tracking</h3>
                             <p className="text-sm text-zinc-500 mt-1">Track email opens</p>
                         </div>
                         <div className="flex items-center gap-4">
@@ -2006,7 +2006,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div>
-                                <h3 className="font-bold text-white">Delivery Optimization</h3>
+                                <h3 className="font-bold text-foreground">Delivery Optimization</h3>
                                 <p className="text-sm text-zinc-500 mt-1">Disables open tracking for better deliverability</p>
                             </div>
                             <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[10px]">Recommended</Badge>
@@ -2036,7 +2036,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="font-bold text-white">Daily Limit</h3>
+                            <h3 className="font-bold text-foreground">Daily Limit</h3>
                             <p className="text-sm text-zinc-500 mt-1">Max number of emails to send per day for this campaign</p>
                         </div>
                         <Input
@@ -2052,7 +2052,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
             {/* Sending Pattern */}
             <Card className="bg-zinc-950 border-zinc-800">
                 <CardContent className="p-6 space-y-5">
-                    <h3 className="font-bold text-white">Sending Pattern</h3>
+                    <h3 className="font-bold text-foreground">Sending Pattern</h3>
                     <p className="text-sm text-zinc-500 -mt-3">Specify how you want your emails to go</p>
 
                     {/* Time gap between emails */}
@@ -2106,7 +2106,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="font-bold text-white">Stop Sending Emails on Auto-Reply</h3>
+                            <h3 className="font-bold text-foreground">Stop Sending Emails on Auto-Reply</h3>
                             <p className="text-sm text-zinc-500 mt-1">Stop sending if an automatic response (e.g. out-of-office) is received</p>
                         </div>
                         <label className="flex items-center gap-2 cursor-pointer">
@@ -2125,7 +2125,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="font-bold text-white">Stop Campaign for Company on Reply</h3>
+                            <h3 className="font-bold text-foreground">Stop Campaign for Company on Reply</h3>
                             <p className="text-sm text-zinc-500 mt-1">Stops the campaign for all leads from a company if any of them replies</p>
                         </div>
                         <label className="flex items-center gap-2 cursor-pointer">
@@ -2144,7 +2144,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="font-bold text-white">Insert Unsubscribe Link Header</h3>
+                            <h3 className="font-bold text-foreground">Insert Unsubscribe Link Header</h3>
                             <p className="text-sm text-zinc-500 mt-1">Automatically adds an unsubscribe link to email headers for one-click unsubscription</p>
                         </div>
                         <label className="flex items-center gap-2 cursor-pointer">

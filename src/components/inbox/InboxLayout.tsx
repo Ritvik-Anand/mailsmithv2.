@@ -48,7 +48,7 @@ function IntentBadge({ label, color, className }: {
         <span
             className={cn(
                 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border',
-                !color && 'bg-white/10 text-white/50 border-white/10',
+                !color && 'bg-foreground/10 text-foreground/50 border-foreground/10',
                 className
             )}
             style={style}
@@ -139,21 +139,21 @@ export function InboxLayout({ initialEmails, accounts }: InboxLayoutProps) {
     if (accounts.length === 0) return <NoAccountsState />
 
     return (
-        <div className="flex h-full min-h-[calc(100vh-13rem)] rounded-2xl overflow-hidden border border-white/5 bg-white/[0.01]">
+        <div className="flex h-full min-h-[calc(100vh-13rem)] rounded-2xl overflow-hidden border border-foreground/5 bg-foreground/[0.01]">
 
             {/* ── LEFT: Email list ── */}
-            <div className="w-[320px] shrink-0 flex flex-col border-r border-white/5">
+            <div className="w-[320px] shrink-0 flex flex-col border-r border-foreground/5">
 
                 {/* Header */}
-                <div className="px-4 pt-4 pb-3 border-b border-white/5 space-y-3">
+                <div className="px-4 pt-4 pb-3 border-b border-foreground/5 space-y-3">
                     <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-white/60 uppercase tracking-wider">
+                        <span className="text-sm font-semibold text-foreground/60 uppercase tracking-wider">
                             Replies
                         </span>
                         <button
                             onClick={refresh}
                             disabled={isRefreshing}
-                            className="text-white/30 hover:text-white transition-colors"
+                            className="text-foreground/30 hover:text-foreground transition-colors"
                         >
                             <RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
                         </button>
@@ -161,18 +161,18 @@ export function InboxLayout({ initialEmails, accounts }: InboxLayoutProps) {
 
                     {/* Search */}
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-foreground/25" />
                         <input
                             type="text"
                             placeholder="Search…"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg pl-9 pr-8 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-primary/40"
+                            className="w-full bg-foreground/[0.04] border border-foreground/[0.08] rounded-lg pl-9 pr-8 py-2 text-sm text-foreground placeholder:text-foreground/25 focus:outline-none focus:border-primary/40"
                         />
                         {search && (
                             <button
                                 onClick={() => setSearch('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/25 hover:text-foreground"
                             >
                                 <X className="h-3.5 w-3.5" />
                             </button>
@@ -197,8 +197,8 @@ export function InboxLayout({ initialEmails, accounts }: InboxLayoutProps) {
                 </div>
 
                 {/* Footer */}
-                <div className="px-4 py-2.5 border-t border-white/5">
-                    <p className="text-[11px] text-white/25">
+                <div className="px-4 py-2.5 border-t border-foreground/5">
+                    <p className="text-[11px] text-foreground/25">
                         {emails.length} {emails.length === 1 ? 'reply' : 'replies'} · {accounts.length} accounts
                     </p>
                 </div>
@@ -241,10 +241,10 @@ function EmailRow({ email, isActive, onClick }: {
         <button
             onClick={onClick}
             className={cn(
-                'w-full text-left px-4 py-3.5 border-b border-white/[0.04] transition-all group',
+                'w-full text-left px-4 py-3.5 border-b border-foreground/[0.04] transition-all group',
                 isActive
                     ? 'bg-primary/10 border-l-[2px] border-l-primary'
-                    : 'hover:bg-white/[0.025] border-l-[2px] border-l-transparent'
+                    : 'hover:bg-foreground/[0.025] border-l-[2px] border-l-transparent'
             )}
         >
             <div className="flex items-start gap-2.5">
@@ -258,25 +258,25 @@ function EmailRow({ email, isActive, onClick }: {
                     <div className="flex items-center justify-between gap-2">
                         <span className={cn(
                             'text-sm truncate',
-                            !email.isRead ? 'font-semibold text-white' : 'text-white/60'
+                            !email.isRead ? 'font-semibold text-foreground' : 'text-foreground/60'
                         )}>
                             {email.fromName !== email.fromAddress
                                 ? email.fromName
                                 : email.fromAddress.split('@')[0]}
                         </span>
-                        <span className="text-[10px] text-white/25 tabular-nums shrink-0">
+                        <span className="text-[10px] text-foreground/25 tabular-nums shrink-0">
                             {formatRelative(email.timestamp)}
                         </span>
                     </div>
 
                     <p className={cn(
                         'text-xs truncate',
-                        !email.isRead ? 'text-white/70' : 'text-white/40'
+                        !email.isRead ? 'text-foreground/70' : 'text-foreground/40'
                     )}>
                         {email.subject}
                     </p>
 
-                    <p className="text-[11px] text-white/30 truncate">
+                    <p className="text-[11px] text-foreground/30 truncate">
                         {email.bodyPreview}
                     </p>
 
@@ -366,10 +366,10 @@ function EmailDetail({ email, accounts, onReplySent, onLabelChange }: {
         <div className="flex flex-col h-full overflow-hidden">
 
             {/* ── Email header ── */}
-            <div className="px-6 py-5 border-b border-white/5">
+            <div className="px-6 py-5 border-b border-foreground/5">
                 <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-base font-semibold text-white leading-snug mb-1.5">
+                        <h2 className="text-base font-semibold text-foreground leading-snug mb-1.5">
                             {email.subject}
                         </h2>
                         {email.interestLabel && (
@@ -384,7 +384,7 @@ function EmailDetail({ email, accounts, onReplySent, onLabelChange }: {
 
                 {/* Lead status one-click buttons */}
                 <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-                    <span className="text-[10px] text-white/30 uppercase tracking-wider mr-1 flex items-center gap-1">
+                    <span className="text-[10px] text-foreground/30 uppercase tracking-wider mr-1 flex items-center gap-1">
                         <Zap className="h-2.5 w-2.5" /> Label lead:
                     </span>
                     {STATUS_BUTTONS.map(btn => {
@@ -399,8 +399,8 @@ function EmailDetail({ email, accounts, onReplySent, onLabelChange }: {
                                 className={cn(
                                     'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all',
                                     isActive
-                                        ? 'text-white border-transparent'
-                                        : 'text-white/40 border-white/10 hover:border-white/20 hover:text-white/70',
+                                        ? 'text-foreground border-transparent'
+                                        : 'text-foreground/40 border-foreground/10 hover:border-foreground/20 hover:text-foreground/70',
                                     statusPending !== null && !isLoading && 'opacity-40 cursor-not-allowed'
                                 )}
                                 style={isActive ? {
@@ -419,12 +419,12 @@ function EmailDetail({ email, accounts, onReplySent, onLabelChange }: {
                     })}
                 </div>
 
-                <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-white/40">
+                <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-foreground/40">
                     <span className="flex items-center gap-1.5">
                         <User className="h-3 w-3" />
-                        <span className="text-white/70">{email.fromName}</span>
+                        <span className="text-foreground/70">{email.fromName}</span>
                         {email.fromName !== email.fromAddress && (
-                            <span className="text-white/30">‹{email.fromAddress}›</span>
+                            <span className="text-foreground/30">‹{email.fromAddress}›</span>
                         )}
                     </span>
                     <span className="flex items-center gap-1.5">
@@ -441,33 +441,33 @@ function EmailDetail({ email, accounts, onReplySent, onLabelChange }: {
             {/* ── Body ── */}
             <div className="flex-1 overflow-y-auto px-6 py-5">
                 <div
-                    className="text-sm text-white/65 leading-relaxed"
+                    className="text-sm text-foreground/65 leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: sanitize(email.body) }}
                 />
             </div>
 
             {/* ── Reply composer ── */}
-            <div className="border-t border-white/5 px-5 py-4 space-y-2.5">
+            <div className="border-t border-foreground/5 px-5 py-4 space-y-2.5">
                 {/* From selector */}
                 {accounts.length > 1 && (
                     <div className="relative">
                         <button
                             onClick={() => setShowAccountPicker(p => !p)}
-                            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors"
+                            className="flex items-center gap-1.5 text-xs text-foreground/40 hover:text-foreground/70 transition-colors"
                         >
                             <Reply className="h-3 w-3" />
-                            Replying as <span className="text-white/70 font-medium">{fromAccount}</span>
+                            Replying as <span className="text-foreground/70 font-medium">{fromAccount}</span>
                             <ChevronDown className={cn('h-3 w-3 transition-transform', showAccountPicker && 'rotate-180')} />
                         </button>
                         {showAccountPicker && (
-                            <div className="absolute bottom-full mb-2 z-50 rounded-xl bg-zinc-900 border border-white/10 shadow-2xl overflow-hidden min-w-[260px]">
+                            <div className="absolute bottom-full mb-2 z-50 rounded-xl bg-zinc-900 border border-foreground/10 shadow-2xl overflow-hidden min-w-[260px]">
                                 {accounts.map(acc => (
                                     <button
                                         key={acc}
                                         onClick={() => { setFromAccount(acc); setShowAccountPicker(false) }}
                                         className={cn(
                                             'w-full text-left px-4 py-2.5 text-sm transition-colors',
-                                            acc === fromAccount ? 'bg-primary/20 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white'
+                                            acc === fromAccount ? 'bg-primary/20 text-foreground' : 'text-foreground/50 hover:bg-foreground/5 hover:text-foreground'
                                         )}
                                     >
                                         {acc}
@@ -480,15 +480,15 @@ function EmailDetail({ email, accounts, onReplySent, onLabelChange }: {
 
                 {/* Textarea */}
                 <div className={cn(
-                    'rounded-xl border bg-white/[0.03] overflow-hidden transition-all',
-                    status === 'error' ? 'border-red-500/40' : 'border-white/10 focus-within:border-primary/40'
+                    'rounded-xl border bg-foreground/[0.03] overflow-hidden transition-all',
+                    status === 'error' ? 'border-red-500/40' : 'border-foreground/10 focus-within:border-primary/40'
                 )}>
                     <textarea
                         value={replyText}
                         onChange={e => { setReplyText(e.target.value); if (status !== 'idle') setStatus('idle') }}
                         placeholder="Write your reply…"
                         rows={4}
-                        className="w-full bg-transparent px-4 pt-3 pb-1 text-sm text-white/80 placeholder:text-white/25 resize-none focus:outline-none"
+                        className="w-full bg-transparent px-4 pt-3 pb-1 text-sm text-foreground/80 placeholder:text-foreground/25 resize-none focus:outline-none"
                     />
                     <div className="flex items-center justify-between px-3 pb-3">
                         <div>
@@ -526,11 +526,11 @@ function EmailDetail({ email, accounts, onReplySent, onLabelChange }: {
 function EmptyList({ search }: { search: string }) {
     return (
         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-            <Inbox className="h-8 w-8 text-white/10 mb-3" />
-            <p className="text-sm text-white/40">
+            <Inbox className="h-8 w-8 text-foreground/10 mb-3" />
+            <p className="text-sm text-foreground/40">
                 {search ? `No results for "${search}"` : 'No replies yet'}
             </p>
-            <p className="text-xs text-white/25 mt-1">
+            <p className="text-xs text-foreground/25 mt-1">
                 {search ? 'Try a different search.' : 'Replies from your campaigns will appear here.'}
             </p>
         </div>
@@ -540,8 +540,8 @@ function EmptyList({ search }: { search: string }) {
 function EmptySelection() {
     return (
         <div className="flex flex-col items-center justify-center h-full">
-            <MailOpen className="h-10 w-10 text-white/10 mb-3" />
-            <p className="text-sm text-white/35">Select a reply to read it</p>
+            <MailOpen className="h-10 w-10 text-foreground/10 mb-3" />
+            <p className="text-sm text-foreground/35">Select a reply to read it</p>
         </div>
     )
 }
@@ -549,9 +549,9 @@ function EmptySelection() {
 function NoAccountsState() {
     return (
         <div className="flex flex-col items-center justify-center h-[500px] text-center p-8">
-            <Inbox className="h-10 w-10 text-white/10 mb-4" />
-            <h3 className="text-base font-semibold text-white mb-2">No Outreach Accounts</h3>
-            <p className="text-sm text-white/40 max-w-xs">
+            <Inbox className="h-10 w-10 text-foreground/10 mb-4" />
+            <h3 className="text-base font-semibold text-foreground mb-2">No Outreach Accounts</h3>
+            <p className="text-sm text-foreground/40 max-w-xs">
                 No email accounts have been assigned to your organisation yet. Contact your operator.
             </p>
         </div>

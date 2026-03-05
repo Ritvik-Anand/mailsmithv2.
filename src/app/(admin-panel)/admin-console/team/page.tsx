@@ -340,7 +340,7 @@ export default function AdminTeamPage() {
                                     Cancel
                                 </Button>
                                 <Button
-                                    className="bg-zinc-100 text-zinc-950 hover:bg-white font-bold"
+                                    className="bg-zinc-100 text-zinc-950 hover:bg-foreground font-bold"
                                     onClick={handleDeploy}
                                     disabled={isPending}
                                 >

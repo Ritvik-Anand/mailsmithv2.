@@ -124,14 +124,14 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                             <Building2 className="h-6 w-6 text-primary" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-white">{organization.name}</h1>
+                            <h1 className="text-2xl font-bold text-foreground">{organization.name}</h1>
                             <p className="text-zinc-500 font-mono text-sm">{organization.slug}</p>
                         </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <Link href={`/operator/customers/${id}/icebreaker`}>
-                        <Button variant="outline" className="border-zinc-800 text-zinc-400 hover:text-white">
+                        <Button variant="outline" className="border-zinc-800 text-zinc-400 hover:text-foreground">
                             <Wand2 className="h-4 w-4 mr-2" />
                             Icebreaker Settings
                         </Button>
@@ -151,7 +151,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                     <CardContent className="p-4 flex items-center gap-3">
                         <Users className="h-8 w-8 text-primary" />
                         <div>
-                            <p className="text-2xl font-bold text-white">{leads.length}</p>
+                            <p className="text-2xl font-bold text-foreground">{leads.length}</p>
                             <p className="text-xs text-zinc-500 uppercase tracking-widest">Total Leads</p>
                         </div>
                     </CardContent>
@@ -160,7 +160,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                     <CardContent className="p-4 flex items-center gap-3">
                         <Sparkles className="h-8 w-8 text-amber-500" />
                         <div>
-                            <p className="text-2xl font-bold text-white">
+                            <p className="text-2xl font-bold text-foreground">
                                 {leads.filter(l => l.icebreaker).length}
                             </p>
                             <p className="text-xs text-zinc-500 uppercase tracking-widest">With Icebreakers</p>
@@ -171,7 +171,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                     <CardContent className="p-4 flex items-center gap-3">
                         <Send className="h-8 w-8 text-emerald-500" />
                         <div>
-                            <p className="text-2xl font-bold text-white">
+                            <p className="text-2xl font-bold text-foreground">
                                 {leads.filter(l => l.campaign_status === 'sent').length}
                             </p>
                             <p className="text-xs text-zinc-500 uppercase tracking-widest">Sent to Campaign</p>
@@ -182,7 +182,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                     <CardContent className="p-4 flex items-center gap-3">
                         <Target className="h-8 w-8 text-purple-500" />
                         <div>
-                            <p className="text-2xl font-bold text-white">{jobs.length}</p>
+                            <p className="text-2xl font-bold text-foreground">{jobs.length}</p>
                             <p className="text-xs text-zinc-500 uppercase tracking-widest">Scrape Jobs</p>
                         </div>
                     </CardContent>
@@ -248,7 +248,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                                     {filteredLeads.slice(0, 50).map((lead) => (
                                         <tr key={lead.id} className="hover:bg-zinc-950/50">
                                             <td className="p-3">
-                                                <p className="font-medium text-white text-sm">
+                                                <p className="font-medium text-foreground text-sm">
                                                     {lead.first_name} {lead.last_name}
                                                 </p>
                                                 <p className="text-xs text-zinc-500">{lead.email}</p>
@@ -331,12 +331,12 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                                                     {job.id.slice(0, 8)}
                                                 </span>
                                             </div>
-                                            <p className="text-sm font-medium text-white">
+                                            <p className="text-sm font-medium text-foreground">
                                                 {job.input_params.contact_job_title?.join(', ') || 'General Search'}
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-lg font-bold text-white">{job.leads_imported || 0}</p>
+                                            <p className="text-lg font-bold text-foreground">{job.leads_imported || 0}</p>
                                             <p className="text-[10px] text-zinc-500 uppercase">Leads</p>
                                         </div>
                                     </CardContent>
@@ -397,7 +397,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                                                         {campaign.id.slice(0, 8)}
                                                     </span>
                                                 </div>
-                                                <p className="text-sm font-medium text-white">
+                                                <p className="text-sm font-medium text-foreground">
                                                     {campaign.name}
                                                 </p>
                                             </div>
@@ -405,7 +405,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                                             {/* Stats */}
                                             <div className="hidden md:flex items-center gap-6 mr-4">
                                                 <div className="text-center">
-                                                    <p className="text-lg font-bold text-white">{campaign.emails_sent || 0}</p>
+                                                    <p className="text-lg font-bold text-foreground">{campaign.emails_sent || 0}</p>
                                                     <p className="text-[10px] text-zinc-500 uppercase">Sent</p>
                                                 </div>
                                                 <div className="text-center">

@@ -563,7 +563,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     </div>
                     {!isRenamingJob ? (
                         <div className="flex items-center gap-2">
-                            <h1 className="text-2xl font-bold text-white tracking-tight">
+                            <h1 className="text-2xl font-bold text-foreground tracking-tight">
                                 {job?.name || `Scrape Results: ${job?.input_params.contact_job_title?.join(', ') || 'General Search'}`}
                             </h1>
                             <button
@@ -582,7 +582,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                             <Input
                                 value={newJobName}
                                 onChange={(e) => setNewJobName(e.target.value)}
-                                className="text-xl font-bold bg-zinc-900 border-zinc-700 text-white max-w-md"
+                                className="text-xl font-bold bg-zinc-900 border-zinc-700 text-foreground max-w-md"
                                 placeholder="Enter job name"
                                 autoFocus
                                 onKeyDown={(e) => {
@@ -649,7 +649,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     </Button>
                     <Button
                         variant="outline"
-                        className="bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white"
+                        className="bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-foreground"
                         onClick={() => fetchData(true)}
                     >
                         <RefreshCw className="h-4 w-4 mr-2" />
@@ -664,7 +664,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                 value={selectedConfigOrgId}
                                 onChange={(e) => setSelectedConfigOrgId(e.target.value)}
                                 disabled={isGenerating}
-                                className="bg-zinc-950 border border-zinc-700 rounded px-2 py-1 text-xs text-white focus:ring-1 focus:ring-primary outline-none min-w-[150px]"
+                                className="bg-zinc-950 border border-zinc-700 rounded px-2 py-1 text-xs text-foreground focus:ring-1 focus:ring-primary outline-none min-w-[150px]"
                             >
                                 <option value="">Default (Job's Org)</option>
                                 {icebreakerConfigs.map(org => (
@@ -696,7 +696,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                 onChange={(e) => setGenerateLimit(e.target.value ? parseInt(e.target.value) : null)}
                                 placeholder="All"
                                 disabled={isGenerating}
-                                className="w-20 bg-zinc-950 border border-zinc-700 rounded px-2 py-1 text-xs text-white focus:ring-1 focus:ring-primary outline-none"
+                                className="w-20 bg-zinc-950 border border-zinc-700 rounded px-2 py-1 text-xs text-foreground focus:ring-1 focus:ring-primary outline-none"
                             />
                         </div>
 
@@ -817,7 +817,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                         <CardContent className="p-0">
                             <Table>
                                 <TableHeader>
-                                    <TableRow className="border-zinc-900 hover:bg-transparent bg-black">
+                                    <TableRow className="border-zinc-900 hover:bg-transparent bg-background">
                                         <TableHead className="text-[10px] font-bold text-zinc-500 pl-6 h-10 uppercase">Lead</TableHead>
                                         <TableHead className="text-[10px] font-bold text-zinc-500 h-10 uppercase">Icebreaker</TableHead>
                                         <TableHead className="text-[10px] font-bold text-zinc-500 h-10 uppercase pr-6 text-right">Status</TableHead>
@@ -896,7 +896,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        className="h-8 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white disabled:opacity-50"
+                                        className="h-8 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-foreground disabled:opacity-50"
                                         onClick={handlePrevPage}
                                         disabled={currentPage === 1}
                                     >
@@ -905,7 +905,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        className="h-8 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white disabled:opacity-50"
+                                        className="h-8 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-foreground disabled:opacity-50"
                                         onClick={handleNextPage}
                                         disabled={currentPage * pageSize >= totalLeads}
                                     >
@@ -997,7 +997,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                             <div className="space-y-4 pt-2">
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="text-zinc-500">Total Leads</span>
-                                    <span className="font-bold text-white">{allLeadsStats.total}</span>
+                                    <span className="font-bold text-foreground">{allLeadsStats.total}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="text-zinc-500">Icebreakers Ready</span>
@@ -1009,12 +1009,12 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                 </div>
                                 <div className="flex items-center justify-between text-xs border-t border-zinc-900 pt-3">
                                     <span className="text-zinc-500">Available to push</span>
-                                    <span className="font-bold text-white">{allLeadsStats.readyToPush}</span>
+                                    <span className="font-bold text-foreground">{allLeadsStats.readyToPush}</span>
                                 </div>
                             </div>
 
                             <Button
-                                className="w-full bg-primary hover:bg-primary/90 text-white font-black py-6 shadow-xl shadow-primary/20 transition-all"
+                                className="w-full bg-primary hover:bg-primary/90 text-foreground font-black py-6 shadow-xl shadow-primary/20 transition-all"
                                 disabled={isPushing || allLeadsStats.readyToPush === 0}
                                 onClick={handlePushToInstantly}
                             >
@@ -1113,7 +1113,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                 <div className="fixed inset-0 z-50 flex justify-end">
                     {/* Backdrop */}
                     <div
-                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        className="absolute inset-0 bg-background/60 backdrop-blur-sm"
                         onClick={() => setSelectedLead(null)}
                     />
 
@@ -1122,7 +1122,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                         {/* Header */}
                         <div className="sticky top-0 bg-zinc-950 border-b border-zinc-800 p-6 flex items-start justify-between">
                             <div>
-                                <h2 className="text-xl font-bold text-white">
+                                <h2 className="text-xl font-bold text-foreground">
                                     {selectedLead.first_name} {selectedLead.last_name}
                                 </h2>
                                 <p className="text-zinc-500 text-sm">{selectedLead.job_title} @ {selectedLead.company_name}</p>
@@ -1131,7 +1131,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setSelectedLead(null)}
-                                className="text-zinc-500 hover:text-white"
+                                className="text-zinc-500 hover:text-foreground"
                             >
                                 <X className="h-5 w-5" />
                             </Button>
@@ -1189,7 +1189,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                             size="sm"
                                             onClick={handleUpdateIcebreaker}
                                             disabled={isSavingIcebreaker || editingIcebreaker === (selectedLead.icebreaker || '')}
-                                            className="bg-primary hover:bg-primary/90 text-white text-xs font-bold"
+                                            className="bg-primary hover:bg-primary/90 text-foreground text-xs font-bold"
                                         >
                                             {isSavingIcebreaker ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Save className="h-3 w-3 mr-2" />}
                                             Save Changes
@@ -1231,7 +1231,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                 <summary className="text-xs font-bold text-zinc-600 uppercase tracking-widest cursor-pointer hover:text-zinc-400">
                                     View Raw JSON
                                 </summary>
-                                <pre className="mt-3 bg-black p-4 rounded-lg border border-zinc-800 text-[10px] text-zinc-400 overflow-x-auto max-h-[300px] overflow-y-auto">
+                                <pre className="mt-3 bg-background p-4 rounded-lg border border-zinc-800 text-[10px] text-zinc-400 overflow-x-auto max-h-[300px] overflow-y-auto">
                                     {JSON.stringify(selectedLead.raw_scraped_data, null, 2)}
                                 </pre>
                             </details>
@@ -1268,7 +1268,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                             setGenerationDialogOpen(false)
                             setIsGenerating(false) // Reset loading state
                         }}>Cancel</Button>
-                        <Button onClick={executeGeneration} className="bg-amber-500 text-black hover:bg-amber-600">
+                        <Button onClick={executeGeneration} className="bg-amber-500 text-background hover:bg-amber-600">
                             Start Generation
                         </Button>
                     </DialogFooter>

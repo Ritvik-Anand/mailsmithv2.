@@ -54,18 +54,18 @@ export default async function CustomerAnalyticsPage() {
         <div className="space-y-8">
             {/* Header */}
             <div className="space-y-1">
-                <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
                     <BarChart3 className="h-6 w-6 text-primary" />
                     Analytics
                 </h1>
-                <p className="text-white/50">Detailed insights into your outreach performance</p>
+                <p className="text-foreground/50">Detailed insights into your outreach performance</p>
             </div>
 
             {/* AI Insights */}
             {insights.length > 0 && (
                 <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
                     <CardHeader>
-                        <CardTitle className="text-base text-white flex items-center gap-2">
+                        <CardTitle className="text-base text-foreground flex items-center gap-2">
                             <Sparkles className="h-4 w-4 text-primary" />
                             AI Insights
                         </CardTitle>
@@ -77,7 +77,7 @@ export default async function CustomerAnalyticsPage() {
                                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">
                                         {i + 1}
                                     </div>
-                                    <p className="text-sm text-white/80">{insight}</p>
+                                    <p className="text-sm text-foreground/80">{insight}</p>
                                 </li>
                             ))}
                         </ul>
@@ -127,9 +127,9 @@ export default async function CustomerAnalyticsPage() {
 
             {/* Conversion Funnel */}
             {hasData && (
-                <Card className="bg-white/[0.02] border-white/5">
+                <Card className="bg-foreground/[0.02] border-foreground/5">
                     <CardHeader>
-                        <CardTitle className="text-base text-white">Conversion Funnel</CardTitle>
+                        <CardTitle className="text-base text-foreground">Conversion Funnel</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
@@ -144,23 +144,23 @@ export default async function CustomerAnalyticsPage() {
                                 return (
                                     <div key={stage.name} className="space-y-2">
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-white">{stage.name}</span>
+                                            <span className="text-foreground">{stage.name}</span>
                                             <div className="flex items-center gap-3">
                                                 {conversionRate && (
-                                                    <span className="text-xs text-white/40">
+                                                    <span className="text-xs text-foreground/40">
                                                         {conversionRate}% conversion
                                                     </span>
                                                 )}
-                                                <span className="text-white font-medium">{stage.value.toLocaleString()}</span>
+                                                <span className="text-foreground font-medium">{stage.value.toLocaleString()}</span>
                                             </div>
                                         </div>
-                                        <div className="h-8 bg-white/5 rounded-lg overflow-hidden">
+                                        <div className="h-8 bg-foreground/5 rounded-lg overflow-hidden">
                                             <div
                                                 className={`h-full ${stage.color} transition-all duration-500 rounded-lg flex items-center justify-end pr-3`}
                                                 style={{ width: `${width}%` }}
                                             >
                                                 {width > 15 && (
-                                                    <span className="text-xs font-medium text-white">
+                                                    <span className="text-xs font-medium text-foreground">
                                                         {width.toFixed(0)}%
                                                     </span>
                                                 )}
@@ -176,27 +176,27 @@ export default async function CustomerAnalyticsPage() {
 
             {/* Campaign Comparison */}
             {campaigns.length > 1 && (
-                <Card className="bg-white/[0.02] border-white/5">
+                <Card className="bg-foreground/[0.02] border-foreground/5">
                     <CardHeader>
-                        <CardTitle className="text-base text-white">Campaign Performance Comparison</CardTitle>
+                        <CardTitle className="text-base text-foreground">Campaign Performance Comparison</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
-                                    <tr className="border-b border-white/5">
-                                        <th className="text-left py-3 px-4 text-xs font-medium text-white/50">Campaign</th>
-                                        <th className="text-center py-3 px-4 text-xs font-medium text-white/50">Status</th>
-                                        <th className="text-right py-3 px-4 text-xs font-medium text-white/50">Leads</th>
-                                        <th className="text-right py-3 px-4 text-xs font-medium text-white/50">Sent</th>
-                                        <th className="text-right py-3 px-4 text-xs font-medium text-white/50">Open Rate</th>
-                                        <th className="text-right py-3 px-4 text-xs font-medium text-white/50">Reply Rate</th>
+                                    <tr className="border-b border-foreground/5">
+                                        <th className="text-left py-3 px-4 text-xs font-medium text-foreground/50">Campaign</th>
+                                        <th className="text-center py-3 px-4 text-xs font-medium text-foreground/50">Status</th>
+                                        <th className="text-right py-3 px-4 text-xs font-medium text-foreground/50">Leads</th>
+                                        <th className="text-right py-3 px-4 text-xs font-medium text-foreground/50">Sent</th>
+                                        <th className="text-right py-3 px-4 text-xs font-medium text-foreground/50">Open Rate</th>
+                                        <th className="text-right py-3 px-4 text-xs font-medium text-foreground/50">Reply Rate</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {campaigns.map((campaign) => (
-                                        <tr key={campaign.id} className="border-b border-white/5">
-                                            <td className="py-3 px-4 text-sm text-white">{campaign.name}</td>
+                                        <tr key={campaign.id} className="border-b border-foreground/5">
+                                            <td className="py-3 px-4 text-sm text-foreground">{campaign.name}</td>
                                             <td className="py-3 px-4 text-center">
                                                 <Badge className={`${campaign.status === 'active' ? 'bg-green-500/10 text-green-400' :
                                                         campaign.status === 'paused' ? 'bg-amber-500/10 text-amber-400' :
@@ -205,15 +205,15 @@ export default async function CustomerAnalyticsPage() {
                                                     {campaign.status}
                                                 </Badge>
                                             </td>
-                                            <td className="py-3 px-4 text-sm text-white text-right">{campaign.totalLeads}</td>
-                                            <td className="py-3 px-4 text-sm text-white text-right">{campaign.emailsSent}</td>
+                                            <td className="py-3 px-4 text-sm text-foreground text-right">{campaign.totalLeads}</td>
+                                            <td className="py-3 px-4 text-sm text-foreground text-right">{campaign.emailsSent}</td>
                                             <td className="py-3 px-4 text-sm text-right">
-                                                <span className={campaign.openRate >= 35 ? 'text-green-400' : 'text-white'}>
+                                                <span className={campaign.openRate >= 35 ? 'text-green-400' : 'text-foreground'}>
                                                     {campaign.openRate}%
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4 text-sm text-right">
-                                                <span className={campaign.replyRate >= 5 ? 'text-green-400' : 'text-white'}>
+                                                <span className={campaign.replyRate >= 5 ? 'text-green-400' : 'text-foreground'}>
                                                     {campaign.replyRate}%
                                                 </span>
                                             </td>
@@ -228,19 +228,19 @@ export default async function CustomerAnalyticsPage() {
 
             {/* Best Performing Campaign */}
             {bestCampaign && (
-                <Card className="bg-white/[0.02] border-white/5">
+                <Card className="bg-foreground/[0.02] border-foreground/5">
                     <CardContent className="p-6">
                         <div className="flex items-center gap-4">
                             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-500/10">
                                 <TrendingUp className="h-6 w-6 text-green-400" />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-sm text-white/50">Top Performing Campaign</h3>
-                                <p className="text-lg font-semibold text-white">{bestCampaign.name}</p>
+                                <h3 className="text-sm text-foreground/50">Top Performing Campaign</h3>
+                                <p className="text-lg font-semibold text-foreground">{bestCampaign.name}</p>
                             </div>
                             <div className="text-right">
                                 <p className="text-2xl font-bold text-green-400">{bestCampaign.replyRate}%</p>
-                                <p className="text-xs text-white/40">Reply Rate</p>
+                                <p className="text-xs text-foreground/40">Reply Rate</p>
                             </div>
                         </div>
                     </CardContent>
@@ -249,13 +249,13 @@ export default async function CustomerAnalyticsPage() {
 
             {/* Empty State */}
             {!hasData && (
-                <Card className="bg-white/[0.02] border-white/5">
+                <Card className="bg-foreground/[0.02] border-foreground/5">
                     <CardContent className="py-16 text-center">
                         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mx-auto mb-4">
                             <BarChart3 className="h-8 w-8 text-primary" />
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2">No Analytics Yet</h3>
-                        <p className="text-white/50 max-w-md mx-auto">
+                        <h3 className="text-xl font-bold text-foreground mb-2">No Analytics Yet</h3>
+                        <p className="text-foreground/50 max-w-md mx-auto">
                             Once your campaigns are launched and emails are sent, you'll see detailed
                             analytics about opens, replies, and conversion rates here.
                         </p>
@@ -287,7 +287,7 @@ function MetricCard({
     const isAboveBenchmark = benchmark ? numValue >= benchmark : null
 
     return (
-        <Card className="bg-white/[0.02] border-white/5">
+        <Card className="bg-foreground/[0.02] border-foreground/5">
             <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
@@ -300,15 +300,15 @@ function MetricCard({
                         </div>
                     )}
                 </div>
-                <p className="text-2xl font-bold text-white">{value}</p>
-                <p className="text-sm text-white/40 mt-1">{title}</p>
+                <p className="text-2xl font-bold text-foreground">{value}</p>
+                <p className="text-sm text-foreground/40 mt-1">{title}</p>
                 {benchmarkLabel && (
                     <p className={`text-xs mt-2 ${isAboveBenchmark ? 'text-green-400' : 'text-amber-400'}`}>
                         {isAboveBenchmark ? '✓' : '○'} {benchmarkLabel}
                     </p>
                 )}
                 {subtext && (
-                    <p className="text-xs text-white/30 mt-2">{subtext}</p>
+                    <p className="text-xs text-foreground/30 mt-2">{subtext}</p>
                 )}
             </CardContent>
         </Card>

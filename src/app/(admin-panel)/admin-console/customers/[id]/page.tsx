@@ -195,7 +195,7 @@ export default function AdminCustomerDetailPage() {
                     </div>
                     <div className="flex items-center gap-3">
                         <h1 className="text-3xl font-bold tracking-tight">{org.name}</h1>
-                        <Badge className={`${planColors[org.plan]} text-white capitalize`}>
+                        <Badge className={`${planColors[org.plan]} text-foreground capitalize`}>
                             {org.plan}
                         </Badge>
                         <Badge variant={org.status === 'suspended' ? 'destructive' : 'secondary'} className="capitalize">
@@ -276,7 +276,7 @@ export default function AdminCustomerDetailPage() {
                                 <Separator />
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Plan</span>
-                                    <Badge className={`${planColors[org.plan]} text-white capitalize`}>
+                                    <Badge className={`${planColors[org.plan]} text-foreground capitalize`}>
                                         {org.plan}
                                     </Badge>
                                 </div>
@@ -621,7 +621,7 @@ export default function AdminCustomerDetailPage() {
                                                     </div>
                                                     <Button
                                                         size="sm"
-                                                        className="bg-primary hover:bg-primary/90 text-white"
+                                                        className="bg-primary hover:bg-primary/90 text-foreground"
                                                         onClick={() => handleAssignNode(node.id, id)}
                                                     >
                                                         Assign

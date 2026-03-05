@@ -137,7 +137,7 @@ export default function CustomerIcebreakerSettingsPage({ params }: { params: Pro
                     </Button>
                 </Link>
                 <div className="flex-1">
-                    <h1 className="text-2xl font-bold text-white">Icebreaker Configuration</h1>
+                    <h1 className="text-2xl font-bold text-foreground">Icebreaker Configuration</h1>
                     <p className="text-zinc-500 text-sm font-medium">
                         Configure how AI generates personalized icebreakers for {organization?.name}
                     </p>

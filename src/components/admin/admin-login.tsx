@@ -116,7 +116,7 @@ export function AdminLogin() {
                     <CardFooter className="flex flex-col space-y-4 pb-8">
                         <Button
                             type="submit"
-                            className="w-full h-12 bg-zinc-100 text-zinc-950 hover:bg-white font-bold rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-white/5"
+                            className="w-full h-12 bg-zinc-100 text-zinc-950 hover:bg-foreground font-bold rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-foreground/5"
                             disabled={isLoading}
                         >
                             {isLoading ? (

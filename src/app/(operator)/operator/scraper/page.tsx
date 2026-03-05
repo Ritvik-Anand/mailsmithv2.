@@ -181,7 +181,7 @@ function ListInput({
                     <Icon className={`absolute left-3 top-2.5 h-4 w-4 ${isNegative ? 'text-red-900' : 'text-zinc-600'}`} />
                     <Input
                         placeholder={placeholder}
-                        className={`bg-black border-zinc-800 pl-10 h-10 text-sm ${isNegative ? 'focus-visible:ring-red-500/50' : ''}`}
+                        className={`bg-background border-zinc-800 pl-10 h-10 text-sm ${isNegative ? 'focus-visible:ring-red-500/50' : ''}`}
                         value={input}
                         onChange={(e) => { setInput(e.target.value); setShowSuggestions(true) }}
                         onFocus={() => setShowSuggestions(true)}
@@ -192,7 +192,7 @@ function ListInput({
                             {filteredSuggestions.length > 0 ? filteredSuggestions.map((s, i) => (
                                 <button
                                     key={i}
-                                    className="w-full text-left px-4 py-2.5 text-xs text-zinc-400 hover:bg-zinc-900 hover:text-white flex items-center justify-between group transition-colors"
+                                    className="w-full text-left px-4 py-2.5 text-xs text-zinc-400 hover:bg-zinc-900 hover:text-foreground flex items-center justify-between group transition-colors"
                                     onClick={() => handleAdd(s)}
                                 >
                                     {s}
@@ -222,7 +222,7 @@ function ListInput({
                             : 'bg-primary/5 text-primary border-primary/20'}`}
                     >
                         {v}
-                        <button onClick={() => onRemove(v)} className="hover:text-white">
+                        <button onClick={() => onRemove(v)} className="hover:text-foreground">
                             <X className="h-3 w-3" />
                         </button>
                     </Badge>
@@ -278,7 +278,7 @@ function SaveTemplateModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+            <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" onClick={onClose} />
             <div className="relative w-full max-w-md mx-4 bg-zinc-950 border-2 border-zinc-800 rounded-2xl shadow-2xl shadow-black/50 animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between p-6 border-b border-zinc-900">
                     <div className="flex items-center gap-3">
@@ -286,11 +286,11 @@ function SaveTemplateModal({
                             <Save className="h-4 w-4 text-primary" />
                         </div>
                         <div>
-                            <h2 className="text-sm font-black text-white uppercase tracking-tight">Save as Template</h2>
+                            <h2 className="text-sm font-black text-foreground uppercase tracking-tight">Save as Template</h2>
                             <p className="text-[10px] text-zinc-500 font-medium">Reuse these filters later with one click</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-zinc-600 hover:text-white transition-colors">
+                    <button onClick={onClose} className="text-zinc-600 hover:text-foreground transition-colors">
                         <X className="h-5 w-5" />
                     </button>
                 </div>
@@ -449,7 +449,7 @@ function TemplatesPanel({
                                     <button className="w-full text-left p-3 pr-10" onClick={() => handleLoad(template)}>
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-xs font-bold text-zinc-200 truncate group-hover:text-white transition-colors">{template.name}</p>
+                                                <p className="text-xs font-bold text-zinc-200 truncate group-hover:text-foreground transition-colors">{template.name}</p>
                                                 {template.description && (
                                                     <p className="text-[10px] text-zinc-600 mt-0.5 line-clamp-1">{template.description}</p>
                                                 )}
@@ -573,7 +573,7 @@ function ScraperContent() {
             {/* ── Page Header ─────────────────────────────────────────────── */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="space-y-1">
-                    <h1 className="text-4xl font-black tracking-tighter text-white">MACHINE SCRAPER v2</h1>
+                    <h1 className="text-4xl font-black tracking-tighter text-foreground">MACHINE SCRAPER v2</h1>
                     <p className="text-zinc-500 font-medium">Global Lead Finding Infrastructure.</p>
                 </div>
                 <div className="flex items-start gap-3">
@@ -590,7 +590,7 @@ function ScraperContent() {
                     </Button>
                     <div className="flex flex-col items-end gap-1">
                         <Button
-                            className="bg-primary hover:bg-primary/90 text-white font-black px-10 h-12 shadow-2xl shadow-primary/20"
+                            className="bg-primary hover:bg-primary/90 text-foreground font-black px-10 h-12 shadow-2xl shadow-primary/20"
                             onClick={handleStartJob}
                             disabled={isSubmitting}
                         >
@@ -705,7 +705,7 @@ function ScraperContent() {
                                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                                     {SENIORITY_OPTIONS.map(opt => (
                                         <Button key={opt.value} variant="outline"
-                                            className={`h-12 text-[10px] font-black uppercase tracking-tight transition-all border-2 ${filters.seniority_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-900 bg-black text-zinc-600'}`}
+                                            className={`h-12 text-[10px] font-black uppercase tracking-tight transition-all border-2 ${filters.seniority_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-900 bg-background text-zinc-600'}`}
                                             onClick={() => toggleArrayFilter('seniority_level', opt.value)}>
                                             {opt.label}
                                         </Button>
@@ -741,7 +741,7 @@ function ScraperContent() {
                                 <div className="flex flex-wrap gap-2">
                                     {SIZE_OPTIONS.map(size => (
                                         <Badge key={size}
-                                            className={`cursor-pointer px-5 py-2.5 border-2 font-mono text-[10px] font-black transition-all ${filters.size?.includes(size) ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-black text-zinc-600 border-zinc-900 hover:border-zinc-700'}`}
+                                            className={`cursor-pointer px-5 py-2.5 border-2 font-mono text-[10px] font-black transition-all ${filters.size?.includes(size) ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20' : 'bg-background text-zinc-600 border-zinc-900 hover:border-zinc-700'}`}
                                             onClick={() => toggleArrayFilter('size', size)}>
                                             {size}
                                         </Badge>
@@ -781,7 +781,7 @@ function ScraperContent() {
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                     {FUNCTIONAL_OPTIONS.map(opt => (
                                         <Button key={opt.value} variant="outline"
-                                            className={`h-12 text-[10px] font-black uppercase tracking-tight border-2 ${filters.functional_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-900 bg-black text-zinc-600'}`}
+                                            className={`h-12 text-[10px] font-black uppercase tracking-tight border-2 ${filters.functional_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-900 bg-background text-zinc-600'}`}
                                             onClick={() => toggleArrayFilter('functional_level', opt.value)}>
                                             {opt.label}
                                         </Button>
@@ -793,7 +793,7 @@ function ScraperContent() {
                                 <div className="flex flex-wrap gap-2">
                                     {FUNDING_OPTIONS.map(opt => (
                                         <Button key={opt.value} variant="outline"
-                                            className={`px-8 h-12 text-[10px] font-black uppercase tracking-tight rounded-full border-2 ${filters.funding?.includes(opt.value) ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500' : 'border-zinc-900 bg-black text-zinc-600'}`}
+                                            className={`px-8 h-12 text-[10px] font-black uppercase tracking-tight rounded-full border-2 ${filters.funding?.includes(opt.value) ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500' : 'border-zinc-900 bg-background text-zinc-600'}`}
                                             onClick={() => toggleArrayFilter('funding', opt.value)}>
                                             {opt.label}
                                         </Button>
@@ -810,12 +810,12 @@ function ScraperContent() {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="relative">
                                             <DollarSign className="absolute left-3 top-3 h-4 w-4 text-zinc-700" />
-                                            <Input placeholder="Min Revenue" className="bg-black border-2 border-zinc-900 pl-10 h-12 text-xs font-mono"
+                                            <Input placeholder="Min Revenue" className="bg-background border-2 border-zinc-900 pl-10 h-12 text-xs font-mono"
                                                 onChange={(e) => setFilters({ ...filters, min_revenue: e.target.value })} />
                                         </div>
                                         <div className="relative">
                                             <DollarSign className="absolute left-3 top-3 h-4 w-4 text-zinc-700" />
-                                            <Input placeholder="Max Revenue" className="bg-black border-2 border-zinc-900 pl-10 h-12 text-xs font-mono"
+                                            <Input placeholder="Max Revenue" className="bg-background border-2 border-zinc-900 pl-10 h-12 text-xs font-mono"
                                                 onChange={(e) => setFilters({ ...filters, max_revenue: e.target.value })} />
                                         </div>
                                     </div>

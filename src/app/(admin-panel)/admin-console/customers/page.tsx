@@ -372,7 +372,7 @@ export default function AdminCustomersPage() {
                                     </TableCell>
                                     <TableCell>
                                         <Badge
-                                            className={`${planColors[customer.plan]} text-white capitalize`}
+                                            className={`${planColors[customer.plan]} text-foreground capitalize`}
                                         >
                                             {customer.plan}
                                         </Badge>

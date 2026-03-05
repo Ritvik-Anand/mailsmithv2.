@@ -446,7 +446,7 @@ function NewCampaignContent() {
                                 Save Draft
                             </Button>
                             <Button
-                                className="bg-amber-500 hover:bg-amber-600 text-black font-bold"
+                                className="bg-amber-500 hover:bg-amber-600 text-background font-bold"
                                 onClick={() => handleLaunch(true)}
                                 disabled={isSubmitting}
                             >
@@ -544,7 +544,7 @@ function NewCampaignContent() {
                                 >
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2">
-                                            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${idx === 0 ? 'bg-amber-500 text-black' : 'bg-zinc-800 text-zinc-400'
+                                            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${idx === 0 ? 'bg-amber-500 text-background' : 'bg-zinc-800 text-zinc-400'
                                                 }`}>
                                                 {seq.stepNumber}
                                             </div>
@@ -612,7 +612,7 @@ function NewCampaignContent() {
                                                                 key={v.label}
                                                                 onClick={() => setActiveVariantLabel(v.label)}
                                                                 className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeVariantLabel === v.label
-                                                                    ? 'bg-zinc-800 text-white shadow-sm'
+                                                                    ? 'bg-zinc-800 text-foreground shadow-sm'
                                                                     : 'text-zinc-500 hover:text-zinc-300'
                                                                     }`}
                                                             >
@@ -642,7 +642,7 @@ function NewCampaignContent() {
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="text-zinc-500 hover:text-white"
+                                                    className="text-zinc-500 hover:text-foreground"
                                                     onClick={handlePreview}
                                                 >
                                                     <Eye className="h-4 w-4 mr-2" />
@@ -786,7 +786,7 @@ function NewCampaignContent() {
                                                     days: { ...schedule.days, [day]: !active }
                                                 })}
                                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${active
-                                                    ? 'bg-amber-500 text-black'
+                                                    ? 'bg-amber-500 text-background'
                                                     : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800'
                                                     }`}
                                             >
@@ -1035,7 +1035,7 @@ function NewCampaignContent() {
             <Dialog open={showPreview} onOpenChange={setShowPreview}>
                 <DialogContent className="sm:max-w-2xl bg-zinc-950 border-zinc-800 max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle className="text-white">Email Preview</DialogTitle>
+                        <DialogTitle className="text-foreground">Email Preview</DialogTitle>
                         <DialogDescription className="text-zinc-500">
                             See how this email will look for a sample lead from {organizations?.find(o => o.id === selectedOrgId)?.name || 'the customer'}.
                         </DialogDescription>
@@ -1058,7 +1058,7 @@ function NewCampaignContent() {
                                     <select
                                         value={selectedPreviewLeadId}
                                         onChange={(e) => setSelectedPreviewLeadId(e.target.value)}
-                                        className="w-full h-9 px-3 text-sm bg-zinc-900 border border-zinc-800 rounded-md text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                        className="w-full h-9 px-3 text-sm bg-zinc-900 border border-zinc-800 rounded-md text-foreground focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                                         disabled={isLoadingPreview}
                                     >
                                         <option value="sample">📋 Sample Data (Alex Johnson)</option>
@@ -1084,7 +1084,7 @@ function NewCampaignContent() {
                                             {(currentPreviewData?.first_name?.[0] || 'A')}
                                         </div>
                                         <div>
-                                            <p className="text-xs font-bold text-white">
+                                            <p className="text-xs font-bold text-foreground">
                                                 {currentPreviewData.first_name} {currentPreviewData.last_name}
                                             </p>
                                             <p className="text-[10px] text-zinc-500">
@@ -1098,7 +1098,7 @@ function NewCampaignContent() {
                                 {/* Subject */}
                                 <div className="space-y-1">
                                     <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Subject</span>
-                                    <div className="p-3 bg-zinc-900 rounded-lg border border-zinc-800 text-sm text-white font-medium">
+                                    <div className="p-3 bg-zinc-900 rounded-lg border border-zinc-800 text-sm text-foreground font-medium">
                                         {replaceVariablesForPreview(activeVariant?.subject || '') || <span className="text-zinc-600 italic">No subject</span>}
                                     </div>
                                 </div>
@@ -1106,7 +1106,7 @@ function NewCampaignContent() {
                                 {/* Body */}
                                 <div className="space-y-1">
                                     <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Body</span>
-                                    <div className="p-4 bg-white rounded-lg text-zinc-900 text-sm leading-relaxed whitespace-pre-wrap min-h-[200px]">
+                                    <div className="p-4 bg-foreground rounded-lg text-zinc-900 text-sm leading-relaxed whitespace-pre-wrap min-h-[200px]">
                                         {replaceVariablesForPreview(activeVariant?.body || '') || <span className="text-zinc-400 italic">No body content</span>}
                                     </div>
                                 </div>
@@ -1121,7 +1121,7 @@ function NewCampaignContent() {
                 <div className="fixed inset-0 z-[60] flex justify-end">
                     {/* Backdrop */}
                     <div
-                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        className="absolute inset-0 bg-background/60 backdrop-blur-sm"
                         onClick={() => setDetailLead(null)}
                     />
 
@@ -1130,7 +1130,7 @@ function NewCampaignContent() {
                         {/* Header */}
                         <div className="sticky top-0 bg-zinc-950/80 backdrop-blur border-b border-zinc-800 p-6 flex items-start justify-between z-10">
                             <div>
-                                <h2 className="text-xl font-bold text-white">
+                                <h2 className="text-xl font-bold text-foreground">
                                     {detailLead.first_name} {detailLead.last_name}
                                 </h2>
                                 <p className="text-zinc-500 text-sm">{detailLead.job_title} @ {detailLead.company_name}</p>
@@ -1139,7 +1139,7 @@ function NewCampaignContent() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setDetailLead(null)}
-                                className="text-zinc-500 hover:text-white"
+                                className="text-zinc-500 hover:text-foreground"
                             >
                                 <X className="h-5 w-5" />
                             </Button>
@@ -1223,7 +1223,7 @@ function NewCampaignContent() {
                                 <summary className="text-xs font-bold text-zinc-600 uppercase tracking-widest cursor-pointer hover:text-zinc-400">
                                     View Raw JSON
                                 </summary>
-                                <pre className="mt-3 bg-black p-4 rounded-lg border border-zinc-800 text-[10px] text-zinc-400 overflow-x-auto max-h-[300px] overflow-y-auto">
+                                <pre className="mt-3 bg-background p-4 rounded-lg border border-zinc-800 text-[10px] text-zinc-400 overflow-x-auto max-h-[300px] overflow-y-auto">
                                     {JSON.stringify(detailLead.raw_scraped_data || detailLead, null, 2)}
                                 </pre>
                             </details>

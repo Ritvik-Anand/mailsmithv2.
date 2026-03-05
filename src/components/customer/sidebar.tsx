@@ -21,6 +21,7 @@ import {
     Inbox,
 } from 'lucide-react'
 import type { UserWithRole } from '@/server/actions/roles'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 interface CustomerSidebarProps {
     user: UserWithRole
@@ -98,15 +99,15 @@ export function CustomerSidebar({ user }: CustomerSidebarProps) {
     return (
         <aside
             className={cn(
-                'hidden lg:flex flex-col border-r border-white/5 bg-black/40 backdrop-blur-xl transition-all duration-300',
+                'hidden lg:flex flex-col border-r border-foreground/5 bg-background/40 backdrop-blur-xl transition-all duration-300',
                 collapsed ? 'w-16' : 'w-72'
             )}
         >
             {/* Logo */}
-            <div className="flex h-20 items-center border-b border-white/5 px-4">
+            <div className="flex h-20 items-center border-b border-foreground/5 px-4">
                 <Link href="/portal" className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/60 p-0.5 shadow-lg shadow-primary/20">
-                        <div className="flex h-full w-full items-center justify-center rounded-[9px] bg-black/20 backdrop-blur-sm">
+                        <div className="flex h-full w-full items-center justify-center rounded-[9px] bg-background/20 backdrop-blur-sm">
                             <Image
                                 src="/logo.png"
                                 alt="MailSmith Logo"
@@ -118,8 +119,8 @@ export function CustomerSidebar({ user }: CustomerSidebarProps) {
                     </div>
                     {!collapsed && (
                         <div className="flex flex-col">
-                            <span className="font-bold text-lg text-white">MailSmith</span>
-                            <span className="text-xs text-white/40">Client Portal</span>
+                            <span className="font-bold text-lg text-foreground">MailSmith</span>
+                            <span className="text-xs text-foreground/40">Client Portal</span>
                         </div>
                     )}
                 </Link>
@@ -139,13 +140,13 @@ export function CustomerSidebar({ user }: CustomerSidebarProps) {
                                 className={cn(
                                     'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all',
                                     isActive
-                                        ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                                        : 'text-white/60 hover:bg-white/5 hover:text-white'
+                                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                                        : 'text-foreground/60 hover:bg-foreground/5 hover:text-foreground'
                                 )}
                             >
                                 <item.icon className={cn(
                                     'h-5 w-5 shrink-0 transition-colors',
-                                    isActive ? 'text-white' : 'text-white/40'
+                                    isActive ? 'text-foreground' : 'text-foreground/40'
                                 )} />
                                 {!collapsed && (
                                     <div className="flex flex-col flex-1 min-w-0">
@@ -156,7 +157,7 @@ export function CustomerSidebar({ user }: CustomerSidebarProps) {
                                             )}
                                         </div>
                                         {!isActive && (
-                                            <span className="text-xs text-white/30">{item.description}</span>
+                                            <span className="text-xs text-foreground/30">{item.description}</span>
                                         )}
                                     </div>
                                 )}
@@ -167,22 +168,22 @@ export function CustomerSidebar({ user }: CustomerSidebarProps) {
             </ScrollArea>
 
             {/* Support Link */}
-            <div className="border-t border-white/5 p-4">
+            <div className="border-t border-foreground/5 p-4">
                 <Link
                     href="/portal/support"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white transition-all"
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground/60 hover:bg-foreground/5 hover:text-foreground transition-all"
                 >
-                    <MessageSquare className="h-5 w-5 text-white/40" />
+                    <MessageSquare className="h-5 w-5 text-foreground/40" />
                     {!collapsed && <span>Contact Support</span>}
                 </Link>
             </div>
 
             {/* Collapse Toggle */}
-            <div className="border-t border-white/5 p-3">
+            <div className="border-t border-foreground/5 p-3 flex items-center justify-between gap-2">
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start text-white/40 hover:text-white hover:bg-white/5"
+                    className="flex-1 justify-start text-foreground/40 hover:text-foreground hover:bg-foreground/5"
                     onClick={() => setCollapsed(!collapsed)}
                 >
                     <ChevronLeft
@@ -190,6 +191,7 @@ export function CustomerSidebar({ user }: CustomerSidebarProps) {
                     />
                     {!collapsed && <span className="ml-2">Collapse</span>}
                 </Button>
+                <ThemeToggle />
             </div>
         </aside>
     )
@@ -201,13 +203,13 @@ export function CustomerMobileSidebar({ user }: CustomerSidebarProps) {
     return (
         <Sheet>
             <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden text-white">
+                <Button variant="ghost" size="icon" className="lg:hidden text-foreground">
                     <Menu className="h-5 w-5" />
                     <span className="sr-only">Toggle menu</span>
                 </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-72 p-0 bg-black/95 border-white/10">
-                <div className="flex h-20 items-center border-b border-white/5 px-4">
+            <SheetContent side="left" className="w-72 p-0 bg-background/95 border-foreground/10">
+                <div className="flex h-20 items-center border-b border-foreground/5 px-4">
                     <Link href="/portal" className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/60">
                             <Image
@@ -219,8 +221,8 @@ export function CustomerMobileSidebar({ user }: CustomerSidebarProps) {
                             />
                         </div>
                         <div className="flex flex-col">
-                            <span className="font-bold text-lg text-white">MailSmith</span>
-                            <span className="text-xs text-white/40">Client Portal</span>
+                            <span className="font-bold text-lg text-foreground">MailSmith</span>
+                            <span className="text-xs text-foreground/40">Client Portal</span>
                         </div>
                     </Link>
                 </div>
@@ -235,8 +237,8 @@ export function CustomerMobileSidebar({ user }: CustomerSidebarProps) {
                                     className={cn(
                                         'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all',
                                         isActive
-                                            ? 'bg-primary text-white'
-                                            : 'text-white/60 hover:bg-white/5 hover:text-white'
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'text-foreground/60 hover:bg-foreground/5 hover:text-foreground'
                                     )}
                                 >
                                     <item.icon className="h-5 w-5" />

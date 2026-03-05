@@ -62,7 +62,7 @@ export default function OperatorCustomersPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="space-y-2">
-                    <h1 className="text-3xl font-bold tracking-tight text-white">My Managed Customers</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">My Managed Customers</h1>
                     <p className="text-zinc-500 font-medium font-mono text-sm uppercase tracking-widest">
                         {organizations.length} Organizations Under Management
                     </p>
@@ -96,7 +96,7 @@ export default function OperatorCustomersPage() {
                                     Health: {org.healthScore}%
                                 </Badge>
                             </div>
-                            <CardTitle className="text-xl font-bold text-white mt-4">{org.name}</CardTitle>
+                            <CardTitle className="text-xl font-bold text-foreground mt-4">{org.name}</CardTitle>
                             <CardDescription className="text-zinc-500 font-mono text-xs font-medium uppercase tracking-tighter italic">
                                 {org.slug}
                             </CardDescription>
@@ -115,12 +115,12 @@ export default function OperatorCustomersPage() {
 
                             <div className="flex flex-col gap-2 pt-2">
                                 <Link href={`/operator/customers/${org.id}`}>
-                                    <Button className="w-full bg-primary hover:bg-primary/90 text-white text-xs font-bold h-10">
+                                    <Button className="w-full bg-primary hover:bg-primary/90 text-foreground text-xs font-bold h-10">
                                         View Customer Profile
                                     </Button>
                                 </Link>
                                 <Link href={`/operator/scraper?org=${org.id}`}>
-                                    <Button variant="outline" className="w-full text-zinc-400 hover:text-white text-xs font-bold h-10 border-zinc-800">
+                                    <Button variant="outline" className="w-full text-zinc-400 hover:text-foreground text-xs font-bold h-10 border-zinc-800">
                                         <Target className="mr-2 h-3.5 w-3.5" />
                                         Launch Lead Engine
                                     </Button>

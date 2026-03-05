@@ -50,7 +50,7 @@ export default function AdminDashboardPage() {
             {/* Header Area */}
             <div className="flex items-end justify-between">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-bold text-white tracking-tight">Admin Console</h1>
+                    <h1 className="text-2xl font-bold text-foreground tracking-tight">Admin Console</h1>
                     <p className="text-zinc-500 text-sm font-medium">Platform-wide overview and organization management.</p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -58,7 +58,7 @@ export default function AdminDashboardPage() {
                         <Search className="mr-2 h-3.5 w-3.5 text-zinc-500" />
                         Quick Search
                     </Button>
-                    <Button className="h-9 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-lg shadow-lg shadow-primary/10 transition-all">
+                    <Button className="h-9 bg-primary hover:bg-primary/90 text-foreground text-xs font-bold rounded-lg shadow-lg shadow-primary/10 transition-all">
                         System Sync
                     </Button>
                 </div>
@@ -102,7 +102,7 @@ export default function AdminDashboardPage() {
                     <CardContent className="p-0">
                         <Table>
                             <TableHeader>
-                                <TableRow className="border-zinc-900 hover:bg-transparent bg-black">
+                                <TableRow className="border-zinc-900 hover:bg-transparent bg-background">
                                     <TableHead className="text-[10px] font-bold text-zinc-500 pl-6 h-10 uppercase tracking-wider">Account</TableHead>
                                     <TableHead className="text-[10px] font-bold text-zinc-500 h-10 uppercase tracking-wider">Plan</TableHead>
                                     <TableHead className="text-[10px] font-bold text-zinc-500 text-right h-10 uppercase tracking-wider">Seats</TableHead>
@@ -186,7 +186,7 @@ export default function AdminDashboardPage() {
                                 Access the lead generation engine, AI campaign managers, and high-level customer operations.
                             </p>
                             <Link href="/operator">
-                                <Button className="w-full h-10 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-lg transition-all group">
+                                <Button className="w-full h-10 bg-primary hover:bg-primary/90 text-foreground text-xs font-bold rounded-lg transition-all group">
                                     Launch Operator Hub
                                     <ArrowUpRight className="ml-2 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                                 </Button>
@@ -213,7 +213,7 @@ function MetricCard({ title, value, icon: Icon, trend }: any) {
                 </div>
                 <div>
                     <p className="text-[11px] text-zinc-500 uppercase font-black tracking-widest mb-1">{title}</p>
-                    <p className="text-2xl font-bold text-white tracking-tight">{value}</p>
+                    <p className="text-2xl font-bold text-foreground tracking-tight">{value}</p>
                 </div>
             </CardContent>
         </Card>

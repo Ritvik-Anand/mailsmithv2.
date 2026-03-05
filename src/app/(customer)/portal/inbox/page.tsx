@@ -22,23 +22,23 @@ export default async function InboxPage() {
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
                             <Inbox className="h-5 w-5 text-primary" />
                         </div>
-                        <h1 className="text-2xl font-bold text-white">Inbox</h1>
+                        <h1 className="text-2xl font-bold text-foreground">Inbox</h1>
                     </div>
-                    <p className="text-sm text-white/40 pl-12">
+                    <p className="text-sm text-foreground/40 pl-12">
                         View and reply to responses from your outreach campaigns
                     </p>
                 </div>
 
                 {/* Stats pill */}
                 {accounts.length > 0 && (
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/5">
-                        <Mail className="h-4 w-4 text-white/40" />
-                        <span className="text-sm text-white/60">
-                            <span className="text-white font-medium">{emails.length}</span> email{emails.length !== 1 ? 's' : ''}
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-foreground/[0.03] border border-foreground/5">
+                        <Mail className="h-4 w-4 text-foreground/40" />
+                        <span className="text-sm text-foreground/60">
+                            <span className="text-foreground font-medium">{emails.length}</span> email{emails.length !== 1 ? 's' : ''}
                         </span>
-                        <span className="text-white/20">·</span>
-                        <span className="text-sm text-white/60">
-                            <span className="text-white font-medium">{accounts.length}</span> account{accounts.length !== 1 ? 's' : ''}
+                        <span className="text-foreground/20">·</span>
+                        <span className="text-sm text-foreground/60">
+                            <span className="text-foreground font-medium">{accounts.length}</span> account{accounts.length !== 1 ? 's' : ''}
                         </span>
                     </div>
                 )}

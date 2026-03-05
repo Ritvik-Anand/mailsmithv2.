@@ -17,6 +17,7 @@ import {
     ChevronLeft,
     Monitor
 } from 'lucide-react'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 const adminNavItems = [
     {
@@ -76,7 +77,7 @@ export function AdminSidebar() {
             <div className="flex h-20 items-center px-6 border-b border-zinc-900/50">
                 <Link href="/admin-console" className="flex items-center gap-3 group">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary border border-primary/20 shadow-lg shadow-primary/10 transition-transform group-hover:scale-105">
-                        <Monitor className="h-5 w-5 text-white" />
+                        <Monitor className="h-5 w-5 text-foreground" />
                     </div>
                     {!collapsed && (
                         <div className="flex flex-col">
@@ -107,7 +108,7 @@ export function AdminSidebar() {
                                     'flex items-center gap-3 rounded-lg px-3.5 py-3 text-[13px] font-semibold transition-all group relative',
                                     isActive
                                         ? 'bg-primary/10 text-primary border border-primary/10'
-                                        : 'text-zinc-500 hover:text-white hover:bg-zinc-900/50'
+                                        : 'text-zinc-500 hover:text-foreground hover:bg-zinc-900/50'
                                 )}
                             >
                                 <item.icon className={cn(
@@ -129,11 +130,11 @@ export function AdminSidebar() {
             </ScrollArea>
 
             {/* Footer */}
-            <div className="p-4 border-t border-zinc-900 bg-zinc-950/20">
+            <div className="p-4 border-t border-zinc-900 bg-zinc-950/20 flex items-center justify-between gap-2">
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-center h-10 rounded-lg text-zinc-600 hover:text-primary hover:bg-primary/5 transition-all"
+                    className="flex-1 justify-center h-10 rounded-lg text-zinc-600 hover:text-primary hover:bg-primary/5 transition-all"
                     onClick={() => setCollapsed(!collapsed)}
                 >
                     <ChevronLeft
@@ -141,6 +142,9 @@ export function AdminSidebar() {
                     />
                     {!collapsed && <span className="ml-2 text-[10px] font-bold uppercase tracking-[0.1em]">Collapse Admin</span>}
                 </Button>
+                <div className="flex shrink-0">
+                    <ThemeToggle />
+                </div>
             </div>
         </aside>
     )

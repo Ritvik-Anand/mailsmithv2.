@@ -60,8 +60,8 @@ export default async function CustomerPortalPage() {
         <div className="space-y-8">
             {/* Welcome Header */}
             <div className="space-y-2">
-                <h1 className="text-3xl font-bold text-white">Welcome back</h1>
-                <p className="text-white/50">Here's an overview of your outreach performance</p>
+                <h1 className="text-3xl font-bold text-foreground">Welcome back</h1>
+                <p className="text-foreground/50">Here's an overview of your outreach performance</p>
             </div>
 
             {/* Key Metrics Grid */}
@@ -96,9 +96,9 @@ export default async function CustomerPortalPage() {
 
             {/* Lead Pipeline Summary */}
             {leadsSummary.total > 0 && (
-                <Card className="bg-white/[0.02] border-white/5">
+                <Card className="bg-foreground/[0.02] border-foreground/5">
                     <CardHeader>
-                        <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+                        <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
                             <Target className="h-5 w-5 text-primary" />
                             Lead Pipeline
                         </CardTitle>
@@ -108,7 +108,7 @@ export default async function CustomerPortalPage() {
                             <PipelineCard
                                 label="Total Leads"
                                 value={leadsSummary.total}
-                                color="text-white"
+                                color="text-foreground"
                             />
                             <PipelineCard
                                 label="With Icebreaker"
@@ -135,11 +135,11 @@ export default async function CustomerPortalPage() {
             {/* Campaign Progress & Activity */}
             <div className="grid gap-6 lg:grid-cols-2">
                 {/* Campaign Progress */}
-                <Card className="bg-white/[0.02] border-white/5">
+                <Card className="bg-foreground/[0.02] border-foreground/5">
                     <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-lg font-semibold text-white">Campaign Progress</CardTitle>
+                        <CardTitle className="text-lg font-semibold text-foreground">Campaign Progress</CardTitle>
                         <Link href="/portal/campaigns">
-                            <Button variant="ghost" size="sm" className="text-white/50 hover:text-white">
+                            <Button variant="ghost" size="sm" className="text-foreground/50 hover:text-foreground">
                                 View all
                                 <ArrowRight className="ml-1 h-4 w-4" />
                             </Button>
@@ -152,7 +152,7 @@ export default async function CustomerPortalPage() {
                                     <div key={campaign.id} className="space-y-3">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
-                                                <span className="font-medium text-white">{campaign.name}</span>
+                                                <span className="font-medium text-foreground">{campaign.name}</span>
                                                 <Badge
                                                     variant={campaign.status === 'completed' ? 'secondary' : 'default'}
                                                     className={campaign.status === 'completed'
@@ -165,13 +165,13 @@ export default async function CustomerPortalPage() {
                                                     {campaign.status}
                                                 </Badge>
                                             </div>
-                                            <span className="text-sm text-white/50">{campaign.progress}%</span>
+                                            <span className="text-sm text-foreground/50">{campaign.progress}%</span>
                                         </div>
                                         <Progress
                                             value={campaign.progress}
-                                            className="h-2 bg-white/5"
+                                            className="h-2 bg-foreground/5"
                                         />
-                                        <div className="flex items-center gap-4 text-xs text-white/40">
+                                        <div className="flex items-center gap-4 text-xs text-foreground/40">
                                             <span>{campaign.totalLeads} leads</span>
                                             <span>{campaign.openRate}% open rate</span>
                                             <span>{campaign.replyRate}% reply rate</span>
@@ -190,9 +190,9 @@ export default async function CustomerPortalPage() {
                 </Card>
 
                 {/* Recent Activity */}
-                <Card className="bg-white/[0.02] border-white/5">
+                <Card className="bg-foreground/[0.02] border-foreground/5">
                     <CardHeader>
-                        <CardTitle className="text-lg font-semibold text-white">Recent Activity</CardTitle>
+                        <CardTitle className="text-lg font-semibold text-foreground">Recent Activity</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {activities.length > 0 ? (
@@ -203,15 +203,15 @@ export default async function CustomerPortalPage() {
                                         className={`flex items-start gap-4 p-3 rounded-xl transition-colors ${activity.highlight ? 'bg-primary/10 border border-primary/20' : ''
                                             }`}
                                     >
-                                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${activity.highlight ? 'bg-primary/20' : 'bg-white/5'
+                                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${activity.highlight ? 'bg-primary/20' : 'bg-foreground/5'
                                             }`}>
                                             <ActivityIcon type={activity.type} highlight={activity.highlight} />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className={`text-sm font-medium ${activity.highlight ? 'text-white' : 'text-white/80'}`}>
+                                            <p className={`text-sm font-medium ${activity.highlight ? 'text-foreground' : 'text-foreground/80'}`}>
                                                 {activity.title}
                                             </p>
-                                            <p className="text-xs text-white/40 flex items-center gap-1 mt-1">
+                                            <p className="text-xs text-foreground/40 flex items-center gap-1 mt-1">
                                                 <Clock className="h-3 w-3" />
                                                 {activity.time}
                                             </p>
@@ -238,8 +238,8 @@ export default async function CustomerPortalPage() {
                             <Sparkles className="h-6 w-6 text-primary" />
                         </div>
                         <div>
-                            <h3 className="font-semibold text-white">Have questions about your performance?</h3>
-                            <p className="text-sm text-white/50">Ask our AI assistant for insights and recommendations</p>
+                            <h3 className="font-semibold text-foreground">Have questions about your performance?</h3>
+                            <p className="text-sm text-foreground/50">Ask our AI assistant for insights and recommendations</p>
                         </div>
                     </div>
                     <Link href="/portal/assistant">
@@ -258,21 +258,21 @@ export default async function CustomerPortalPage() {
                         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mx-auto mb-4">
                             <Zap className="h-8 w-8 text-primary" />
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2">Get Started with MailSmith</h3>
-                        <p className="text-white/50 max-w-md mx-auto mb-6">
+                        <h3 className="text-xl font-bold text-foreground mb-2">Get Started with MailSmith</h3>
+                        <p className="text-foreground/50 max-w-md mx-auto mb-6">
                             Your dashboard is ready! Once your operator adds leads and launches campaigns,
                             your performance metrics will appear here.
                         </p>
                         <div className="flex flex-wrap gap-3 justify-center">
-                            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full text-sm text-white/60">
+                            <div className="flex items-center gap-2 px-4 py-2 bg-foreground/5 rounded-full text-sm text-foreground/60">
                                 <span className="h-2 w-2 rounded-full bg-amber-500"></span>
                                 Leads being sourced
                             </div>
-                            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full text-sm text-white/60">
+                            <div className="flex items-center gap-2 px-4 py-2 bg-foreground/5 rounded-full text-sm text-foreground/60">
                                 <span className="h-2 w-2 rounded-full bg-blue-500"></span>
                                 AI icebreakers ready
                             </div>
-                            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full text-sm text-white/60">
+                            <div className="flex items-center gap-2 px-4 py-2 bg-foreground/5 rounded-full text-sm text-foreground/60">
                                 <span className="h-2 w-2 rounded-full bg-green-500"></span>
                                 Campaigns launching soon
                             </div>
@@ -304,7 +304,7 @@ function MetricCard({
     const isPositive = change >= 0
 
     return (
-        <Card className="bg-white/[0.02] border-white/5 hover:bg-white/[0.04] transition-colors">
+        <Card className="bg-foreground/[0.02] border-foreground/5 hover:bg-foreground/[0.04] transition-colors">
             <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
@@ -318,8 +318,8 @@ function MetricCard({
                     )}
                 </div>
                 <div className="mt-4">
-                    <p className="text-2xl font-bold text-white">{value}</p>
-                    <p className="text-sm text-white/40 mt-1">{title}</p>
+                    <p className="text-2xl font-bold text-foreground">{value}</p>
+                    <p className="text-sm text-foreground/40 mt-1">{title}</p>
                 </div>
             </CardContent>
         </Card>
@@ -338,18 +338,18 @@ function PipelineCard({
     percentage?: number
 }) {
     return (
-        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+        <div className="p-4 rounded-xl bg-foreground/[0.02] border border-foreground/5">
             <p className={`text-2xl font-bold ${color}`}>{value.toLocaleString()}</p>
-            <p className="text-xs text-white/40 mt-1">{label}</p>
+            <p className="text-xs text-foreground/40 mt-1">{label}</p>
             {percentage !== undefined && (
-                <p className="text-xs text-white/30 mt-0.5">{percentage}% of total</p>
+                <p className="text-xs text-foreground/30 mt-0.5">{percentage}% of total</p>
             )}
         </div>
     )
 }
 
 function ActivityIcon({ type, highlight }: { type: string; highlight: boolean }) {
-    const className = `h-5 w-5 ${highlight ? 'text-primary' : 'text-white/40'}`
+    const className = `h-5 w-5 ${highlight ? 'text-primary' : 'text-foreground/40'}`
 
     switch (type) {
         case 'reply':
@@ -378,11 +378,11 @@ function EmptyState({
 }) {
     return (
         <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 mb-3">
-                <Icon className="h-6 w-6 text-white/30" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-foreground/5 mb-3">
+                <Icon className="h-6 w-6 text-foreground/30" />
             </div>
-            <p className="text-sm font-medium text-white/60">{title}</p>
-            <p className="text-xs text-white/40 mt-1 max-w-[200px]">{description}</p>
+            <p className="text-sm font-medium text-foreground/60">{title}</p>
+            <p className="text-xs text-foreground/40 mt-1 max-w-[200px]">{description}</p>
         </div>
     )
 }

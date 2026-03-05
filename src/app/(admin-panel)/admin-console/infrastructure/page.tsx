@@ -99,13 +99,13 @@ export default function InfrastructurePage() {
             {/* Header */}
             <div className="flex items-end justify-between">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-bold text-white tracking-tight">Outreach Infrastructure</h1>
+                    <h1 className="text-2xl font-bold text-foreground tracking-tight">Outreach Infrastructure</h1>
                     <p className="text-zinc-500 text-sm font-medium">Manage and assign Instantly outreach nodes to your clients.</p>
                 </div>
                 <Button
                     onClick={handleSync}
                     disabled={isSyncing}
-                    className="bg-primary hover:bg-primary/90 text-white font-bold h-10 shadow-lg shadow-primary/10 transition-all"
+                    className="bg-primary hover:bg-primary/90 text-foreground font-bold h-10 shadow-lg shadow-primary/10 transition-all"
                 >
                     {isSyncing ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                     Sync from Instantly
@@ -143,7 +143,7 @@ export default function InfrastructurePage() {
                             <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-zinc-600" />
                             <Input
                                 placeholder="Filter by email or ID..."
-                                className="h-8 w-64 bg-zinc-900/50 border-zinc-800 pl-9 text-xs text-white placeholder:text-zinc-700 focus:ring-1 focus:ring-primary rounded-lg"
+                                className="h-8 w-64 bg-zinc-900/50 border-zinc-800 pl-9 text-xs text-foreground placeholder:text-zinc-700 focus:ring-1 focus:ring-primary rounded-lg"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -153,7 +153,7 @@ export default function InfrastructurePage() {
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader>
-                            <TableRow className="border-zinc-900 hover:bg-transparent bg-black">
+                            <TableRow className="border-zinc-900 hover:bg-transparent bg-background">
                                 <TableHead className="text-[10px] font-bold text-zinc-500 pl-6 h-10 uppercase tracking-wider">Email Address</TableHead>
                                 <TableHead className="text-[10px] font-bold text-zinc-500 h-10 uppercase tracking-wider">Status</TableHead>
                                 <TableHead className="text-[10px] font-bold text-zinc-500 h-10 uppercase tracking-wider text-right">Reputation</TableHead>
@@ -235,7 +235,7 @@ function InfrastructureStat({ title, value, icon: Icon, sub }: any) {
                     <div>
                         <p className="text-[10px] text-zinc-600 uppercase font-black tracking-widest mb-1">{title}</p>
                         <div className="flex items-baseline gap-2">
-                            <h3 className="text-xl font-bold text-white">{value}</h3>
+                            <h3 className="text-xl font-bold text-foreground">{value}</h3>
                             <span className="text-[10px] text-zinc-500 font-medium">{sub}</span>
                         </div>
                     </div>

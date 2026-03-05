@@ -205,7 +205,7 @@ export default function OperatorCampaignsPage() {
                         variant="outline"
                         onClick={handleRelink}
                         disabled={isRelinking || isSyncing}
-                        className="border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 font-bold h-11 px-5 shadow-sm"
+                        className="border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-foreground hover:bg-zinc-900 font-bold h-11 px-5 shadow-sm"
                     >
                         <ArrowRightLeft className={cn("mr-2 h-4 w-4", isRelinking && "animate-spin")} />
                         {isRelinking ? 'Re-linking...' : 'Re-link Campaigns'}
@@ -214,7 +214,7 @@ export default function OperatorCampaignsPage() {
                         variant="outline"
                         onClick={handleSyncAll}
                         disabled={isSyncing}
-                        className="border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 font-bold h-11 px-5 shadow-sm"
+                        className="border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-foreground hover:bg-zinc-900 font-bold h-11 px-5 shadow-sm"
                     >
                         <ArrowRightLeft className={cn("mr-2 h-4 w-4", isSyncing && "animate-spin")} />
                         {isSyncing ? 'Syncing...' : 'Sync Live Stats'}
@@ -343,7 +343,7 @@ export default function OperatorCampaignsPage() {
                                     {/* Actions */}
                                     <div className="flex items-center gap-2">
                                         <Link href={`/operator/campaigns/${campaign.id}`}>
-                                            <Button variant="outline" size="sm" className="h-8 px-3 text-[10px] font-bold border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900 uppercase tracking-wider">
+                                            <Button variant="outline" size="sm" className="h-8 px-3 text-[10px] font-bold border-zinc-800 text-zinc-400 hover:text-foreground hover:bg-zinc-900 uppercase tracking-wider">
                                                 View Details
                                                 <ChevronRight className="ml-1 h-3 w-3" />
                                             </Button>
@@ -352,7 +352,7 @@ export default function OperatorCampaignsPage() {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="h-8 w-8 p-0 text-zinc-400 hover:text-white hover:bg-zinc-800"
+                                            className="h-8 w-8 p-0 text-zinc-400 hover:text-foreground hover:bg-zinc-800"
                                             onClick={(e) => {
                                                 e.stopPropagation()
                                                 setCampaignToMove(campaign)
@@ -396,7 +396,7 @@ export default function OperatorCampaignsPage() {
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="text-zinc-400 hover:text-white"
+                            className="text-zinc-400 hover:text-foreground"
                             onClick={() => setSelectedIds(new Set())}
                         >
                             Clear

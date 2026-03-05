@@ -121,10 +121,10 @@ export function AiAssistantWidget() {
                 className={cn(
                     "fixed right-0 top-1/2 -translate-y-1/2",
                     "flex items-center gap-2 py-4 px-2 rounded-l-xl",
-                    "bg-gradient-to-r from-primary to-primary/80 text-white",
+                    "bg-gradient-to-r from-primary to-primary/80 text-foreground",
                     "shadow-lg shadow-primary/30 hover:shadow-primary/50",
                     "transition-all duration-300 hover:px-3",
-                    "border border-r-0 border-white/10",
+                    "border border-r-0 border-foreground/10",
                     isOpen && "opacity-0 pointer-events-none"
                 )}
             >
@@ -136,7 +136,7 @@ export function AiAssistantWidget() {
             {isOpen && (
                 <div
                     style={{ pointerEvents: 'auto' }}
-                    className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity"
+                    className="fixed inset-0 bg-background/30 backdrop-blur-sm transition-opacity"
                     onClick={() => setIsOpen(false)}
                 />
             )}
@@ -146,35 +146,35 @@ export function AiAssistantWidget() {
                 style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
                 className={cn(
                     "fixed right-0 top-0 h-full w-[400px]",
-                    "bg-black border-l border-white/10",
+                    "bg-background border-l border-foreground/10",
                     "shadow-2xl shadow-black/50",
                     "transform transition-transform duration-300 ease-out",
                     isOpen ? "translate-x-0" : "translate-x-full"
                 )}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-white/10 bg-black">
+                <div className="flex items-center justify-between p-4 border-b border-foreground/10 bg-background">
                     <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/20">
-                            <Sparkles className="h-5 w-5 text-white" />
+                            <Sparkles className="h-5 w-5 text-foreground" />
                         </div>
                         <div>
-                            <h3 className="font-semibold text-white">AI Assistant</h3>
-                            <p className="text-xs text-white/40">Ask me anything</p>
+                            <h3 className="font-semibold text-foreground">AI Assistant</h3>
+                            <p className="text-xs text-foreground/40">Ask me anything</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <button
                             type="button"
                             onClick={() => clearConversation()}
-                            className="text-xs px-3 py-1.5 text-white/40 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                            className="text-xs px-3 py-1.5 text-foreground/40 hover:text-foreground hover:bg-foreground/5 rounded-lg transition-colors"
                         >
                             Clear
                         </button>
                         <button
                             type="button"
                             onClick={() => setIsOpen(false)}
-                            className="h-10 w-10 flex items-center justify-center text-white bg-white/10 hover:bg-red-500/20 hover:text-red-400 rounded-lg transition-colors cursor-pointer"
+                            className="h-10 w-10 flex items-center justify-center text-foreground bg-foreground/10 hover:bg-red-500/20 hover:text-red-400 rounded-lg transition-colors cursor-pointer"
                             aria-label="Close AI Assistant"
                         >
                             <X className="h-5 w-5" />
@@ -202,14 +202,14 @@ export function AiAssistantWidget() {
                                     className={cn(
                                         "max-w-[85%] rounded-2xl px-4 py-3 text-sm",
                                         message.role === 'user'
-                                            ? "bg-primary text-white"
-                                            : "bg-white/5 text-white/90"
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-foreground/5 text-foreground/90"
                                     )}
                                 >
                                     <p className="whitespace-pre-wrap">{message.content}</p>
                                     <p className={cn(
                                         "text-xs mt-2",
-                                        message.role === 'user' ? "text-white/60" : "text-white/30"
+                                        message.role === 'user' ? "text-foreground/60" : "text-foreground/30"
                                     )}>
                                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </p>
@@ -222,10 +222,10 @@ export function AiAssistantWidget() {
                                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/20">
                                     <Sparkles className="h-4 w-4 text-primary animate-pulse" />
                                 </div>
-                                <div className="bg-white/5 rounded-2xl px-4 py-3">
+                                <div className="bg-foreground/5 rounded-2xl px-4 py-3">
                                     <div className="flex items-center gap-2">
                                         <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                                        <span className="text-sm text-white/50">Thinking...</span>
+                                        <span className="text-sm text-foreground/50">Thinking...</span>
                                     </div>
                                 </div>
                             </div>
@@ -237,13 +237,13 @@ export function AiAssistantWidget() {
                     {/* Suggested Questions */}
                     {messages.length <= 2 && !isLoading && (
                         <div className="mt-6 space-y-2">
-                            <p className="text-xs text-white/40 mb-3">Suggested questions:</p>
+                            <p className="text-xs text-foreground/40 mb-3">Suggested questions:</p>
                             <div className="flex flex-wrap gap-2">
                                 {suggestedQuestions.map((question, index) => (
                                     <button
                                         key={index}
                                         onClick={() => handleSuggestedQuestion(question)}
-                                        className="text-xs px-3 py-1.5 rounded-full border border-white/10 text-white/60 hover:text-white hover:border-primary/50 hover:bg-primary/10 transition-colors"
+                                        className="text-xs px-3 py-1.5 rounded-full border border-foreground/10 text-foreground/60 hover:text-foreground hover:border-primary/50 hover:bg-primary/10 transition-colors"
                                     >
                                         {question}
                                     </button>
@@ -254,7 +254,7 @@ export function AiAssistantWidget() {
                 </ScrollArea>
 
                 {/* Input */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 bg-black">
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-foreground/10 bg-background">
                     <form
                         onSubmit={(e) => {
                             e.preventDefault()
@@ -267,7 +267,7 @@ export function AiAssistantWidget() {
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             placeholder="Ask about your campaigns..."
-                            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50"
+                            className="flex-1 bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50"
                             disabled={isLoading}
                         />
                         <Button

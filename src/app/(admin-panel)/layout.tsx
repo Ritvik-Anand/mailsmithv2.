@@ -16,7 +16,7 @@ export default async function AdminLayout({
             <AdminSidebar />
 
             {/* Main Content Area */}
-            <div className="flex flex-1 flex-col overflow-hidden bg-black">
+            <div className="flex flex-1 flex-col overflow-hidden bg-background">
                 {/* Admin Header */}
                 <Header isAdmin />
 

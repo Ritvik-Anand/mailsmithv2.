@@ -99,7 +99,7 @@ export default function OperatorJobsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="space-y-2">
-                    <h1 className="text-3xl font-bold tracking-tight text-white">Scrape Jobs</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Scrape Jobs</h1>
                     <p className="text-zinc-500 font-medium">Monitor all lead scraping operations in real-time.</p>
                 </div>
                 <div className="flex gap-3">
@@ -202,7 +202,7 @@ export default function OperatorJobsPage() {
                                                     {job.id.slice(0, 8)}...
                                                 </span>
                                             </div>
-                                            <p className="text-sm font-bold text-white truncate">
+                                            <p className="text-sm font-bold text-foreground truncate">
                                                 {job.name || job.input_params.contact_job_title?.join(', ') || 'General Search'}
                                             </p>
                                             <p className="text-xs text-zinc-500 mt-1">

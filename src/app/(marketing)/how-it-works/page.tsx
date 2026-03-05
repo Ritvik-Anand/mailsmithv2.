@@ -43,7 +43,7 @@ const staggerContainer = {
 
 export default function HowItWorksPage() {
     return (
-        <div className="min-h-screen bg-[#030303] text-white selection:bg-primary/30 overflow-x-hidden">
+        <div className="min-h-screen bg-[#030303] text-foreground selection:bg-primary/30 overflow-x-hidden">
             {/* Ambient effects - CopperX style */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-full h-[800px] mesh-gradient opacity-40" />
@@ -55,12 +55,12 @@ export default function HowItWorksPage() {
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
-                className="relative z-50 border-b border-white/5 bg-black/50 backdrop-blur-xl"
+                className="relative z-50 border-b border-foreground/5 bg-background/50 backdrop-blur-xl"
             >
                 <div className="container flex h-20 items-center justify-between">
                     <Link href="/" className="flex items-center gap-3 group">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/60 p-0.5 shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
-                            <div className="flex h-full w-full items-center justify-center rounded-[9px] bg-black/20 backdrop-blur-sm">
+                            <div className="flex h-full w-full items-center justify-center rounded-[9px] bg-background/20 backdrop-blur-sm">
                                 <Image
                                     src="/logo.png"
                                     alt="MailSmith Logo"
@@ -73,9 +73,9 @@ export default function HowItWorksPage() {
                         <span className="font-bold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">MailSmith</span>
                     </Link>
                     <div className="flex items-center gap-6">
-                        <Link href="/login" className="relative px-4 py-2 text-sm font-medium text-white/70 hover:text-white transition-colors group">
+                        <Link href="/login" className="relative px-4 py-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors group">
                             <span className="relative z-10">Client Login</span>
-                            <span className="absolute inset-0 bg-white/5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300 ease-premium" />
+                            <span className="absolute inset-0 bg-foreground/5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300 ease-premium" />
                         </Link>
                         <Button asChild className="rounded-full px-6 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all hover:-translate-y-0.5 active:scale-95">
                             <Link href="/request-demo">Request Demo</Link>
@@ -92,7 +92,7 @@ export default function HowItWorksPage() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.5 }}
                     >
-                        <Link href="/" className="inline-flex items-center gap-2 text-sm text-white/50 hover:text-white mb-8 transition-colors group">
+                        <Link href="/" className="inline-flex items-center gap-2 text-sm text-foreground/50 hover:text-foreground mb-8 transition-colors group">
                             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
                             Back to Home
                         </Link>
@@ -107,7 +107,7 @@ export default function HowItWorksPage() {
                         <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
                             How MailSmith Works
                         </h1>
-                        <p className="text-xl md:text-2xl text-white/50 leading-relaxed font-medium">
+                        <p className="text-xl md:text-2xl text-foreground/50 leading-relaxed font-medium">
                             MailSmith is a fully-managed cold email service. We handle everything—from
                             finding leads to booking meetings—so you can focus on closing deals.
                         </p>
@@ -116,7 +116,7 @@ export default function HowItWorksPage() {
             </section>
 
             {/* The Process */}
-            <section className="relative py-32 border-t border-white/5 bg-grid-white">
+            <section className="relative py-32 border-t border-foreground/5 bg-grid-white">
                 <div className="container relative z-10">
                     <motion.h2
                         {...fadeInUp}
@@ -137,7 +137,7 @@ export default function HowItWorksPage() {
                                     <span className="text-primary font-bold tracking-widest text-sm uppercase">DISCOVERY</span>
                                 </div>
                                 <h3 className="text-4xl md:text-5xl font-bold tracking-tight">We Learn Your Business</h3>
-                                <p className="text-white/60 leading-relaxed text-xl">
+                                <p className="text-foreground/60 leading-relaxed text-xl">
                                     It starts with a discovery call. We learn about your ideal customer profile,
                                     value proposition, and what makes your solution unique. This helps us craft
                                     messages that resonate.
@@ -159,14 +159,14 @@ export default function HowItWorksPage() {
                                             <div className="mt-1 bg-green-500/10 p-1 rounded-full">
                                                 <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
                                             </div>
-                                            <span className="text-white/80 text-lg font-medium">{text}</span>
+                                            <span className="text-foreground/80 text-lg font-medium">{text}</span>
                                         </motion.li>
                                     ))}
                                 </ul>
                             </div>
                             <div className="relative group">
                                 <div className="absolute inset-0 bg-primary/10 rounded-3xl blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                                <div className="relative bg-white/[0.03] border border-white/10 rounded-[32px] p-10 backdrop-blur-sm transition-all duration-500 group-hover:bg-white/[0.05] group-hover:border-primary/20 group-hover:scale-[1.02]">
+                                <div className="relative bg-foreground/[0.03] border border-foreground/10 rounded-[32px] p-10 backdrop-blur-sm transition-all duration-500 group-hover:bg-foreground/[0.05] group-hover:border-primary/20 group-hover:scale-[1.02]">
                                     <div className="grid grid-cols-2 gap-6">
                                         {[
                                             { icon: Target, label: 'ICP Definition' },
@@ -177,10 +177,10 @@ export default function HowItWorksPage() {
                                             <motion.div
                                                 key={i}
                                                 whileHover={{ y: -5, scale: 1.05 }}
-                                                className="bg-white/[0.03] rounded-2xl p-6 flex flex-col items-center text-center border border-white/5 hover:border-primary/30 transition-all shadow-inner"
+                                                className="bg-foreground/[0.03] rounded-2xl p-6 flex flex-col items-center text-center border border-foreground/5 hover:border-primary/30 transition-all shadow-inner"
                                             >
                                                 <item.icon className="h-10 w-10 text-primary mb-4" />
-                                                <span className="text-sm font-bold text-white/90">{item.label}</span>
+                                                <span className="text-sm font-bold text-foreground/90">{item.label}</span>
                                             </motion.div>
                                         ))}
                                     </div>
@@ -195,7 +195,7 @@ export default function HowItWorksPage() {
                         >
                             <div className="order-2 md:order-1 relative group">
                                 <div className="absolute inset-0 bg-primary/10 rounded-3xl blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                                <div className="relative bg-white/[0.03] border border-white/10 rounded-[32px] p-10 backdrop-blur-sm transition-all duration-500 group-hover:bg-white/[0.05] group-hover:border-primary/20 group-hover:scale-[1.02]">
+                                <div className="relative bg-foreground/[0.03] border border-foreground/10 rounded-[32px] p-10 backdrop-blur-sm transition-all duration-500 group-hover:bg-foreground/[0.05] group-hover:border-primary/20 group-hover:scale-[1.02]">
                                     <div className="space-y-6">
                                         {[
                                             { icon: Globe, title: 'LinkedIn Sales Navigator', desc: 'Primary lead source' },
@@ -205,14 +205,14 @@ export default function HowItWorksPage() {
                                             <motion.div
                                                 key={i}
                                                 whileHover={{ x: 10 }}
-                                                className="flex items-center gap-6 bg-white/[0.03] rounded-2xl p-6 border border-white/5 hover:border-primary/20 transition-all"
+                                                className="flex items-center gap-6 bg-foreground/[0.03] rounded-2xl p-6 border border-foreground/5 hover:border-primary/20 transition-all"
                                             >
                                                 <div className="bg-primary/10 p-4 rounded-xl">
                                                     <item.icon className={`h-8 w-8 ${item.color || 'text-primary'}`} />
                                                 </div>
                                                 <div>
                                                     <p className="font-bold text-xl">{item.title}</p>
-                                                    <p className="text-sm text-white/40 font-medium">{item.desc}</p>
+                                                    <p className="text-sm text-foreground/40 font-medium">{item.desc}</p>
                                                 </div>
                                             </motion.div>
                                         ))}
@@ -225,7 +225,7 @@ export default function HowItWorksPage() {
                                     <span className="text-primary font-bold tracking-widest text-sm uppercase">LEAD SOURCING</span>
                                 </div>
                                 <h3 className="text-4xl md:text-5xl font-bold tracking-tight">Perfect Prospects</h3>
-                                <p className="text-white/60 leading-relaxed text-xl">
+                                <p className="text-foreground/60 leading-relaxed text-xl">
                                     Our team sources leads from LinkedIn, Apollo, and proprietary databases.
                                     Every email is verified to ensure high deliverability and protect your domain reputation.
                                 </p>
@@ -246,7 +246,7 @@ export default function HowItWorksPage() {
                                             <div className="mt-1 bg-green-500/10 p-1 rounded-full">
                                                 <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
                                             </div>
-                                            <span className="text-white/80 text-lg font-medium">{text}</span>
+                                            <span className="text-foreground/80 text-lg font-medium">{text}</span>
                                         </motion.li>
                                     ))}
                                 </ul>
@@ -264,7 +264,7 @@ export default function HowItWorksPage() {
                                     <span className="text-primary font-bold tracking-widest text-sm uppercase">PERSONALIZATION</span>
                                 </div>
                                 <h3 className="text-4xl md:text-5xl font-bold tracking-tight">AI Generated Icebreakers</h3>
-                                <p className="text-white/60 leading-relaxed text-xl">
+                                <p className="text-foreground/60 leading-relaxed text-xl">
                                     For each lead, our AI analyzes their LinkedIn, company news, and recent activity
                                     to craft a unique opening line. No templates. Every email feels personally written.
                                 </p>
@@ -285,14 +285,14 @@ export default function HowItWorksPage() {
                                             <div className="mt-1 bg-green-500/10 p-1 rounded-full">
                                                 <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
                                             </div>
-                                            <span className="text-white/80 text-lg font-medium">{text}</span>
+                                            <span className="text-foreground/80 text-lg font-medium">{text}</span>
                                         </motion.li>
                                     ))}
                                 </ul>
                             </div>
                             <div className="relative group">
                                 <div className="absolute inset-0 bg-primary/10 rounded-3xl blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                                <div className="relative bg-white/[0.03] border border-white/10 rounded-[32px] p-10 backdrop-blur-sm transition-all duration-500 group-hover:bg-white/[0.05] group-hover:border-primary/20">
+                                <div className="relative bg-foreground/[0.03] border border-foreground/10 rounded-[32px] p-10 backdrop-blur-sm transition-all duration-500 group-hover:bg-foreground/[0.05] group-hover:border-primary/20">
                                     <div className="space-y-6">
                                         <div className="flex items-center gap-4 mb-4">
                                             <div className="bg-primary/20 p-3 rounded-xl animate-pulse">
@@ -307,14 +307,14 @@ export default function HowItWorksPage() {
                                             viewport={{ once: true }}
                                             className="bg-primary/5 rounded-2xl p-8 border border-primary/20 shadow-2xl"
                                         >
-                                            <p className="text-white/90 leading-relaxed italic text-lg font-medium">
+                                            <p className="text-foreground/90 leading-relaxed italic text-lg font-medium">
                                                 "Saw your recent post on scaling B2B sales teams—the point about
                                                 hiring for curiosity over experience really resonated. We're helping
                                                 companies like DataCorp automate their outreach while keeping that
                                                 personal touch..."
                                             </p>
                                         </motion.div>
-                                        <p className="text-xs text-white/40 text-center font-bold tracking-widest uppercase mt-4">
+                                        <p className="text-xs text-foreground/40 text-center font-bold tracking-widest uppercase mt-4">
                                             Live Generation Preview
                                         </p>
                                     </div>
@@ -329,10 +329,10 @@ export default function HowItWorksPage() {
                         >
                             <div className="order-2 md:order-1 relative group">
                                 <div className="absolute inset-0 bg-green-500/5 rounded-3xl blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                                <div className="relative bg-white/[0.03] border border-white/10 rounded-[32px] p-12 backdrop-blur-sm transition-all duration-500 group-hover:bg-white/[0.05] group-hover:border-green-500/20">
+                                <div className="relative bg-foreground/[0.03] border border-foreground/10 rounded-[32px] p-12 backdrop-blur-sm transition-all duration-500 group-hover:bg-foreground/[0.05] group-hover:border-green-500/20">
                                     <div className="space-y-10">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm font-bold tracking-widest text-white/50 uppercase">Cloud Analytics</span>
+                                            <span className="text-sm font-bold tracking-widest text-foreground/50 uppercase">Cloud Analytics</span>
                                             <span className="text-xs font-bold text-green-400 bg-green-500/10 px-3 py-1.5 rounded-full animate-pulse border border-green-500/20">LIVE DATA</span>
                                         </div>
                                         <div className="grid grid-cols-3 gap-8 text-center">
@@ -351,12 +351,12 @@ export default function HowItWorksPage() {
                                                     >
                                                         {stat.val}
                                                     </motion.p>
-                                                    <p className="text-xs font-bold text-white/40 uppercase tracking-wider">{stat.label}</p>
+                                                    <p className="text-xs font-bold text-foreground/40 uppercase tracking-wider">{stat.label}</p>
                                                 </div>
                                             ))}
                                         </div>
                                         <div className="relative pt-4">
-                                            <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                            <div className="h-3 bg-foreground/5 rounded-full overflow-hidden border border-foreground/5">
                                                 <motion.div
                                                     initial={{ width: 0 }}
                                                     whileInView={{ width: '65%' }}
@@ -375,7 +375,7 @@ export default function HowItWorksPage() {
                                     <span className="text-primary font-bold tracking-widest text-sm uppercase">EXECUTION</span>
                                 </div>
                                 <h3 className="text-4xl md:text-5xl font-bold tracking-tight">Run & Optimize</h3>
-                                <p className="text-white/60 leading-relaxed text-xl">
+                                <p className="text-foreground/60 leading-relaxed text-xl">
                                     We handle domain setup, inbox warming, and deliverability. Campaigns run on
                                     autopilot with automated follow-ups. You track everything in your real-time dashboard.
                                 </p>
@@ -396,7 +396,7 @@ export default function HowItWorksPage() {
                                             <div className="mt-1 bg-green-500/10 p-1 rounded-full">
                                                 <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
                                             </div>
-                                            <span className="text-white/80 text-lg font-medium">{text}</span>
+                                            <span className="text-foreground/80 text-lg font-medium">{text}</span>
                                         </motion.li>
                                     ))}
                                 </ul>
@@ -407,14 +407,14 @@ export default function HowItWorksPage() {
             </section>
 
             {/* Timeline */}
-            <section className="relative py-48 border-t border-white/5 bg-black">
+            <section className="relative py-48 border-t border-foreground/5 bg-background">
                 <div className="container relative z-10">
                     <motion.div
                         {...fadeInUp}
                         className="text-center mb-24 space-y-6"
                     >
                         <h2 className="text-4xl md:text-6xl font-bold tracking-tight">Your Timeline to Results</h2>
-                        <p className="text-white/50 max-w-xl mx-auto text-xl font-medium">
+                        <p className="text-foreground/50 max-w-xl mx-auto text-xl font-medium">
                             From kickoff to qualified meetings in just 2 weeks
                         </p>
                     </motion.div>
@@ -435,13 +435,13 @@ export default function HowItWorksPage() {
                                 whileHover={{ y: -12, backgroundColor: "rgba(255,255,255,0.05)" }}
                                 className="relative group cursor-default"
                             >
-                                <div className="bg-white/[0.02] border border-white/10 rounded-[32px] p-8 h-full transition-all duration-500 group-hover:border-primary/30 group-hover:shadow-2xl group-hover:shadow-primary/5 backdrop-blur-sm">
+                                <div className="bg-foreground/[0.02] border border-foreground/10 rounded-[32px] p-8 h-full transition-all duration-500 group-hover:border-primary/30 group-hover:shadow-2xl group-hover:shadow-primary/5 backdrop-blur-sm">
                                     <div className="text-primary text-sm font-black tracking-widest uppercase mb-4">{item.week}</div>
                                     <div className="mb-6 bg-primary/10 w-fit p-3 rounded-xl transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6">
                                         <item.icon className="h-6 w-6 text-primary" />
                                     </div>
                                     <h3 className="text-2xl font-bold mb-3 group-hover:text-primary transition-colors">{item.title}</h3>
-                                    <p className="text-white/40 text-sm leading-relaxed font-medium group-hover:text-white/60 transition-colors">{item.desc}</p>
+                                    <p className="text-foreground/40 text-sm leading-relaxed font-medium group-hover:text-foreground/60 transition-colors">{item.desc}</p>
                                 </div>
                             </motion.div>
                         ))}
@@ -463,17 +463,17 @@ export default function HowItWorksPage() {
                         <motion.div
                             animate={{ scale: [1, 1.2, 1], rotate: 45 }}
                             transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                            className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/20 rounded-full blur-[120px] -mr-64 -mt-64"
+                            className="absolute top-0 right-0 w-[500px] h-[500px] bg-foreground/20 rounded-full blur-[120px] -mr-64 -mt-64"
                         />
 
                         <div className="relative z-10 max-w-2xl mx-auto space-y-10">
-                            <h2 className="text-4xl md:text-7xl font-bold text-white tracking-tight leading-tight">
+                            <h2 className="text-4xl md:text-7xl font-bold text-foreground tracking-tight leading-tight">
                                 Ready to get started?
                             </h2>
-                            <p className="text-xl md:text-2xl text-white/80 leading-relaxed font-medium">
+                            <p className="text-xl md:text-2xl text-foreground/80 leading-relaxed font-medium">
                                 Book a demo to see how MailSmith can fill your pipeline with qualified meetings.
                             </p>
-                            <Button size="lg" variant="secondary" asChild className="h-20 px-16 rounded-full text-2xl font-bold bg-white text-primary hover:bg-white/90 shadow-3xl shadow-primary/40 transition-all hover:-translate-y-2 hover:scale-105 active:scale-95 group">
+                            <Button size="lg" variant="secondary" asChild className="h-20 px-16 rounded-full text-2xl font-bold bg-foreground text-primary hover:bg-foreground/90 shadow-3xl shadow-primary/40 transition-all hover:-translate-y-2 hover:scale-105 active:scale-95 group">
                                 <Link href="/request-demo" className="flex items-center gap-4">
                                     Book Your Demo
                                     <ArrowRight className="h-8 w-8 transition-transform group-hover:translate-x-2" />
@@ -485,7 +485,7 @@ export default function HowItWorksPage() {
             </section>
 
             {/* Footer */}
-            <footer className="border-t border-white/5 py-20 bg-black">
+            <footer className="border-t border-foreground/5 py-20 bg-background">
                 <div className="container">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-12">
                         <div className="flex items-center gap-4">
@@ -500,21 +500,21 @@ export default function HowItWorksPage() {
                             </div>
                             <span className="font-bold text-2xl tracking-tight">MailSmith</span>
                         </div>
-                        <div className="flex flex-wrap justify-center gap-8 md:gap-12 text-sm font-bold text-white/50 tracking-widest uppercase">
-                            <Link href="/" className="hover:text-white transition-colors relative group">
+                        <div className="flex flex-wrap justify-center gap-8 md:gap-12 text-sm font-bold text-foreground/50 tracking-widest uppercase">
+                            <Link href="/" className="hover:text-foreground transition-colors relative group">
                                 Home
                                 <span className="absolute -bottom-1 left-0 w-0 h-px bg-primary transition-all group-hover:w-full" />
                             </Link>
-                            <Link href="/request-demo" className="hover:text-white transition-colors relative group">
+                            <Link href="/request-demo" className="hover:text-foreground transition-colors relative group">
                                 Request Demo
                                 <span className="absolute -bottom-1 left-0 w-0 h-px bg-primary transition-all group-hover:w-full" />
                             </Link>
-                            <Link href="/login" className="hover:text-white transition-colors relative group">
+                            <Link href="/login" className="hover:text-foreground transition-colors relative group">
                                 Client Login
                                 <span className="absolute -bottom-1 left-0 w-0 h-px bg-primary transition-all group-hover:w-full" />
                             </Link>
                         </div>
-                        <p className="text-sm text-white/30 font-bold uppercase tracking-[0.2em]">
+                        <p className="text-sm text-foreground/30 font-bold uppercase tracking-[0.2em]">
                             © 2026 MailSmith.
                         </p>
                     </div>

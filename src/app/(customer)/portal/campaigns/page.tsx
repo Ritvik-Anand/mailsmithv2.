@@ -28,15 +28,15 @@ export default async function CustomerCampaignsPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-bold text-white">Your Campaigns</h1>
-                    <p className="text-white/50">Track the progress of your outreach campaigns</p>
+                    <h1 className="text-2xl font-bold text-foreground">Your Campaigns</h1>
+                    <p className="text-foreground/50">Track the progress of your outreach campaigns</p>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 text-sm text-white/50">
+                    <div className="flex items-center gap-2 text-sm text-foreground/50">
                         <div className="flex h-2 w-2 rounded-full bg-green-500"></div>
                         <span>{campaigns.filter(c => c.status === 'active').length} Active</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-white/50">
+                    <div className="flex items-center gap-2 text-sm text-foreground/50">
                         <div className="flex h-2 w-2 rounded-full bg-amber-500"></div>
                         <span>{campaigns.filter(c => c.status === 'paused').length} Paused</span>
                     </div>
@@ -79,13 +79,13 @@ export default async function CustomerCampaignsPage() {
                     ))}
                 </div>
             ) : (
-                <Card className="bg-white/[0.02] border-white/5">
+                <Card className="bg-foreground/[0.02] border-foreground/5">
                     <CardContent className="py-16 text-center">
                         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mx-auto mb-4">
                             <Mail className="h-8 w-8 text-primary" />
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2">No Campaigns Yet</h3>
-                        <p className="text-white/50 max-w-md mx-auto">
+                        <h3 className="text-xl font-bold text-foreground mb-2">No Campaigns Yet</h3>
+                        <p className="text-foreground/50 max-w-md mx-auto">
                             Your campaigns will appear here once they're launched. Your operator is
                             working on getting your first campaign ready!
                         </p>
@@ -106,15 +106,15 @@ function StatCard({
     icon: any
 }) {
     return (
-        <Card className="bg-white/[0.02] border-white/5">
+        <Card className="bg-foreground/[0.02] border-foreground/5">
             <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
                         <Icon className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                        <p className="text-xl font-bold text-white">{value}</p>
-                        <p className="text-xs text-white/40">{label}</p>
+                        <p className="text-xl font-bold text-foreground">{value}</p>
+                        <p className="text-xs text-foreground/40">{label}</p>
                     </div>
                 </div>
             </CardContent>
@@ -134,20 +134,20 @@ function CampaignCard({ campaign }: { campaign: any }) {
     const StatusIcon = status.icon
 
     return (
-        <Card className="bg-white/[0.02] border-white/5 hover:bg-white/[0.04] transition-colors">
+        <Card className="bg-foreground/[0.02] border-foreground/5 hover:bg-foreground/[0.04] transition-colors">
             <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     {/* Campaign Info */}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-semibold text-white truncate">{campaign.name}</h3>
+                            <h3 className="text-lg font-semibold text-foreground truncate">{campaign.name}</h3>
                             <Badge className={`${status.color} border`}>
                                 <StatusIcon className="h-3 w-3 mr-1" />
                                 {status.label}
                             </Badge>
                         </div>
 
-                        <div className="flex items-center gap-4 text-sm text-white/50 mb-4">
+                        <div className="flex items-center gap-4 text-sm text-foreground/50 mb-4">
                             <div className="flex items-center gap-1">
                                 <Calendar className="h-3.5 w-3.5" />
                                 <span>{new Date(campaign.createdAt).toLocaleDateString()}</span>
@@ -161,35 +161,35 @@ function CampaignCard({ campaign }: { campaign: any }) {
                         {/* Progress Bar */}
                         <div className="space-y-2">
                             <div className="flex justify-between text-xs">
-                                <span className="text-white/50">Progress</span>
-                                <span className="text-white/70">{campaign.progress}%</span>
+                                <span className="text-foreground/50">Progress</span>
+                                <span className="text-foreground/70">{campaign.progress}%</span>
                             </div>
-                            <Progress value={campaign.progress} className="h-2 bg-white/5" />
+                            <Progress value={campaign.progress} className="h-2 bg-foreground/5" />
                         </div>
                     </div>
 
                     {/* Stats */}
                     <div className="flex items-center gap-6 lg:gap-8">
                         <div className="text-center">
-                            <div className="flex items-center justify-center gap-1 text-lg font-bold text-white">
+                            <div className="flex items-center justify-center gap-1 text-lg font-bold text-foreground">
                                 <Mail className="h-4 w-4 text-primary" />
                                 {campaign.emailsSent.toLocaleString()}
                             </div>
-                            <p className="text-xs text-white/40">Sent</p>
+                            <p className="text-xs text-foreground/40">Sent</p>
                         </div>
                         <div className="text-center">
                             <div className="flex items-center justify-center gap-1 text-lg font-bold text-blue-400">
                                 <MousePointer2 className="h-4 w-4" />
                                 {campaign.openRate}%
                             </div>
-                            <p className="text-xs text-white/40">Open Rate</p>
+                            <p className="text-xs text-foreground/40">Open Rate</p>
                         </div>
                         <div className="text-center">
                             <div className="flex items-center justify-center gap-1 text-lg font-bold text-green-400">
                                 <MessageSquare className="h-4 w-4" />
                                 {campaign.replyRate}%
                             </div>
-                            <p className="text-xs text-white/40">Reply Rate</p>
+                            <p className="text-xs text-foreground/40">Reply Rate</p>
                         </div>
                     </div>
                 </div>

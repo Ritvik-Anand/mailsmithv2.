@@ -115,23 +115,23 @@ export default function AIAssistantPage() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Link href="/portal">
-                        <Button variant="ghost" size="icon" className="text-white/50 hover:text-white">
+                        <Button variant="ghost" size="icon" className="text-foreground/50 hover:text-foreground">
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
                             <Sparkles className="h-6 w-6 text-primary" />
                             AI Assistant
                         </h1>
-                        <p className="text-sm text-white/50">Ask questions about your outreach performance</p>
+                        <p className="text-sm text-foreground/50">Ask questions about your outreach performance</p>
                     </div>
                 </div>
                 <Button
                     variant="outline"
                     size="sm"
                     onClick={clearConversation}
-                    className="text-white/50 border-white/10 hover:text-white"
+                    className="text-foreground/50 border-foreground/10 hover:text-foreground"
                 >
                     <RefreshCw className="h-4 w-4 mr-2" />
                     New Chat
@@ -139,7 +139,7 @@ export default function AIAssistantPage() {
             </div>
 
             {/* Chat Container */}
-            <Card className="bg-white/[0.02] border-white/5 flex-1 flex flex-col min-h-[600px] lg:min-h-[700px]">
+            <Card className="bg-foreground/[0.02] border-foreground/5 flex-1 flex flex-col min-h-[600px] lg:min-h-[700px]">
                 {/* Messages */}
                 <CardContent className="flex-1 p-6 overflow-y-auto">
                     <div className="space-y-4">
@@ -155,19 +155,19 @@ export default function AIAssistantPage() {
                                 )}
                                 <div
                                     className={`max-w-[80%] rounded-2xl px-4 py-3 ${message.role === 'user'
-                                        ? 'bg-primary text-white'
-                                        : 'bg-white/5 text-white/90'
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'bg-foreground/5 text-foreground/90'
                                         }`}
                                 >
                                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                                    <p className={`text-xs mt-2 ${message.role === 'user' ? 'text-white/60' : 'text-white/30'
+                                    <p className={`text-xs mt-2 ${message.role === 'user' ? 'text-foreground/60' : 'text-foreground/30'
                                         }`}>
                                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </p>
                                 </div>
                                 {message.role === 'user' && (
-                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10">
-                                        <User className="h-4 w-4 text-white/60" />
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground/10">
+                                        <User className="h-4 w-4 text-foreground/60" />
                                     </div>
                                 )}
                             </div>
@@ -178,10 +178,10 @@ export default function AIAssistantPage() {
                                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20">
                                     <Bot className="h-4 w-4 text-primary" />
                                 </div>
-                                <div className="bg-white/5 rounded-2xl px-4 py-3">
+                                <div className="bg-foreground/5 rounded-2xl px-4 py-3">
                                     <div className="flex items-center gap-2">
                                         <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                                        <span className="text-sm text-white/50">Thinking...</span>
+                                        <span className="text-sm text-foreground/50">Thinking...</span>
                                     </div>
                                 </div>
                             </div>
@@ -194,7 +194,7 @@ export default function AIAssistantPage() {
                 {/* Suggested Questions - Only show at start */}
                 {messages.length === 1 && (
                     <div className="px-4 pb-4">
-                        <p className="text-xs text-white/40 mb-3">Suggested questions:</p>
+                        <p className="text-xs text-foreground/40 mb-3">Suggested questions:</p>
                         <div className="flex flex-wrap gap-2">
                             {SUGGESTED_QUESTIONS.map((q, i) => (
                                 <Button
@@ -202,7 +202,7 @@ export default function AIAssistantPage() {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleSend(q.text)}
-                                    className="text-white/70 border-white/10 hover:text-white hover:bg-white/5"
+                                    className="text-foreground/70 border-foreground/10 hover:text-foreground hover:bg-foreground/5"
                                 >
                                     <q.icon className="h-3 w-3 mr-2" />
                                     {q.text}
@@ -213,14 +213,14 @@ export default function AIAssistantPage() {
                 )}
 
                 {/* Input Area */}
-                <div className="p-4 border-t border-white/5">
+                <div className="p-4 border-t border-foreground/5">
                     <div className="flex gap-3">
                         <Input
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={handleKeyPress}
                             placeholder="Ask about your campaigns, leads, or performance..."
-                            className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                            className="flex-1 bg-foreground/5 border-foreground/10 text-foreground placeholder:text-foreground/30"
                             disabled={isLoading}
                         />
                         <Button
@@ -231,22 +231,22 @@ export default function AIAssistantPage() {
                             <Send className="h-4 w-4" />
                         </Button>
                     </div>
-                    <p className="text-xs text-white/30 mt-2 text-center">
+                    <p className="text-xs text-foreground/30 mt-2 text-center">
                         AI responses are based on your account data and general best practices
                     </p>
                 </div>
             </Card>
 
             {/* Tips Card */}
-            <Card className="bg-white/[0.02] border-white/5">
+            <Card className="bg-foreground/[0.02] border-foreground/5">
                 <CardContent className="p-4">
                     <div className="flex items-start gap-3">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
                             <Lightbulb className="h-4 w-4 text-amber-500" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-white">Pro Tips</p>
-                            <p className="text-xs text-white/50 mt-1">
+                            <p className="text-sm font-medium text-foreground">Pro Tips</p>
+                            <p className="text-xs text-foreground/50 mt-1">
                                 Ask specific questions for better insights. Try: "What's my best performing campaign?"
                                 or "Which industry has the highest reply rate?"
                             </p>
