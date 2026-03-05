@@ -22,7 +22,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Plus, Search, MoreHorizontal, UserCog, Mail, Ban, Eye, Users, RefreshCw, AlertCircle, Target, Trash } from 'lucide-react'
+import { Plus, Search, MoreHorizontal, UserCog, Mail, Ban, Eye, Users, RefreshCw, AlertCircle, Target, Trash, Wand2, Copy, Check, Eye as EyeIcon, EyeOff } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getOrganizations, toggleOrganizationStatus, updateOrganization, onboardCustomer, deleteOrganization } from '@/server/actions/organizations'
 import {
@@ -62,6 +62,36 @@ export default function AdminCustomersPage() {
     const [newLimit, setNewLimit] = useState<number>(1000)
     const [isUpdating, setIsUpdating] = useState(false)
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+    const [generatedPassword, setGeneratedPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
+    const [passwordCopied, setPasswordCopied] = useState(false)
+
+    const generatePassword = () => {
+        const upper = 'ABCDEFGHIJKLMNPQRSTUVWXYZ'
+        const lower = 'abcdefghijkmnpqrstuvwxyz'
+        const digits = '23456789'
+        const symbols = '!@#$%^&*'
+        const all = upper + lower + digits + symbols
+        const arr = new Uint32Array(16)
+        crypto.getRandomValues(arr)
+        // Guarantee at least one of each class in positions 0-3
+        const pwd = [
+            upper[arr[0] % upper.length],
+            lower[arr[1] % lower.length],
+            digits[arr[2] % digits.length],
+            symbols[arr[3] % symbols.length],
+            ...Array.from(arr.slice(4), n => all[n % all.length]),
+        ].sort(() => Math.random() - 0.5).join('')
+        setGeneratedPassword(pwd)
+        setPasswordCopied(false)
+    }
+
+    const copyPassword = async () => {
+        if (!generatedPassword) return
+        await navigator.clipboard.writeText(generatedPassword)
+        setPasswordCopied(true)
+        setTimeout(() => setPasswordCopied(false), 2000)
+    }
 
     const fetchCustomers = async () => {
         setIsLoading(true)
@@ -100,7 +130,7 @@ export default function AdminCustomersPage() {
             const result = await onboardCustomer({
                 name: formData.get('name') as string,
                 email: formData.get('email') as string,
-                password: formData.get('password') as string,
+                password: generatedPassword || formData.get('password') as string,
                 plan: formData.get('plan') as any,
                 monthly_lead_limit: parseInt(formData.get('limit') as string) || 1000
             })
@@ -204,8 +234,53 @@ export default function AdminCustomersPage() {
                                 <Input name="email" type="email" placeholder="owner@acme.com" required />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Initial Password</label>
-                                <Input name="password" type="text" placeholder="Password123!" required />
+                                <label className="text-sm font-medium flex items-center justify-between">
+                                    <span>Initial Password</span>
+                                    <button
+                                        type="button"
+                                        onClick={generatePassword}
+                                        className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-semibold transition-colors"
+                                    >
+                                        <Wand2 className="h-3 w-3" />
+                                        Generate secure password
+                                    </button>
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <div className="relative flex-1">
+                                        <Input
+                                            name="password"
+                                            type={showPassword ? 'text' : 'password'}
+                                            placeholder="Password123!"
+                                            value={generatedPassword}
+                                            onChange={e => setGeneratedPassword(e.target.value)}
+                                            required
+                                            className="pr-9 font-mono text-sm"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(v => !v)}
+                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={copyPassword}
+                                        disabled={!generatedPassword}
+                                        className="flex items-center gap-1.5 px-3 h-10 rounded-md border border-border text-xs font-medium transition-all disabled:opacity-40 hover:bg-muted"
+                                    >
+                                        {passwordCopied
+                                            ? <><Check className="h-3.5 w-3.5 text-emerald-500" /><span className="text-emerald-500">Copied</span></>
+                                            : <><Copy className="h-3.5 w-3.5" /><span>Copy</span></>
+                                        }
+                                    </button>
+                                </div>
+                                {generatedPassword && (
+                                    <p className="text-[11px] text-muted-foreground">
+                                        🔒 16-char password · uppercase, lowercase, digits & symbols
+                                    </p>
+                                )}
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
