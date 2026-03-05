@@ -490,16 +490,26 @@ export class InstantlyClient {
         let startingAfter: string | undefined = undefined
 
         for (let page = 0; page < maxPages; page++) {
-            // Throttle: wait 400ms between pages to stay under 20 req/min
+            // Throttle: 600ms between pages to stay under 20 req/min
             if (page > 0) {
-                await new Promise(resolve => setTimeout(resolve, 400))
+                await new Promise(resolve => setTimeout(resolve, 600))
             }
 
-            const batch = await this.getEmails({
-                limit: PAGE_SIZE,
-                starting_after: startingAfter,
-                campaign_id: params.campaign_id,
-            })
+            let batch: InstantlyEmail[]
+            try {
+                batch = await this.getEmails({
+                    limit: PAGE_SIZE,
+                    starting_after: startingAfter,
+                    campaign_id: params.campaign_id,
+                })
+            } catch (err: any) {
+                // On rate limit (429), return what we have so far — don't crash inbox
+                if (err?.message?.includes('429') || err?.status === 429) {
+                    console.warn('[Inbox] Rate limited by Instantly — returning partial results')
+                    break
+                }
+                throw err
+            }
 
             if (!batch.length) break
 
@@ -527,6 +537,7 @@ export class InstantlyClient {
             const tB = new Date(b.timestamp_created ?? b.timestamp_email ?? 0).getTime()
             return tB - tA
         })
+
     }
 
     /**
