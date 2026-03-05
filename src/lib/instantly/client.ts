@@ -584,6 +584,47 @@ export class InstantlyClient {
             body: JSON.stringify(params),
         })
     }
+
+    /**
+     * Update a lead's interest/intent status in Instantly.
+     * interest_value: 0=Not Interested, 1=Interested, 2=Meeting Booked,
+     *                 3=Out of Office, 4=Do Not Contact, 5=Wrong Person
+     */
+    async updateLeadInterestStatus(params: {
+        email: string          // the lead's email address
+        interest_value: number // numeric label ID
+    }): Promise<any> {
+        return this.request('/leads/update-interest-status', {
+            method: 'PATCH',
+            body: JSON.stringify(params),
+        })
+    }
+
+    // ─── Webhook management ──────────────────────────────────────────────────
+
+    /** List all registered webhooks in the workspace. */
+    async listWebhooks(): Promise<any[]> {
+        const res = await this.request<any>('/webhooks')
+        if (Array.isArray(res)) return res
+        return res?.items ?? res?.data ?? []
+    }
+
+    /** Register a new webhook endpoint for a given event type. */
+    async registerWebhook(params: {
+        url: string           // public HTTPS endpoint
+        event_type: string    // e.g. 'reply_received'
+        name?: string
+    }): Promise<any> {
+        return this.request('/webhooks', {
+            method: 'POST',
+            body: JSON.stringify(params),
+        })
+    }
+
+    /** Delete a registered webhook by its ID. */
+    async deleteWebhook(webhookId: string): Promise<any> {
+        return this.request(`/webhooks/${webhookId}`, { method: 'DELETE' })
+    }
 }
 
 // =============================================================================

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useTransition } from 'react'
 import type { InboxEmail } from '@/server/actions/inbox'
-import { replyToInboxEmail } from '@/server/actions/inbox'
+import { replyToInboxEmail, updateLeadStatus } from '@/server/actions/inbox'
+import { createClient } from '@/lib/supabase/client'
 import {
     Inbox,
     RefreshCw,
@@ -14,11 +15,15 @@ import {
     Clock,
     User,
     Mail,
-    Tag,
     AlertCircle,
     CheckCircle2,
     Loader2,
     MailOpen,
+    ThumbsUp,
+    ThumbsDown,
+    Calendar,
+    Ban,
+    Zap,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -82,7 +87,7 @@ export function InboxLayout({ initialEmails, accounts }: InboxLayoutProps) {
 
     const selected = emails.find(e => e.id === selectedId) ?? filtered[0] ?? null
 
-    // ── Poll every 30s for new emails ─────────────────────────────────────────
+    // ── Poll every 30s for new emails (fallback when webhook is not firing) ──
     const poll = useCallback(async () => {
         try {
             const res = await fetch(`/api/inbox?since=${encodeURIComponent(lastPolled)}`)
@@ -101,6 +106,19 @@ export function InboxLayout({ initialEmails, accounts }: InboxLayoutProps) {
     useEffect(() => {
         const id = setInterval(poll, 30_000)
         return () => clearInterval(id)
+    }, [poll])
+
+    // ── Supabase Realtime — instant updates when webhook fires ─────────────
+    useEffect(() => {
+        const supabase = createClient()
+        const channel = supabase
+            .channel('inbox-broadcast')
+            .on('broadcast', { event: 'new_reply' }, () => {
+                // Webhook fired — poll immediately to get the new email
+                poll()
+            })
+            .subscribe()
+        return () => { supabase.removeChannel(channel) }
     }, [poll])
 
     // ── Manual refresh ────────────────────────────────────────────────────────
@@ -189,9 +207,20 @@ export function InboxLayout({ initialEmails, accounts }: InboxLayoutProps) {
             {/* ── RIGHT: Thread + Reply ── */}
             <div className="flex-1 flex flex-col min-w-0">
                 {selected
-                    ? <EmailDetail email={selected} accounts={accounts} onReplySent={() => {
-                        setEmails(prev => prev.map(e => e.id === selected.id ? { ...e, isRead: true } : e))
-                    }} />
+                    ? <EmailDetail
+                        email={selected}
+                        accounts={accounts}
+                        onReplySent={() => {
+                            setEmails(prev => prev.map(e => e.id === selected.id ? { ...e, isRead: true } : e))
+                        }}
+                        onLabelChange={(label, color) => {
+                            setEmails(prev => prev.map(e =>
+                                e.id === selected.id
+                                    ? { ...e, interestLabel: label, interestColor: color }
+                                    : e
+                            ))
+                        }}
+                    />
                     : <EmptySelection />
                 }
             </div>
@@ -268,10 +297,11 @@ function EmailRow({ email, isActive, onClick }: {
 // EMAIL DETAIL + REPLY COMPOSER
 // =============================================================================
 
-function EmailDetail({ email, accounts, onReplySent }: {
+function EmailDetail({ email, accounts, onReplySent, onLabelChange }: {
     email: InboxEmail
     accounts: string[]
     onReplySent: () => void
+    onLabelChange: (label: string | null, color: string | null) => void
 }) {
     const [replyText, setReplyText] = useState('')
     const [fromAccount, setFromAccount] = useState(
@@ -279,8 +309,29 @@ function EmailDetail({ email, accounts, onReplySent }: {
     )
     const [showAccountPicker, setShowAccountPicker] = useState(false)
     const [isPending, startTransition] = useTransition()
+    const [statusPending, setStatusPending] = useState<number | null>(null)
     const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
     const [errorMsg, setErrorMsg] = useState('')
+
+    // Lead status buttons definition (numeric value matches Instantly)
+    const STATUS_BUTTONS = [
+        { value: 1, label: 'Interested', icon: ThumbsUp, color: '#22c55e' },
+        { value: 2, label: 'Meeting Booked', icon: Calendar, color: '#3b82f6' },
+        { value: 0, label: 'Not Interested', icon: ThumbsDown, color: '#ef4444' },
+        { value: 4, label: 'Do Not Contact', icon: Ban, color: '#dc2626' },
+    ]
+
+    const handleStatusClick = (value: number, label: string, color: string) => {
+        if (statusPending !== null) return
+        setStatusPending(value)
+        // Optimistic update immediately
+        onLabelChange(label, color)
+        updateLeadStatus({ leadEmail: email.fromAddress, interestValue: value })
+            .then(res => {
+                if (!res.success) onLabelChange(email.interestLabel, email.interestColor) // revert
+            })
+            .finally(() => setStatusPending(null))
+    }
 
     useEffect(() => {
         setReplyText('')
@@ -316,9 +367,9 @@ function EmailDetail({ email, accounts, onReplySent }: {
 
             {/* ── Email header ── */}
             <div className="px-6 py-5 border-b border-white/5">
-                <div className="flex items-start gap-3 mb-4">
+                <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-base font-semibold text-white leading-snug mb-1">
+                        <h2 className="text-base font-semibold text-white leading-snug mb-1.5">
                             {email.subject}
                         </h2>
                         {email.interestLabel && (
@@ -329,6 +380,43 @@ function EmailDetail({ email, accounts, onReplySent }: {
                             />
                         )}
                     </div>
+                </div>
+
+                {/* Lead status one-click buttons */}
+                <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+                    <span className="text-[10px] text-white/30 uppercase tracking-wider mr-1 flex items-center gap-1">
+                        <Zap className="h-2.5 w-2.5" /> Label lead:
+                    </span>
+                    {STATUS_BUTTONS.map(btn => {
+                        const isActive = email.interestLabel === btn.label
+                        const isLoading = statusPending === btn.value
+                        return (
+                            <button
+                                key={btn.value}
+                                onClick={() => handleStatusClick(btn.value, btn.label, btn.color)}
+                                disabled={statusPending !== null}
+                                title={btn.label}
+                                className={cn(
+                                    'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all',
+                                    isActive
+                                        ? 'text-white border-transparent'
+                                        : 'text-white/40 border-white/10 hover:border-white/20 hover:text-white/70',
+                                    statusPending !== null && !isLoading && 'opacity-40 cursor-not-allowed'
+                                )}
+                                style={isActive ? {
+                                    backgroundColor: `${btn.color}30`,
+                                    borderColor: `${btn.color}60`,
+                                    color: btn.color,
+                                } : undefined}
+                            >
+                                {isLoading
+                                    ? <Loader2 className="h-3 w-3 animate-spin" />
+                                    : <btn.icon className="h-3 w-3" />
+                                }
+                                {btn.label}
+                            </button>
+                        )
+                    })}
                 </div>
 
                 <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-white/40">

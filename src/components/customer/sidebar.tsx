@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
@@ -65,6 +65,32 @@ const navItems = [
     },
 ]
 
+// =============================================================================
+// Unread badge — polls /api/inbox/unread every 60s
+// =============================================================================
+function InboxUnreadBadge() {
+    const [count, setCount] = useState(0)
+
+    useEffect(() => {
+        const fetch = () =>
+            window.fetch('/api/inbox/unread')
+                .then(r => r.json())
+                .then(d => setCount(d.count ?? 0))
+                .catch(() => { })
+
+        fetch()
+        const id = setInterval(fetch, 60_000)
+        return () => clearInterval(id)
+    }, [])
+
+    if (count === 0) return null
+    return (
+        <span className="ml-auto flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white tabular-nums">
+            {count > 99 ? '99+' : count}
+        </span>
+    )
+}
+
 export function CustomerSidebar({ user }: CustomerSidebarProps) {
     const pathname = usePathname()
     const [collapsed, setCollapsed] = useState(false)
@@ -122,8 +148,13 @@ export function CustomerSidebar({ user }: CustomerSidebarProps) {
                                     isActive ? 'text-white' : 'text-white/40'
                                 )} />
                                 {!collapsed && (
-                                    <div className="flex flex-col">
-                                        <span>{item.title}</span>
+                                    <div className="flex flex-col flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <span>{item.title}</span>
+                                            {item.href === '/portal/inbox' && (
+                                                <InboxUnreadBadge />
+                                            )}
+                                        </div>
                                         {!isActive && (
                                             <span className="text-xs text-white/30">{item.description}</span>
                                         )}

@@ -268,3 +268,94 @@ export async function getNewInboxEmails(since: string): Promise<{
 
     return { success: true, emails: newEmails }
 }
+
+// =============================================================================
+// ACTION: Update a lead's interest/intent status (one-click pipeline)
+// =============================================================================
+export async function updateLeadStatus(params: {
+    leadEmail: string    // the lead's email address (from email.fromAddress)
+    interestValue: number // 0=Not Interested, 1=Interested, 2=Meeting Booked, etc.
+}): Promise<{ success: boolean; error?: string }> {
+    const orgId = await getCustomerOrgId()
+    if (!orgId) return { success: false, error: 'Not authenticated.' }
+
+    try {
+        await instantly.updateLeadInterestStatus({
+            email: params.leadEmail,
+            interest_value: params.interestValue,
+        })
+        return { success: true }
+    } catch (error: any) {
+        console.error('[Inbox] updateLeadStatus error:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+// =============================================================================
+// ACTION: Get unread email count (for sidebar badge)
+// =============================================================================
+export async function getInboxUnreadCount(): Promise<number> {
+    const supabase = createAdminClient()
+    const orgId = await getCustomerOrgId()
+    if (!orgId) return 0
+
+    try {
+        const { data: accountRows } = await supabase
+            .from('instantly_email_accounts')
+            .select('email_address')
+            .eq('organization_id', orgId)
+            .eq('status', 'active')
+
+        const accountEmails = (accountRows ?? []).map(r => r.email_address)
+        if (!accountEmails.length) return 0
+
+        // Fetch only first page — unread count from recent emails is enough
+        const rawEmails = await instantly.getEmails({ limit: 100 })
+        const ownAccounts = new Set(accountEmails.map(e => e.toLowerCase()))
+
+        return rawEmails.filter(e =>
+            e.ue_type === 2 &&
+            e.eaccount && ownAccounts.has(e.eaccount.toLowerCase()) &&
+            e.is_unread === 1
+        ).length
+    } catch {
+        return 0
+    }
+}
+
+// =============================================================================
+// ACTION: Register Instantly webhook for real-time inbox (called once on setup)
+// =============================================================================
+export async function setupInstantlyWebhook(appBaseUrl: string): Promise<{
+    success: boolean
+    webhookId?: string
+    error?: string
+}> {
+    const orgId = await getCustomerOrgId()
+    if (!orgId) return { success: false, error: 'Not authenticated.' }
+
+    try {
+        const url = `${appBaseUrl}/api/webhooks/instantly`
+
+        // Check if already registered to avoid duplicates
+        const existing = await instantly.listWebhooks()
+        const alreadyExists = existing.find((w: any) =>
+            (w.url ?? w.endpoint) === url &&
+            (w.event_type ?? w.event) === 'reply_received'
+        )
+        if (alreadyExists) {
+            return { success: true, webhookId: alreadyExists.id }
+        }
+
+        const result = await instantly.registerWebhook({
+            url,
+            event_type: 'reply_received',
+            name: 'MailSmith Inbox — reply_received',
+        })
+
+        return { success: true, webhookId: result?.id }
+    } catch (error: any) {
+        console.error('[Inbox] setupInstantlyWebhook error:', error)
+        return { success: false, error: error.message }
+    }
+}
