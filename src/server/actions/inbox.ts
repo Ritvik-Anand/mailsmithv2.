@@ -146,20 +146,14 @@ export async function getInboxEmails(params: {
             }
         }
 
-        // 2. Fetch all emails from Instantly for the org's accounts.
-        // We omit the 'type' param — Instantly appears to ignore it.
-        const rawEmails = await instantly.getEmailsForAccounts(accountEmails, {
-            limit: params.limit ?? 100,
+        // 2. Fetch ALL historical inbound replies via paginated Unibox walk.
+        // getAllInboundEmails pages through up to 2000 emails (20 pages × 100),
+        // filtering to ue_type===2 and only emails for this org's accounts.
+        const rawEmails = await instantly.getAllInboundEmails(accountEmails, {
             campaign_id: params.campaignId,
         })
 
-        // ── THE definitive filter: ue_type === 2 means inbound reply ──────────
-        // Confirmed from raw API data:
-        //   ue_type 1 = outbound email we sent to a lead
-        //   ue_type 2 = inbound reply from a lead
-        const emails = rawEmails
-            .filter(e => e.ue_type === 2)
-            .map(normaliseEmail)
+        const emails = rawEmails.map(normaliseEmail)
 
         return {
             success: true,

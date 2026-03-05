@@ -471,41 +471,60 @@ export class InstantlyClient {
     }
 
     /**
-     * Get all emails across multiple accounts.
-     * Fetches in parallel and merges / sorts by timestamp desc.
+     * Fetch ALL inbound replies (ue_type === 2) for a set of accounts by
+     * paginating through the entire Unibox history.
+     *
+     * Strategy:
+     * - The Instantly Unibox returns emails in reverse-chronological order.
+     * - We page through 100 at a time using `starting_after` cursor.
+     * - We stop when a page returns fewer than 100 items (last page reached)
+     *   or when we hit maxPages (safety cap, default 20 = up to 2000 emails).
+     * - We keep only emails where ue_type === 2 AND eaccount is in ownAccounts.
      */
-    async getEmailsForAccounts(accountEmails: string[], params: {
-        limit?: number
+    async getAllInboundEmails(ownAccounts: string[], params: {
         campaign_id?: string
-        type?: 'reply' | 'sent' | 'all'
+        maxPages?: number
     } = {}): Promise<InstantlyEmail[]> {
-        if (accountEmails.length === 0) return []
+        const PAGE_SIZE = 100
+        const maxPages = params.maxPages ?? 20
+        const ownAccountSet = new Set(ownAccounts.map(a => a.toLowerCase()))
 
-        const results = await Promise.allSettled(
-            accountEmails.map(email =>
-                this.getEmails({ ...params, email_account: email, limit: params.limit ?? 50 })
-            )
-        )
+        const inbound: InstantlyEmail[] = []
+        let startingAfter: string | undefined = undefined
 
-        const all: InstantlyEmail[] = []
-        for (const result of results) {
-            if (result.status === 'fulfilled') all.push(...result.value)
+        for (let page = 0; page < maxPages; page++) {
+            const batch = await this.getEmails({
+                limit: PAGE_SIZE,
+                starting_after: startingAfter,
+                campaign_id: params.campaign_id,
+            })
+
+            if (!batch.length) break
+
+            // Collect inbound emails for this org's accounts
+            for (const email of batch) {
+                if (
+                    email.ue_type === 2 &&
+                    email.eaccount &&
+                    ownAccountSet.has(email.eaccount.toLowerCase())
+                ) {
+                    inbound.push(email)
+                }
+            }
+
+            // Stop if this was the last page
+            if (batch.length < PAGE_SIZE) break
+
+            // Cursor for next page = ID of last item in this batch
+            startingAfter = batch[batch.length - 1].id
         }
 
-        // De-dupe by ID and sort newest first
-        const seen = new Set<string>()
-        return all
-            .filter(email => {
-                const id = email.id
-                if (!id || seen.has(id)) return false
-                seen.add(id)
-                return true
-            })
-            .sort((a, b) => {
-                const tA = new Date(a.timestamp_created ?? a.timestamp_email ?? 0).getTime()
-                const tB = new Date(b.timestamp_created ?? b.timestamp_email ?? 0).getTime()
-                return tB - tA
-            })
+        // Sort newest first
+        return inbound.sort((a, b) => {
+            const tA = new Date(a.timestamp_created ?? a.timestamp_email ?? 0).getTime()
+            const tB = new Date(b.timestamp_created ?? b.timestamp_email ?? 0).getTime()
+            return tB - tA
+        })
     }
 
     /**
@@ -517,10 +536,6 @@ export class InstantlyClient {
 
     /**
      * Reply to an email in the Unibox.
-     * - reply_to_uuid: ID of the email you are replying to
-     * - eaccount: the from-address sending the reply (must be a connected account)
-     * - subject: email subject (typically "Re: <original subject>")
-     * - body: reply body (plain text or HTML)
      */
     async replyToEmail(params: {
         reply_to_uuid: string
