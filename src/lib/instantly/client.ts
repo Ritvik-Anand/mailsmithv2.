@@ -472,27 +472,29 @@ export class InstantlyClient {
 
     /**
      * Fetch ALL inbound replies (ue_type === 2) for a set of accounts by
-     * paginating through the entire Unibox history.
+     * paginating through the Unibox history.
      *
-     * Strategy:
-     * - The Instantly Unibox returns emails in reverse-chronological order.
-     * - We page through 100 at a time using `starting_after` cursor.
-     * - We stop when a page returns fewer than 100 items (last page reached)
-     *   or when we hit maxPages (safety cap, default 20 = up to 2000 emails).
-     * - We keep only emails where ue_type === 2 AND eaccount is in ownAccounts.
+     * Rate limit: Instantly allows 20 req/min. We cap at 3 pages (300 emails)
+     * with a 400ms delay between pages = max 3 requests per call, well under limit.
+     * Increase maxPages cautiously — each extra page = 1 more API request.
      */
     async getAllInboundEmails(ownAccounts: string[], params: {
         campaign_id?: string
         maxPages?: number
     } = {}): Promise<InstantlyEmail[]> {
         const PAGE_SIZE = 100
-        const maxPages = params.maxPages ?? 20
+        const maxPages = params.maxPages ?? 3   // 3 pages = 300 emails = 3 req (safe)
         const ownAccountSet = new Set(ownAccounts.map(a => a.toLowerCase()))
 
         const inbound: InstantlyEmail[] = []
         let startingAfter: string | undefined = undefined
 
         for (let page = 0; page < maxPages; page++) {
+            // Throttle: wait 400ms between pages to stay under 20 req/min
+            if (page > 0) {
+                await new Promise(resolve => setTimeout(resolve, 400))
+            }
+
             const batch = await this.getEmails({
                 limit: PAGE_SIZE,
                 starting_after: startingAfter,
