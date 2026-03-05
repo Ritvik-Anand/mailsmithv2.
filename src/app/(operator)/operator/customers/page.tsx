@@ -52,7 +52,7 @@ export default function OperatorCustomersPage() {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <p className="text-zinc-500 font-medium">Loading your portfolio...</p>
+                <p className="text-muted-foreground font-medium">Loading your portfolio...</p>
             </div>
         )
     }
@@ -63,15 +63,15 @@ export default function OperatorCustomersPage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="space-y-2">
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">My Managed Customers</h1>
-                    <p className="text-zinc-500 font-medium font-mono text-sm uppercase tracking-widest">
+                    <p className="text-muted-foreground font-medium font-mono text-sm uppercase tracking-widest">
                         {organizations.length} Organizations Under Management
                     </p>
                 </div>
                 <div className="relative w-full md:w-64">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-600" />
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search portfolio..."
-                        className="pl-10 bg-zinc-900 border-zinc-800 text-sm h-10"
+                        className="pl-10 bg-muted border-border text-sm h-10"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -81,7 +81,7 @@ export default function OperatorCustomersPage() {
             {/* Organizations Grid */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredOrgs.map((org) => (
-                    <Card key={org.id} className="bg-zinc-950 border-border hover:border-zinc-700 transition-all group shadow-2xl">
+                    <Card key={org.id} className="bg-card border-border hover:border-border transition-all group shadow-2xl">
                         <CardHeader className="pb-4">
                             <div className="flex justify-between items-start">
                                 <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
@@ -97,19 +97,19 @@ export default function OperatorCustomersPage() {
                                 </Badge>
                             </div>
                             <CardTitle className="text-xl font-bold text-foreground mt-4">{org.name}</CardTitle>
-                            <CardDescription className="text-zinc-500 font-mono text-xs font-medium uppercase tracking-tighter italic">
+                            <CardDescription className="text-muted-foreground font-mono text-xs font-medium uppercase tracking-tighter italic">
                                 {org.slug}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-3 bg-foreground/5 rounded-lg border border-border">
-                                    <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest mb-1">Status</p>
-                                    <p className="text-sm font-bold text-zinc-300">Active</p>
+                                    <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1">Status</p>
+                                    <p className="text-sm font-bold text-foreground/70">Active</p>
                                 </div>
                                 <div className="p-3 bg-foreground/5 rounded-lg border border-border">
-                                    <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest mb-1">Role</p>
-                                    <p className="text-sm font-bold text-zinc-300">{org.isPrimary ? 'Primary' : 'Support'}</p>
+                                    <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1">Role</p>
+                                    <p className="text-sm font-bold text-foreground/70">{org.isPrimary ? 'Primary' : 'Support'}</p>
                                 </div>
                             </div>
 
@@ -120,7 +120,7 @@ export default function OperatorCustomersPage() {
                                     </Button>
                                 </Link>
                                 <Link href={`/operator/scraper?org=${org.id}`}>
-                                    <Button variant="outline" className="w-full text-zinc-400 hover:text-foreground text-xs font-bold h-10 border-zinc-800">
+                                    <Button variant="outline" className="w-full text-muted-foreground hover:text-foreground text-xs font-bold h-10 border-border">
                                         <Target className="mr-2 h-3.5 w-3.5" />
                                         Launch Lead Engine
                                     </Button>
@@ -133,7 +133,7 @@ export default function OperatorCustomersPage() {
                 {filteredOrgs.length === 0 && (
                     <div className="col-span-full py-20 text-center border-2 border-dashed border-border rounded-2xl bg-foreground/5">
                         <Users className="h-12 w-12 text-zinc-800 mx-auto mb-4" />
-                        <h3 className="text-zinc-500 font-bold uppercase tracking-widest text-sm">Portfolio Empty</h3>
+                        <h3 className="text-muted-foreground font-bold uppercase tracking-widest text-sm">Portfolio Empty</h3>
                         <p className="text-zinc-700 text-xs mt-2">You don't have any organizations assigned to your account yet.</p>
                     </div>
                 )}

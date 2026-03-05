@@ -173,40 +173,40 @@ function ListInput({
 
     return (
         <div className="space-y-3 relative" ref={containerRef}>
-            <Label className={`text-[10px] font-black uppercase tracking-widest ${isNegative ? 'text-red-500/70' : 'text-zinc-500'}`}>
+            <Label className={`text-[10px] font-black uppercase tracking-widest ${isNegative ? 'text-red-500/70' : 'text-muted-foreground'}`}>
                 {label} {isNegative && <span className="text-red-500">(EXCLUDE)</span>}
             </Label>
             <div className="flex gap-2">
                 <div className="relative flex-1">
-                    <Icon className={`absolute left-3 top-2.5 h-4 w-4 ${isNegative ? 'text-red-900' : 'text-zinc-600'}`} />
+                    <Icon className={`absolute left-3 top-2.5 h-4 w-4 ${isNegative ? 'text-red-900' : 'text-muted-foreground'}`} />
                     <Input
                         placeholder={placeholder}
-                        className={`bg-background border-zinc-800 pl-10 h-10 text-sm ${isNegative ? 'focus-visible:ring-red-500/50' : ''}`}
+                        className={`bg-background border-border pl-10 h-10 text-sm ${isNegative ? 'focus-visible:ring-red-500/50' : ''}`}
                         value={input}
                         onChange={(e) => { setInput(e.target.value); setShowSuggestions(true) }}
                         onFocus={() => setShowSuggestions(true)}
                         onKeyDown={(e) => e.key === 'Enter' && isValidInput && handleAdd()}
                     />
                     {showSuggestions && (filteredSuggestions.length > 0 || (strict && input.length > 0)) && (
-                        <div className="absolute z-50 mt-1 w-full bg-zinc-950 border border-border rounded-lg shadow-2xl overflow-y-auto max-h-60 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="absolute z-50 mt-1 w-full bg-card border border-border rounded-lg shadow-2xl overflow-y-auto max-h-60 animate-in fade-in zoom-in-95 duration-200">
                             {filteredSuggestions.length > 0 ? filteredSuggestions.map((s, i) => (
                                 <button
                                     key={i}
-                                    className="w-full text-left px-4 py-2.5 text-xs text-zinc-400 hover:bg-zinc-900 hover:text-foreground flex items-center justify-between group transition-colors"
+                                    className="w-full text-left px-4 py-2.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground flex items-center justify-between group transition-colors"
                                     onClick={() => handleAdd(s)}
                                 >
                                     {s}
                                     <Check className="h-3 w-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
                                 </button>
                             )) : (
-                                <div className="px-4 py-3 text-xs text-zinc-600 italic">No matching options found</div>
+                                <div className="px-4 py-3 text-xs text-muted-foreground italic">No matching options found</div>
                             )}
                         </div>
                     )}
                 </div>
                 <Button
                     variant="outline"
-                    className={`h-10 border-zinc-800 ${isNegative ? 'hover:bg-red-500/10 hover:text-red-500' : ''}`}
+                    className={`h-10 border-border ${isNegative ? 'hover:bg-red-500/10 hover:text-red-500' : ''}`}
                     onClick={() => isValidInput && handleAdd()}
                     disabled={strict && !isValidInput}
                 >
@@ -279,7 +279,7 @@ function SaveTemplateModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative w-full max-w-md mx-4 bg-zinc-950 border-2 border-zinc-800 rounded-2xl shadow-2xl shadow-black/50 animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative w-full max-w-md mx-4 bg-card border-2 border-border rounded-2xl shadow-2xl shadow-black/50 animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between p-6 border-b border-border">
                     <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -287,32 +287,32 @@ function SaveTemplateModal({
                         </div>
                         <div>
                             <h2 className="text-sm font-black text-foreground uppercase tracking-tight">Save as Template</h2>
-                            <p className="text-[10px] text-zinc-500 font-medium">Reuse these filters later with one click</p>
+                            <p className="text-[10px] text-muted-foreground font-medium">Reuse these filters later with one click</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-zinc-600 hover:text-foreground transition-colors">
+                    <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
                         <X className="h-5 w-5" />
                     </button>
                 </div>
                 <div className="p-6 space-y-5">
                     {filterSummary.length > 0 && (
-                        <div className="p-3 rounded-lg bg-foreground/5 border border-zinc-800">
-                            <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-2">Current Filters</p>
+                        <div className="p-3 rounded-lg bg-foreground/5 border border-border">
+                            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-2">Current Filters</p>
                             <div className="flex flex-wrap gap-1.5">
                                 {filterSummary.map((s, i) => (
                                     <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">{s}</span>
                                 ))}
                                 {filters.fetch_count && (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700 font-medium">{filters.fetch_count} leads</span>
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border font-medium">{filters.fetch_count} leads</span>
                                 )}
                             </div>
                         </div>
                     )}
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Template Name *</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Template Name *</Label>
                         <Input
                             placeholder="e.g. SaaS Founders USA"
-                            className="bg-zinc-900 border-zinc-800 h-11 text-sm focus-visible:ring-primary"
+                            className="bg-muted border-border h-11 text-sm focus-visible:ring-primary"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
@@ -320,17 +320,17 @@ function SaveTemplateModal({
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Description (optional)</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Description (optional)</Label>
                         <textarea
                             placeholder="Brief description of this filter set..."
-                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm text-zinc-200 resize-none h-20 outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                            className="w-full bg-muted border border-border rounded-lg px-3 py-2.5 text-sm text-foreground resize-none h-20 outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                         />
                     </div>
                 </div>
                 <div className="flex gap-3 p-6 pt-0">
-                    <Button variant="outline" className="flex-1 border-zinc-800 h-11" onClick={onClose}>Cancel</Button>
+                    <Button variant="outline" className="flex-1 border-border h-11" onClick={onClose}>Cancel</Button>
                     <Button className="flex-1 bg-primary hover:bg-primary/90 h-11 font-black" onClick={handleSave} disabled={saving || !name.trim()}>
                         {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                         Save Template
@@ -403,7 +403,7 @@ function TemplatesPanel({
 
     return (
         <>
-            <Card className="bg-zinc-950 border-border shadow-none border-2">
+            <Card className="bg-card border-border shadow-none border-2">
                 <CardHeader className="pb-4 border-b border-border">
                     <div className="flex items-center justify-between">
                         <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-2">
@@ -412,29 +412,29 @@ function TemplatesPanel({
                         </CardTitle>
                         <button
                             onClick={() => setShowSaveModal(true)}
-                            className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-primary/5"
+                            className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-primary/5"
                         >
                             <BookmarkPlus className="h-3 w-3" />
                             Save Current
                         </button>
                     </div>
-                    <CardDescription className="text-[10px] text-zinc-600 font-medium">
+                    <CardDescription className="text-[10px] text-muted-foreground font-medium">
                         Click a template to load its filters instantly
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-4 space-y-2">
                     {loading ? (
                         <div className="flex items-center justify-center py-8">
-                            <Loader2 className="h-5 w-5 animate-spin text-zinc-600" />
+                            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                         </div>
                     ) : templates.length === 0 ? (
                         <div className="text-center py-8 space-y-3">
-                            <div className="h-10 w-10 rounded-xl bg-zinc-900 flex items-center justify-center mx-auto">
-                                <BookOpen className="h-5 w-5 text-zinc-600" />
+                            <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center mx-auto">
+                                <BookOpen className="h-5 w-5 text-muted-foreground" />
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-zinc-500">No templates yet</p>
-                                <p className="text-[10px] text-zinc-600 mt-1">Configure filters then save as a template</p>
+                                <p className="text-xs font-bold text-muted-foreground">No templates yet</p>
+                                <p className="text-[10px] text-muted-foreground mt-1">Configure filters then save as a template</p>
                             </div>
                             <button onClick={() => setShowSaveModal(true)} className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">
                                 Save Current Filters →
@@ -445,20 +445,20 @@ function TemplatesPanel({
                             const summary = getTemplateSummary(template.filters)
                             const isDeleting = deletingId === template.id
                             return (
-                                <div key={template.id} className="group relative rounded-xl border border-border bg-foreground/5 hover:bg-foreground/5 hover:border-zinc-700 transition-all duration-200 overflow-hidden">
+                                <div key={template.id} className="group relative rounded-xl border border-border bg-foreground/5 hover:bg-foreground/5 hover:border-border transition-all duration-200 overflow-hidden">
                                     <button className="w-full text-left p-3 pr-10" onClick={() => handleLoad(template)}>
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-xs font-bold text-zinc-200 truncate group-hover:text-foreground transition-colors">{template.name}</p>
+                                                <p className="text-xs font-bold text-foreground truncate group-hover:text-foreground transition-colors">{template.name}</p>
                                                 {template.description && (
-                                                    <p className="text-[10px] text-zinc-600 mt-0.5 line-clamp-1">{template.description}</p>
+                                                    <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{template.description}</p>
                                                 )}
                                                 {summary.length > 0 && (
-                                                    <p className="text-[10px] text-zinc-600 mt-1 line-clamp-1">{summary.join(' · ')}</p>
+                                                    <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">{summary.join(' · ')}</p>
                                                 )}
                                                 <div className="flex items-center gap-2 mt-2">
                                                     {template.filters.fetch_count && (
-                                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 font-mono">{template.filters.fetch_count} leads</span>
+                                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">{template.filters.fetch_count} leads</span>
                                                     )}
                                                     <span className="text-[9px] text-zinc-700 flex items-center gap-1">
                                                         <Clock className="h-2.5 w-2.5" />
@@ -466,11 +466,11 @@ function TemplatesPanel({
                                                     </span>
                                                 </div>
                                             </div>
-                                            <ChevronRight className="h-4 w-4 text-zinc-600 group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-0.5" />
+                                            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-0.5" />
                                         </div>
                                     </button>
                                     <button
-                                        className="absolute top-2 right-8 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/10 hover:text-red-500 text-zinc-600"
+                                        className="absolute top-2 right-8 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/10 hover:text-red-500 text-muted-foreground"
                                         onClick={(e) => { e.stopPropagation(); handleDelete(template.id, template.name) }}
                                         disabled={isDeleting}
                                         title="Delete template"
@@ -574,12 +574,12 @@ function ScraperContent() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="space-y-1">
                     <h1 className="text-4xl font-black tracking-tighter text-foreground">MACHINE SCRAPER v2</h1>
-                    <p className="text-zinc-500 font-medium">Global Lead Finding Infrastructure.</p>
+                    <p className="text-muted-foreground font-medium">Global Lead Finding Infrastructure.</p>
                 </div>
                 <div className="flex items-start gap-3">
                     <Button
                         variant="outline"
-                        className="border-zinc-800 gap-2 hover:bg-zinc-900 hover:border-zinc-700"
+                        className="border-border gap-2 hover:bg-muted hover:border-border"
                         onClick={() => setShowSaveModal(true)}
                     >
                         <BookmarkPlus className="h-4 w-4" />
@@ -611,15 +611,15 @@ function ScraperContent() {
 
                 {/* Left Sidebar */}
                 <div className="space-y-6">
-                    <Card className="bg-zinc-950 border-border shadow-none border-2">
+                    <Card className="bg-card border-border shadow-none border-2">
                         <CardHeader className="pb-4 border-b border-border">
                             <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">System Parameters</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-8 pt-6">
                             <div className="space-y-3">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Target Organization</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Target Organization</Label>
                                 <select
-                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg h-12 px-4 text-sm focus:ring-2 focus:ring-primary/50 outline-none text-zinc-200 transition-all"
+                                    className="w-full bg-muted border border-border rounded-lg h-12 px-4 text-sm focus:ring-2 focus:ring-primary/50 outline-none text-foreground transition-all"
                                     value={selectedOrg}
                                     onChange={(e) => setSelectedOrg(e.target.value)}
                                 >
@@ -632,21 +632,21 @@ function ScraperContent() {
 
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Lead Volume</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Lead Volume</Label>
                                     <Input
                                         type="number"
-                                        className="w-20 h-8 bg-zinc-900 border-zinc-800 text-center font-mono text-xs focus-visible:ring-primary"
+                                        className="w-20 h-8 bg-muted border-border text-center font-mono text-xs focus-visible:ring-primary"
                                         value={filters.fetch_count}
                                         onChange={(e) => setFilters({ ...filters, fetch_count: parseInt(e.target.value) || 0 })}
                                     />
                                 </div>
                                 <input
                                     type="range" min="10" max="5000" step="10"
-                                    className="w-full h-2 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
+                                    className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                                     value={filters.fetch_count}
                                     onChange={(e) => setFilters({ ...filters, fetch_count: parseInt(e.target.value) })}
                                 />
-                                <div className="flex justify-between text-[10px] text-zinc-600 font-mono">
+                                <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
                                     <span>10</span><span>2.5K</span><span>5K</span>
                                 </div>
                             </div>
@@ -656,7 +656,7 @@ function ScraperContent() {
                                     <Shield className="h-4 w-4 text-primary" />
                                     <span className="text-[10px] font-black text-primary uppercase tracking-tighter">Machine Status: READY</span>
                                 </div>
-                                <p className="text-[10px] text-zinc-500 leading-relaxed font-medium">
+                                <p className="text-[10px] text-muted-foreground leading-relaxed font-medium">
                                     Engine is connected to global proxy network. Catch-all verification enabled.
                                 </p>
                             </div>
@@ -673,17 +673,17 @@ function ScraperContent() {
                 {/* Main Filter Hub */}
                 <div className="lg:col-span-3 space-y-6">
                     <Tabs defaultValue="people" className="w-full">
-                        <TabsList className="bg-zinc-950 border border-border w-full justify-start p-1 h-auto gap-1 border-2">
-                            <TabsTrigger value="people" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
+                        <TabsList className="bg-card border border-border w-full justify-start p-1 h-auto gap-1 border-2">
+                            <TabsTrigger value="people" className="flex-1 py-3 data-[state=active]:bg-muted font-bold uppercase text-[10px] tracking-widest">
                                 <Users className="h-4 w-4 mr-2" />People
                             </TabsTrigger>
-                            <TabsTrigger value="company" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
+                            <TabsTrigger value="company" className="flex-1 py-3 data-[state=active]:bg-muted font-bold uppercase text-[10px] tracking-widest">
                                 <Building2 className="h-4 w-4 mr-2" />Company
                             </TabsTrigger>
-                            <TabsTrigger value="geo" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
+                            <TabsTrigger value="geo" className="flex-1 py-3 data-[state=active]:bg-muted font-bold uppercase text-[10px] tracking-widest">
                                 <Globe className="h-4 w-4 mr-2" />Geo/Location
                             </TabsTrigger>
-                            <TabsTrigger value="advanced" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
+                            <TabsTrigger value="advanced" className="flex-1 py-3 data-[state=active]:bg-muted font-bold uppercase text-[10px] tracking-widest">
                                 <Layers className="h-4 w-4 mr-2" />Advanced
                             </TabsTrigger>
                         </TabsList>
@@ -701,11 +701,11 @@ function ScraperContent() {
                                     onRemove={(v) => handleListChange('contact_not_job_title', 'remove', v)} isNegative />
                             </div>
                             <div className="space-y-4">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Seniority Levels</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Seniority Levels</Label>
                                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                                     {SENIORITY_OPTIONS.map(opt => (
                                         <Button key={opt.value} variant="outline"
-                                            className={`h-12 text-[10px] font-black uppercase tracking-tight transition-all border-2 ${filters.seniority_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-zinc-600'}`}
+                                            className={`h-12 text-[10px] font-black uppercase tracking-tight transition-all border-2 ${filters.seniority_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground'}`}
                                             onClick={() => toggleArrayFilter('seniority_level', opt.value)}>
                                             {opt.label}
                                         </Button>
@@ -737,11 +737,11 @@ function ScraperContent() {
                                     onRemove={(v) => handleListChange('company_not_keywords', 'remove', v)} isNegative />
                             </div>
                             <div className="space-y-4">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Staff Count</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Staff Count</Label>
                                 <div className="flex flex-wrap gap-2">
                                     {SIZE_OPTIONS.map(size => (
                                         <Badge key={size}
-                                            className={`cursor-pointer px-5 py-2.5 border-2 font-mono text-[10px] font-black transition-all ${filters.size?.includes(size) ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20' : 'bg-background text-zinc-600 border-border hover:border-zinc-700'}`}
+                                            className={`cursor-pointer px-5 py-2.5 border-2 font-mono text-[10px] font-black transition-all ${filters.size?.includes(size) ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20' : 'bg-background text-muted-foreground border-border hover:border-border'}`}
                                             onClick={() => toggleArrayFilter('size', size)}>
                                             {size}
                                         </Badge>
@@ -777,11 +777,11 @@ function ScraperContent() {
                         {/* Advanced */}
                         <TabsContent value="advanced" className="mt-8 space-y-10">
                             <div className="space-y-4">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Functional Levels</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Functional Levels</Label>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                     {FUNCTIONAL_OPTIONS.map(opt => (
                                         <Button key={opt.value} variant="outline"
-                                            className={`h-12 text-[10px] font-black uppercase tracking-tight border-2 ${filters.functional_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-zinc-600'}`}
+                                            className={`h-12 text-[10px] font-black uppercase tracking-tight border-2 ${filters.functional_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground'}`}
                                             onClick={() => toggleArrayFilter('functional_level', opt.value)}>
                                             {opt.label}
                                         </Button>
@@ -789,11 +789,11 @@ function ScraperContent() {
                                 </div>
                             </div>
                             <div className="space-y-4 border-t border-border pt-10">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Funding Stages</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Funding Stages</Label>
                                 <div className="flex flex-wrap gap-2">
                                     {FUNDING_OPTIONS.map(opt => (
                                         <Button key={opt.value} variant="outline"
-                                            className={`px-8 h-12 text-[10px] font-black uppercase tracking-tight rounded-full border-2 ${filters.funding?.includes(opt.value) ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500' : 'border-border bg-background text-zinc-600'}`}
+                                            className={`px-8 h-12 text-[10px] font-black uppercase tracking-tight rounded-full border-2 ${filters.funding?.includes(opt.value) ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500' : 'border-border bg-background text-muted-foreground'}`}
                                             onClick={() => toggleArrayFilter('funding', opt.value)}>
                                             {opt.label}
                                         </Button>
@@ -806,7 +806,7 @@ function ScraperContent() {
                                     onAdd={(v) => handleListChange('company_domain', 'add', v)}
                                     onRemove={(v) => handleListChange('company_domain', 'remove', v)} />
                                 <div className="space-y-4">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Revenue (USD)</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Revenue (USD)</Label>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="relative">
                                             <DollarSign className="absolute left-3 top-3 h-4 w-4 text-zinc-700" />
@@ -845,7 +845,7 @@ export default function ScraperPage() {
         <Suspense fallback={
             <div className="flex h-[60vh] flex-col items-center justify-center gap-4">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <p className="text-zinc-500 font-medium">Initializing Lead Engine...</p>
+                <p className="text-muted-foreground font-medium">Initializing Lead Engine...</p>
             </div>
         }>
             <ScraperContent />

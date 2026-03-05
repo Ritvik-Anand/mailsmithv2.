@@ -81,7 +81,7 @@ export function AdminSidebar() {
                     </div>
                     {!collapsed && (
                         <div className="flex flex-col">
-                            <span className="font-bold text-base text-zinc-100 tracking-tight leading-none">
+                            <span className="font-bold text-base text-foreground tracking-tight leading-none">
                                 MailSmith
                             </span>
                             <span className="text-[10px] text-primary font-bold uppercase tracking-[0.2em] mt-1 shrink-0">
@@ -108,12 +108,12 @@ export function AdminSidebar() {
                                     'flex items-center gap-3 rounded-lg px-3.5 py-3 text-[13px] font-semibold transition-all group relative',
                                     isActive
                                         ? 'bg-primary/10 text-primary border border-primary/10'
-                                        : 'text-zinc-500 hover:text-foreground hover:bg-foreground/5'
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
                                 )}
                             >
                                 <item.icon className={cn(
                                     "h-4 w-4 shrink-0 transition-colors",
-                                    isActive ? "text-primary" : "text-zinc-600 group-hover:text-zinc-400"
+                                    isActive ? "text-primary" : "text-muted-foreground group-hover:text-muted-foreground"
                                 )} />
                                 {!collapsed && (
                                     <span className="flex-1 truncate">
@@ -134,7 +134,7 @@ export function AdminSidebar() {
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="flex-1 justify-center h-10 rounded-lg text-zinc-600 hover:text-primary hover:bg-primary/5 transition-all"
+                    className="flex-1 justify-center h-10 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all"
                     onClick={() => setCollapsed(!collapsed)}
                 >
                     <ChevronLeft

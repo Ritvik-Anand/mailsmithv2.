@@ -392,16 +392,16 @@ export default function AdminSupportPage() {
                                     key={msg.id}
                                     className={`flex items-start gap-3 ${msg.sender === 'admin' ? 'flex-row-reverse' : 'flex-row'}`}
                                 >
-                                    <Avatar className="h-8 w-8 border border-zinc-800 shrink-0 mt-1">
+                                    <Avatar className="h-8 w-8 border border-border shrink-0 mt-1">
                                         <AvatarImage src={msg.sender === 'admin' ? "https://github.com/ritvikanand.png" : ""} />
-                                        <AvatarFallback className="text-[10px] bg-zinc-800 text-zinc-400">
+                                        <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
                                             {msg.senderName.substring(0, 2).toUpperCase()}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div
                                         className={`max-w-[75%] rounded-2xl p-4 shadow-sm ${msg.sender === 'admin'
                                             ? 'bg-primary text-primary-foreground rounded-tr-none'
-                                            : 'bg-zinc-800 text-zinc-100 rounded-tl-none border border-zinc-700'
+                                            : 'bg-muted text-foreground rounded-tl-none border border-border'
                                             }`}
                                     >
                                         <div className="flex items-center justify-between gap-4 mb-2">

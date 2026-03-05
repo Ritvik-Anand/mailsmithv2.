@@ -185,7 +185,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             case 'completed':
                 return 'bg-blue-500/10 text-blue-500 border-blue-500/20'
             default:
-                return 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20'
+                return 'bg-zinc-500/10 text-muted-foreground border-zinc-500/20'
         }
     }
 
@@ -200,7 +200,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     if (!campaign) {
         return (
             <div className="flex items-center justify-center h-96">
-                <p className="text-zinc-500">Campaign not found</p>
+                <p className="text-muted-foreground">Campaign not found</p>
             </div>
         )
     }
@@ -242,7 +242,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                                         value={instantlyIdInput}
                                         onChange={e => setInstantlyIdInput(e.target.value)}
                                         placeholder="Paste Instantly campaign UUID..."
-                                        className="text-xs font-mono bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-zinc-200 w-72 outline-none focus:border-amber-500"
+                                        className="text-xs font-mono bg-muted border border-border rounded px-2 py-1 text-foreground w-72 outline-none focus:border-amber-500"
                                     />
                                     <button
                                         onClick={handleSaveInstantlyId}
@@ -253,14 +253,14 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                                     </button>
                                     <button
                                         onClick={() => setIsEditingInstantlyId(false)}
-                                        className="text-xs text-zinc-500 hover:text-zinc-300"
+                                        className="text-xs text-muted-foreground hover:text-foreground/70"
                                     >
                                         Cancel
                                     </button>
                                 </>
                             ) : (
                                 <>
-                                    <span className="text-xs font-mono text-zinc-600">
+                                    <span className="text-xs font-mono text-muted-foreground">
                                         Instantly ID: {campaign.instantly_campaign_id ? campaign.instantly_campaign_id.slice(0, 18) + '...' : 'Not linked'}
                                     </span>
                                     <button
@@ -281,7 +281,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                     <Button
                         variant="outline"
                         size="sm"
-                        className="gap-2 h-9 px-4 border border-zinc-800 bg-zinc-950 text-zinc-300 hover:text-foreground hover:bg-zinc-900 shadow-sm"
+                        className="gap-2 h-9 px-4 border border-border bg-card text-foreground/70 hover:text-foreground hover:bg-muted shadow-sm"
                         onClick={handleSyncStats}
                         disabled={isSyncingStat}
                     >
@@ -317,7 +317,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             </div>
 
             {/* Tab Navigation */}
-            <div className="border-b border-zinc-800">
+            <div className="border-b border-border">
                 <nav className="flex gap-8">
                     {TABS.map((tab) => (
                         <button
@@ -327,7 +327,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                                 "flex items-center gap-2 py-4 text-sm font-medium border-b-2 transition-all",
                                 activeTab === tab.id
                                     ? "text-primary border-primary"
-                                    : "text-muted-foreground border-transparent hover:text-foreground hover:border-zinc-700"
+                                    : "text-muted-foreground border-transparent hover:text-foreground hover:border-border"
                             )}
                         >
                             <tab.icon className="h-4 w-4" />
@@ -421,15 +421,15 @@ function AnalyticsTab({ campaign }: { campaign: any }) {
             {/* Metrics Cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 {metrics.map((metric) => (
-                    <Card key={metric.label} className="bg-zinc-950 border-zinc-800">
+                    <Card key={metric.label} className="bg-card border-border">
                         <CardContent className="p-4">
-                            <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium mb-2">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium mb-2">
                                 <metric.icon className={cn("h-3.5 w-3.5", metric.color)} />
                                 {metric.label}
                             </div>
                             <div className="text-2xl font-bold text-foreground">{metric.value}</div>
                             {metric.subValue && (
-                                <div className="text-xs text-zinc-500 mt-1">
+                                <div className="text-xs text-muted-foreground mt-1">
                                     {metric.subValue}
                                 </div>
                             )}
@@ -439,15 +439,15 @@ function AnalyticsTab({ campaign }: { campaign: any }) {
             </div>
 
             {/* Timeline Chart Placeholder */}
-            <Card className="bg-zinc-950 border-zinc-800">
+            <Card className="bg-card border-border">
                 <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-medium text-zinc-400">Performance Over Time</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Performance Over Time</CardTitle>
                         <Select defaultValue="7d">
-                            <SelectTrigger className="w-[130px] h-8 text-xs bg-zinc-900 border-zinc-800">
+                            <SelectTrigger className="w-[130px] h-8 text-xs bg-muted border-border">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-zinc-950 border-zinc-800">
+                            <SelectContent className="bg-card border-border">
                                 <SelectItem value="7d">Last 7 days</SelectItem>
                                 <SelectItem value="14d">Last 14 days</SelectItem>
                                 <SelectItem value="30d">Last 30 days</SelectItem>
@@ -460,27 +460,27 @@ function AnalyticsTab({ campaign }: { campaign: any }) {
                     <div className="flex items-center gap-6 mb-4">
                         <div className="flex items-center gap-2">
                             <div className="h-2 w-2 rounded-full bg-blue-500" />
-                            <span className="text-xs text-zinc-500">Sent</span>
+                            <span className="text-xs text-muted-foreground">Sent</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="h-2 w-2 rounded-full bg-amber-500" />
-                            <span className="text-xs text-zinc-500">Total Opens</span>
+                            <span className="text-xs text-muted-foreground">Total Opens</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                            <span className="text-xs text-zinc-500">Unique Opens</span>
+                            <span className="text-xs text-muted-foreground">Unique Opens</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="h-2 w-2 rounded-full bg-cyan-500" />
-                            <span className="text-xs text-zinc-500">Replies</span>
+                            <span className="text-xs text-muted-foreground">Replies</span>
                         </div>
                     </div>
 
                     {/* Placeholder Chart */}
-                    <div className="h-[200px] bg-foreground/5 rounded-lg flex items-center justify-center border border-zinc-800/50">
+                    <div className="h-[200px] bg-foreground/5 rounded-lg flex items-center justify-center border border-border/50">
                         <div className="text-center">
                             <TrendingUp className="h-8 w-8 text-zinc-700 mx-auto mb-2" />
-                            <p className="text-xs text-zinc-600">Chart coming soon</p>
+                            <p className="text-xs text-muted-foreground">Chart coming soon</p>
                             <p className="text-[10px] text-zinc-700">Will pull from Instantly API</p>
                         </div>
                     </div>
@@ -488,35 +488,35 @@ function AnalyticsTab({ campaign }: { campaign: any }) {
             </Card>
 
             {/* Step Analytics Table */}
-            <Card className="bg-zinc-950 border-zinc-800">
+            <Card className="bg-card border-border">
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-zinc-400">Step Analytics</CardTitle>
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Step Analytics</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-zinc-800">
-                                    <th className="text-left py-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Step</th>
-                                    <th className="text-left py-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Sent</th>
-                                    <th className="text-left py-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Opened</th>
-                                    <th className="text-left py-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Replied</th>
-                                    <th className="text-left py-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Clicked</th>
+                                <tr className="border-b border-border">
+                                    <th className="text-left py-3 text-[10px] font-black text-muted-foreground uppercase tracking-wider">Step</th>
+                                    <th className="text-left py-3 text-[10px] font-black text-muted-foreground uppercase tracking-wider">Sent</th>
+                                    <th className="text-left py-3 text-[10px] font-black text-muted-foreground uppercase tracking-wider">Opened</th>
+                                    <th className="text-left py-3 text-[10px] font-black text-muted-foreground uppercase tracking-wider">Replied</th>
+                                    <th className="text-left py-3 text-[10px] font-black text-muted-foreground uppercase tracking-wider">Clicked</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr className="border-b border-border">
                                     <td className="py-3 font-medium text-foreground">Step 1</td>
-                                    <td className="py-3 text-zinc-300">{emailsSent.toLocaleString()}</td>
+                                    <td className="py-3 text-foreground/70">{emailsSent.toLocaleString()}</td>
                                     <td className="py-3">
-                                        <span className="text-zinc-300">{emailsOpened.toLocaleString()}</span>
-                                        <span className="text-zinc-500 ml-2">| {openRate}%</span>
+                                        <span className="text-foreground/70">{emailsOpened.toLocaleString()}</span>
+                                        <span className="text-muted-foreground ml-2">| {openRate}%</span>
                                     </td>
                                     <td className="py-3">
-                                        <span className="text-zinc-300">{emailsReplied}</span>
-                                        <span className="text-zinc-500 ml-2">| {replyRate}%</span>
+                                        <span className="text-foreground/70">{emailsReplied}</span>
+                                        <span className="text-muted-foreground ml-2">| {replyRate}%</span>
                                     </td>
-                                    <td className="py-3 text-zinc-500">0 | 0%</td>
+                                    <td className="py-3 text-muted-foreground">0 | 0%</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -594,7 +594,7 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
             case 'bounced':
                 return <Badge variant="outline" className="bg-red-500/10 text-red-400 border-red-500/20 text-[10px]"><XCircle className="h-3 w-3 mr-1" />{status}</Badge>
             default:
-                return <Badge variant="outline" className="bg-zinc-500/10 text-zinc-400 border-zinc-500/20 text-[10px]">{status || 'queued'}</Badge>
+                return <Badge variant="outline" className="bg-zinc-500/10 text-muted-foreground border-zinc-500/20 text-[10px]">{status || 'queued'}</Badge>
         }
     }
 
@@ -607,9 +607,9 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
                         placeholder="Search leads..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-[200px] h-9 bg-zinc-950 border-zinc-800"
+                        className="w-[200px] h-9 bg-card border-border"
                     />
-                    <div className="flex items-center gap-4 text-xs text-zinc-500">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
                             {totalLeads.toLocaleString()} total
@@ -620,18 +620,18 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
                     <Button
                         variant="outline"
                         size="sm"
-                        className="gap-2 border-zinc-800"
+                        className="gap-2 border-border"
                         onClick={handleSyncToInstantly}
                         disabled={isSyncing}
                     >
                         {isSyncing ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                         ) : (
-                            <RefreshCw className="h-4 w-4 text-zinc-400" />
+                            <RefreshCw className="h-4 w-4 text-muted-foreground" />
                         )}
                         Sync to Instantly
                     </Button>
-                    <Button variant="outline" size="sm" className="gap-2 border-zinc-800">
+                    <Button variant="outline" size="sm" className="gap-2 border-border">
                         <Settings className="h-4 w-4" />
                         Filters
                     </Button>
@@ -643,20 +643,20 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
             </div>
 
             {/* Leads Table */}
-            <Card className="bg-zinc-950 border-zinc-800">
+            <Card className="bg-card border-border">
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-zinc-800 bg-foreground/5">
+                                <tr className="border-b border-border bg-foreground/5">
                                     <th className="w-10 p-3">
                                         <Checkbox />
                                     </th>
-                                    <th className="text-left p-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Email</th>
-                                    <th className="text-left p-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Contact</th>
-                                    <th className="text-left p-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Company</th>
-                                    <th className="text-left p-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Job Title</th>
-                                    <th className="text-left p-3 text-[10px] font-black text-zinc-500 uppercase tracking-wider">Status</th>
+                                    <th className="text-left p-3 text-[10px] font-black text-muted-foreground uppercase tracking-wider">Email</th>
+                                    <th className="text-left p-3 text-[10px] font-black text-muted-foreground uppercase tracking-wider">Contact</th>
+                                    <th className="text-left p-3 text-[10px] font-black text-muted-foreground uppercase tracking-wider">Company</th>
+                                    <th className="text-left p-3 text-[10px] font-black text-muted-foreground uppercase tracking-wider">Job Title</th>
+                                    <th className="text-left p-3 text-[10px] font-black text-muted-foreground uppercase tracking-wider">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -664,12 +664,12 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
                                     <tr>
                                         <td colSpan={6} className="p-8 text-center">
                                             <Loader2 className="h-5 w-5 animate-spin text-amber-500 mx-auto" />
-                                            <p className="text-xs text-zinc-500 mt-2">Loading leads...</p>
+                                            <p className="text-xs text-muted-foreground mt-2">Loading leads...</p>
                                         </td>
                                     </tr>
                                 ) : filteredLeads.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="p-8 text-center text-zinc-500 text-sm">
+                                        <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">
                                             {searchQuery ? 'No leads match your search' : 'No leads assigned to this campaign'}
                                         </td>
                                     </tr>
@@ -679,13 +679,13 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
                                             key={lead.id}
                                             className="border-b border-border hover:bg-foreground/5 transition-colors cursor-pointer"
                                         >
-                                            <td className="p-3 text-zinc-500">{(currentPage - 1) * pageSize + idx + 1}</td>
+                                            <td className="p-3 text-muted-foreground">{(currentPage - 1) * pageSize + idx + 1}</td>
                                             <td className="p-3">
                                                 <span className="text-blue-400 hover:underline">{lead.email}</span>
                                             </td>
-                                            <td className="p-3 text-zinc-300">{lead.first_name} {lead.last_name}</td>
-                                            <td className="p-3 text-zinc-300">{lead.company_name || '—'}</td>
-                                            <td className="p-3 text-zinc-400">{lead.job_title || '—'}</td>
+                                            <td className="p-3 text-foreground/70">{lead.first_name} {lead.last_name}</td>
+                                            <td className="p-3 text-foreground/70">{lead.company_name || '—'}</td>
+                                            <td className="p-3 text-muted-foreground">{lead.job_title || '—'}</td>
                                             <td className="p-3">
                                                 {getStatusBadge(lead.campaign_status)}
                                             </td>
@@ -700,14 +700,14 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
 
             {totalLeads > pageSize && (
                 <div className="flex items-center justify-center gap-4">
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-xs text-muted-foreground">
                         Showing {((currentPage - 1) * pageSize) + 1}–{Math.min(currentPage * pageSize, totalLeads)} of {totalLeads.toLocaleString()}
                     </span>
                     <div className="flex items-center gap-2">
                         <Button
                             variant="outline"
                             size="sm"
-                            className="border-zinc-800"
+                            className="border-border"
                             disabled={currentPage === 1}
                             onClick={() => setCurrentPage(p => p - 1)}
                         >
@@ -716,7 +716,7 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
                         <Button
                             variant="outline"
                             size="sm"
-                            className="border-zinc-800"
+                            className="border-border"
                             disabled={currentPage * pageSize >= totalLeads}
                             onClick={() => setCurrentPage(p => p + 1)}
                         >
@@ -1116,15 +1116,15 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center p-12">
-                <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
         )
     }
 
     if (sequences.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 border border-dashed border-zinc-800 rounded-lg">
-                <p className="text-zinc-500 mb-4">No steps in this campaign yet</p>
+            <div className="flex flex-col items-center justify-center p-12 border border-dashed border-border rounded-lg">
+                <p className="text-muted-foreground mb-4">No steps in this campaign yet</p>
                 <Button onClick={addStep}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add First Step
@@ -1151,18 +1151,18 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                             className={cn(
                                 "p-4 rounded-lg border cursor-pointer transition-all",
                                 selectedStep?.step === seq.step
-                                    ? "bg-zinc-900 border-primary"
-                                    : "bg-zinc-950 border-zinc-800 hover:border-zinc-700"
+                                    ? "bg-muted border-primary"
+                                    : "bg-card border-border hover:border-border"
                             )}
                         >
                             <div className="flex items-center justify-between mb-2">
                                 <h4 className="font-bold text-foreground">Step {seq.step}</h4>
                                 <Trash2
-                                    className="h-4 w-4 text-zinc-600 hover:text-red-400 cursor-pointer transition-colors"
+                                    className="h-4 w-4 text-muted-foreground hover:text-red-400 cursor-pointer transition-colors"
                                     onClick={(e) => deleteStep(e, seq)}
                                 />
                             </div>
-                            <div className="text-xs text-zinc-500 truncate">
+                            <div className="text-xs text-muted-foreground truncate">
                                 {seq.variants.length > 1
                                     ? `${seq.variants.length} variants`
                                     : (seq.variants[0]?.subject || 'No subject')}
@@ -1180,7 +1180,7 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                             {seq.variants.length > 1 && (
                                 <div className="flex gap-1 mt-2 flex-wrap">
                                     {seq.variants.map((v: any) => (
-                                        <div key={v.id} className="text-[10px] px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-400">
+                                        <div key={v.id} className="text-[10px] px-1.5 py-0.5 bg-muted rounded text-muted-foreground">
                                             {v.label}
                                         </div>
                                     ))}
@@ -1189,21 +1189,21 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                         </div>
                         {idx < sequences.length - 1 && (
                             <div className="flex items-center gap-2 py-2 px-4">
-                                <span className="text-[10px] text-zinc-600">Send next message in</span>
+                                <span className="text-[10px] text-muted-foreground">Send next message in</span>
                                 <Input
                                     type="number"
                                     value={sequences[idx + 1]?.delayDays || 1}
                                     onChange={(e) => handleDelayUpdate(sequences[idx + 1].step, parseInt(e.target.value) || 1)}
-                                    className="w-12 h-6 text-xs text-center bg-zinc-950 border-zinc-800"
+                                    className="w-12 h-6 text-xs text-center bg-card border-border"
                                 />
-                                <span className="text-[10px] text-zinc-600">Days</span>
+                                <span className="text-[10px] text-muted-foreground">Days</span>
                             </div>
                         )}
                     </div>
                 ))}
                 <Button
                     variant="outline"
-                    className="w-full border-dashed border-zinc-700 text-zinc-500 hover:text-foreground"
+                    className="w-full border-dashed border-border text-muted-foreground hover:text-foreground"
                     onClick={addStep}
                 >
                     <Plus className="h-4 w-4 mr-2" />
@@ -1213,8 +1213,8 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
 
             {/* Right Panel - Email Editor */}
             <div className="col-span-9">
-                <Card className="bg-zinc-950 border-zinc-800">
-                    <CardHeader className="border-b border-zinc-800 pb-0">
+                <Card className="bg-card border-border">
+                    <CardHeader className="border-b border-border pb-0">
                         {/* Variant Tabs */}
                         {selectedStep && selectedStep.variants.length > 1 && (
                             <div className="flex items-center gap-1 mb-4">
@@ -1226,7 +1226,7 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                                             "px-4 py-2 text-xs font-medium border-b-2 transition-colors",
                                             activeVariantId === v.id
                                                 ? "border-primary text-foreground"
-                                                : "border-transparent text-zinc-500 hover:text-zinc-300"
+                                                : "border-transparent text-muted-foreground hover:text-foreground/70"
                                         )}
                                     >
                                         Variant {v.label}
@@ -1236,7 +1236,7 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                         )}
                         <div className="flex items-center justify-between pb-4">
                             <div className="flex items-center gap-4">
-                                <Label className="text-zinc-400">Subject</Label>
+                                <Label className="text-muted-foreground">Subject</Label>
                                 <Input
                                     ref={subjectRef}
                                     value={activeVariant?.subject || ''}
@@ -1244,14 +1244,14 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                                     onSelect={(e) => handleInputSelect('subject', e)}
                                     onClick={(e) => handleInputSelect('subject', e)}
                                     onKeyUp={(e) => handleInputSelect('subject', e)}
-                                    className="flex-1 min-w-[300px] bg-zinc-900 border-zinc-800"
+                                    className="flex-1 min-w-[300px] bg-muted border-border"
                                     placeholder="Enter subject line..."
                                 />
                             </div>
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="gap-2 border-zinc-800"
+                                className="gap-2 border-border"
                                 onClick={openPreview}
                             >
                                 <Eye className="h-4 w-4" />
@@ -1267,15 +1267,15 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                             onSelect={(e) => handleInputSelect('body', e)}
                             onClick={(e) => handleInputSelect('body', e)}
                             onKeyUp={(e) => handleInputSelect('body', e)}
-                            className="min-h-[400px] bg-zinc-900 border-zinc-800 font-mono text-sm leading-relaxed"
+                            className="min-h-[400px] bg-muted border-border font-mono text-sm leading-relaxed"
                             placeholder="Write your email body here..."
                         />
 
                         {/* Editor Toolbar */}
-                        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-zinc-800">
+                        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
                             <div className="mr-auto flex items-center gap-2">
                                 {isSaving ? (
-                                    <div className="flex items-center text-xs text-zinc-500">
+                                    <div className="flex items-center text-xs text-muted-foreground">
                                         <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                                         Saving...
                                     </div>
@@ -1286,17 +1286,17 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                                     </div>
                                 )}
                             </div>
-                            <Button variant="outline" size="sm" className="gap-2 border-zinc-800 text-zinc-400">
+                            <Button variant="outline" size="sm" className="gap-2 border-border text-muted-foreground">
                                 <span className="text-amber-400">✨</span>
                                 AI Tools
                             </Button>
-                            <Button variant="outline" size="sm" className="gap-2 border-zinc-800 text-zinc-400">
+                            <Button variant="outline" size="sm" className="gap-2 border-border text-muted-foreground">
                                 Templates
                             </Button>
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="gap-2 border-zinc-800 text-zinc-400"
+                                className="gap-2 border-border text-muted-foreground"
                                 onClick={() => {
                                     document.getElementById('variables-section')?.scrollIntoView({ behavior: 'smooth' })
                                 }}
@@ -1307,13 +1307,13 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                         </div>
 
                         {/* Variables Reference */}
-                        <div id="variables-section" className="mt-4 p-3 bg-foreground/5 rounded-lg border border-zinc-800">
-                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Available Variables — click to insert</p>
+                        <div id="variables-section" className="mt-4 p-3 bg-foreground/5 rounded-lg border border-border">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Available Variables — click to insert</p>
                             <div className="flex flex-wrap gap-2">
                                 {['{{firstName}}', '{{lastName}}', '{{companyName}}', '{{jobTitle}}', '{{personalization}}', '{{sendingAccountFirstName}}'].map((v) => (
                                     <button
                                         key={v}
-                                        className="text-[10px] bg-zinc-800 px-2 py-1 rounded text-amber-400 cursor-pointer hover:bg-zinc-700 hover:text-amber-300 transition-colors select-none border border-zinc-700 font-mono"
+                                        className="text-[10px] bg-muted px-2 py-1 rounded text-amber-400 cursor-pointer hover:bg-zinc-700 hover:text-amber-300 transition-colors select-none border border-border font-mono"
                                         onClick={() => insertVariable(v)}
                                         onMouseDown={(e) => e.preventDefault()}
                                         type="button"
@@ -1322,7 +1322,7 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                                     </button>
                                 ))}
                             </div>
-                            <p className="text-[10px] text-zinc-600 mt-2">
+                            <p className="text-[10px] text-muted-foreground mt-2">
                                 💡 <span className="text-amber-400">{'{{personalization}}'}</span> = AI-generated icebreaker from MailSmith
                             </p>
                         </div>
@@ -1332,21 +1332,21 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
 
             {/* Preview Dialog */}
             <Dialog open={showPreview} onOpenChange={(open) => { setShowPreview(open); if (!open) setSelectedLeadId('sample') }}>
-                <DialogContent className="sm:max-w-2xl bg-zinc-950 border-zinc-800 max-h-[80vh] overflow-y-auto">
+                <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="text-foreground">Email Preview</DialogTitle>
-                        <DialogDescription className="text-zinc-500">
+                        <DialogDescription className="text-muted-foreground">
                             See how this email will look for a specific lead.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 mt-2">
                         {/* Lead Selector */}
                         <div className="space-y-1">
-                            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Preview as</span>
+                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Preview as</span>
                             <select
                                 value={selectedLeadId}
                                 onChange={(e) => setSelectedLeadId(e.target.value)}
-                                className="w-full h-9 px-3 text-sm bg-zinc-900 border border-zinc-800 rounded-md text-foreground focus:border-primary focus:outline-none"
+                                className="w-full h-9 px-3 text-sm bg-muted border border-border rounded-md text-foreground focus:border-primary focus:outline-none"
                             >
                                 <option value="sample">📋 Sample Data (Alex Johnson)</option>
                                 {loadingPreviewLeads ? (
@@ -1362,29 +1362,29 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                         </div>
                         {/* Subject */}
                         <div className="space-y-1">
-                            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Subject</span>
-                            <div className="p-3 bg-zinc-900 rounded-lg border border-zinc-800 text-sm text-foreground font-medium">
-                                {replaceVariables(activeVariant?.subject || '') || <span className="text-zinc-600 italic">No subject</span>}
+                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Subject</span>
+                            <div className="p-3 bg-muted rounded-lg border border-border text-sm text-foreground font-medium">
+                                {replaceVariables(activeVariant?.subject || '') || <span className="text-muted-foreground italic">No subject</span>}
                             </div>
                         </div>
                         {/* Body */}
                         <div className="space-y-1">
-                            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Body</span>
+                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Body</span>
                             <div className="p-4 bg-foreground rounded-lg text-zinc-900 text-sm leading-relaxed whitespace-pre-wrap min-h-[200px]">
-                                {replaceVariables(activeVariant?.body || '') || <span className="text-zinc-400 italic">No body content</span>}
+                                {replaceVariables(activeVariant?.body || '') || <span className="text-muted-foreground italic">No body content</span>}
                             </div>
                         </div>
                         {/* Variable mapping reference */}
-                        <div className="p-3 bg-foreground/5 rounded-lg border border-zinc-800">
-                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">
+                        <div className="p-3 bg-foreground/5 rounded-lg border border-border">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
                                 {selectedLeadId === 'sample' ? 'Sample values used' : 'Lead data used'}
                             </p>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                                 {Object.entries(getActiveVariables()).map(([key, value]) => (
                                     <div key={key} className="flex items-center gap-2 text-[11px]">
-                                        <code className="text-amber-400 bg-zinc-800 px-1.5 py-0.5 rounded">{key}</code>
-                                        <span className="text-zinc-600">→</span>
-                                        <span className="text-zinc-400 truncate">{value || <span className="italic text-zinc-600">(empty)</span>}</span>
+                                        <code className="text-amber-400 bg-muted px-1.5 py-0.5 rounded">{key}</code>
+                                        <span className="text-muted-foreground">→</span>
+                                        <span className="text-muted-foreground truncate">{value || <span className="italic text-muted-foreground">(empty)</span>}</span>
                                     </div>
                                 ))}
                             </div>
@@ -1394,7 +1394,7 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
             </Dialog>
             {/* Delete Step Confirmation Dialog */}
             <Dialog open={deleteStepDialogOpen} onOpenChange={setDeleteStepDialogOpen}>
-                <DialogContent className="bg-zinc-950 border-border">
+                <DialogContent className="bg-card border-border">
                     <DialogHeader>
                         <DialogTitle>Delete Sequence Step</DialogTitle>
                         <DialogDescription>
@@ -1605,7 +1605,7 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center p-12">
-                <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
         )
     }
@@ -1616,20 +1616,20 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
             <div className="col-span-3 space-y-4">
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-zinc-500" />
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium text-foreground">Start</span>
                         <span className="text-primary">Now</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-zinc-500" />
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium text-foreground">End</span>
                         <span className="text-primary">No end date</span>
                     </div>
                 </div>
 
-                <div className="border-t border-zinc-800 pt-4">
-                    <div className="flex items-center gap-2 text-sm p-2 bg-foreground/5 rounded-lg border border-zinc-800">
-                        <Calendar className="h-4 w-4 text-zinc-500" />
+                <div className="border-t border-border pt-4">
+                    <div className="flex items-center gap-2 text-sm p-2 bg-foreground/5 rounded-lg border border-border">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium text-foreground">{schedule.name}</span>
                     </div>
                     <Button
@@ -1645,24 +1645,24 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
 
             {/* Right Panel */}
             <div className="col-span-9">
-                <Card className="bg-zinc-950 border-zinc-800">
+                <Card className="bg-card border-border">
                     <CardContent className="p-6 space-y-6">
                         {/* Schedule Name */}
                         <div className="space-y-2">
-                            <Label className="text-zinc-400">Schedule Name</Label>
+                            <Label className="text-muted-foreground">Schedule Name</Label>
                             <Input
                                 value={schedule.name}
                                 onChange={(e) => setSchedule({ ...schedule, name: e.target.value })}
-                                className="bg-zinc-900 border-zinc-800"
+                                className="bg-muted border-border"
                             />
                         </div>
 
                         {/* Timing */}
                         <div className="space-y-2">
-                            <Label className="text-zinc-400">Timing</Label>
+                            <Label className="text-muted-foreground">Timing</Label>
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="space-y-1">
-                                    <span className="text-[10px] text-zinc-600">From</span>
+                                    <span className="text-[10px] text-muted-foreground">From</span>
                                     <Select
                                         value={`${schedule.fromHour}:${schedule.fromMinute}`}
                                         onValueChange={(val) => {
@@ -1670,10 +1670,10 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                                             setSchedule({ ...schedule, fromHour: h, fromMinute: m })
                                         }}
                                     >
-                                        <SelectTrigger className="bg-zinc-900 border-zinc-800">
+                                        <SelectTrigger className="bg-muted border-border">
                                             <SelectValue />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-zinc-950 border-zinc-800 max-h-[300px] overflow-y-auto">
+                                        <SelectContent className="bg-card border-border max-h-[300px] overflow-y-auto">
                                             {Array.from({ length: 24 }).map((_, h) => (
                                                 <SelectItem key={h} value={`${h}:00`}>
                                                     {formatTime(h)}
@@ -1683,7 +1683,7 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                                     </Select>
                                 </div>
                                 <div className="space-y-1">
-                                    <span className="text-[10px] text-zinc-600">To</span>
+                                    <span className="text-[10px] text-muted-foreground">To</span>
                                     <Select
                                         value={`${schedule.toHour}:${schedule.toMinute}`}
                                         onValueChange={(val) => {
@@ -1691,10 +1691,10 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                                             setSchedule({ ...schedule, toHour: h, toMinute: m })
                                         }}
                                     >
-                                        <SelectTrigger className="bg-zinc-900 border-zinc-800">
+                                        <SelectTrigger className="bg-muted border-border">
                                             <SelectValue />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-zinc-950 border-zinc-800 max-h-[300px] overflow-y-auto">
+                                        <SelectContent className="bg-card border-border max-h-[300px] overflow-y-auto">
                                             {Array.from({ length: 24 }).map((_, h) => (
                                                 <SelectItem key={h} value={`${h}:00`}>
                                                     {formatTime(h)}
@@ -1704,15 +1704,15 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                                     </Select>
                                 </div>
                                 <div className="space-y-1">
-                                    <span className="text-[10px] text-zinc-600">Timezone</span>
+                                    <span className="text-[10px] text-muted-foreground">Timezone</span>
                                     <Select
                                         value={schedule.timezone}
                                         onValueChange={(val) => setSchedule({ ...schedule, timezone: val })}
                                     >
-                                        <SelectTrigger className="bg-zinc-900 border-zinc-800">
+                                        <SelectTrigger className="bg-muted border-border">
                                             <SelectValue />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-zinc-950 border-zinc-800 max-h-[300px] overflow-y-auto">
+                                        <SelectContent className="bg-card border-border max-h-[300px] overflow-y-auto">
                                             {TIMEZONES.map((tz) => (
                                                 <SelectItem key={tz} value={tz}>
                                                     {tz}
@@ -1726,7 +1726,7 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
 
                         {/* Days */}
                         <div className="space-y-2">
-                            <Label className="text-zinc-400">Days</Label>
+                            <Label className="text-muted-foreground">Days</Label>
                             <div className="flex items-center gap-4 flex-wrap">
                                 {dayLabels.map((day) => (
                                     <label
@@ -1742,7 +1742,7 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                                                 })
                                             }}
                                         />
-                                        <span className="text-sm text-zinc-300 capitalize">{day}</span>
+                                        <span className="text-sm text-foreground/70 capitalize">{day}</span>
                                     </label>
                                 ))}
                             </div>
@@ -1885,14 +1885,14 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
             <Button
                 variant="outline"
                 size="sm"
-                className={cn("border-zinc-800 min-w-[80px]", !opts[field] && "bg-zinc-800 text-foreground")}
+                className={cn("border-border min-w-[80px]", !opts[field] && "bg-muted text-foreground")}
                 onClick={() => setOpts({ ...opts, [field]: false })}
             >
                 Disable
             </Button>
             <Button
                 size="sm"
-                className={cn("min-w-[80px]", opts[field] ? "bg-emerald-500 hover:bg-emerald-600 text-white" : "bg-zinc-900 text-zinc-400")}
+                className={cn("min-w-[80px]", opts[field] ? "bg-emerald-500 hover:bg-emerald-600 text-white" : "bg-muted text-muted-foreground")}
                 onClick={() => setOpts({ ...opts, [field]: true })}
             >
                 Enable
@@ -1904,7 +1904,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
         return (
             <div className="flex items-center justify-center py-16">
                 <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
-                <span className="ml-3 text-sm text-zinc-500">Loading options from Instantly...</span>
+                <span className="ml-3 text-sm text-muted-foreground">Loading options from Instantly...</span>
             </div>
         )
     }
@@ -1913,24 +1913,24 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
         <div className="max-w-3xl space-y-4">
 
             {/* Accounts to use */}
-            <Card className="bg-zinc-950 border-zinc-800">
+            <Card className="bg-card border-border">
                 <CardContent className="p-6">
                     <div className="flex flex-col gap-4">
                         <div className="flex items-start justify-between">
                             <div>
                                 <h3 className="font-bold text-foreground">Accounts to use</h3>
-                                <p className="text-sm text-zinc-500 mt-1">Select accounts to send emails from</p>
+                                <p className="text-sm text-muted-foreground mt-1">Select accounts to send emails from</p>
                             </div>
-                            <Badge variant="outline" className="bg-zinc-900 border-zinc-800 text-zinc-500 text-xs">
+                            <Badge variant="outline" className="bg-muted border-border text-muted-foreground text-xs">
                                 {selectedEmails.length} selected
                             </Badge>
                         </div>
                         {isLoadingAccounts ? (
                             <div className="flex items-center justify-center py-8">
-                                <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                             </div>
                         ) : availableAccounts.length === 0 ? (
-                            <p className="text-sm text-zinc-500 italic">No email accounts found for this organization.</p>
+                            <p className="text-sm text-muted-foreground italic">No email accounts found for this organization.</p>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto p-1">
                                 {availableAccounts.map((acc) => {
@@ -1940,7 +1940,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                                             key={acc.id}
                                             className={cn(
                                                 "flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                                                isSelected ? "bg-primary/10 border-primary/50" : "bg-foreground/5 border-zinc-800 hover:border-zinc-700"
+                                                isSelected ? "bg-primary/10 border-primary/50" : "bg-foreground/5 border-border hover:border-border"
                                             )}
                                         >
                                             <Checkbox
@@ -1948,10 +1948,10 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                                                 onCheckedChange={(checked) => toggleEmail(acc.email_address, !!checked)}
                                             />
                                             <div className="flex flex-col overflow-hidden">
-                                                <span className={cn("text-xs font-medium truncate", isSelected ? "text-primary" : "text-zinc-300")}>
+                                                <span className={cn("text-xs font-medium truncate", isSelected ? "text-primary" : "text-foreground/70")}>
                                                     {acc.email_address}
                                                 </span>
-                                                <span className="text-[10px] text-zinc-500">
+                                                <span className="text-[10px] text-muted-foreground">
                                                     Score: {acc.reputation_score || 0}
                                                     {acc.status === 'paused' && <span className="text-amber-500 ml-1">• Paused</span>}
                                                 </span>
@@ -1966,12 +1966,12 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
             </Card>
 
             {/* Stop on Reply */}
-            <Card className="bg-zinc-950 border-zinc-800">
+            <Card className="bg-card border-border">
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="font-bold text-foreground">Stop sending emails on reply</h3>
-                            <p className="text-sm text-zinc-500 mt-1">Stop sending emails to a lead if a response has been received</p>
+                            <p className="text-sm text-muted-foreground mt-1">Stop sending emails to a lead if a response has been received</p>
                         </div>
                         <ToggleButtons field="stop_on_reply" />
                     </div>
@@ -1979,12 +1979,12 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
             </Card>
 
             {/* Open Tracking */}
-            <Card className="bg-zinc-950 border-zinc-800">
+            <Card className="bg-card border-border">
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="font-bold text-foreground">Open Tracking</h3>
-                            <p className="text-sm text-zinc-500 mt-1">Track email opens</p>
+                            <p className="text-sm text-muted-foreground mt-1">Track email opens</p>
                         </div>
                         <div className="flex items-center gap-4">
                             <label className="flex items-center gap-2 cursor-pointer">
@@ -1992,7 +1992,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                                     checked={opts.link_tracking}
                                     onCheckedChange={(c) => setOpts({ ...opts, link_tracking: !!c })}
                                 />
-                                <span className="text-sm text-zinc-400">Link tracking</span>
+                                <span className="text-sm text-muted-foreground">Link tracking</span>
                             </label>
                             <ToggleButtons field="open_tracking" />
                         </div>
@@ -2001,13 +2001,13 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
             </Card>
 
             {/* Delivery Optimization */}
-            <Card className="bg-zinc-950 border-zinc-800">
+            <Card className="bg-card border-border">
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div>
                                 <h3 className="font-bold text-foreground">Delivery Optimization</h3>
-                                <p className="text-sm text-zinc-500 mt-1">Disables open tracking for better deliverability</p>
+                                <p className="text-sm text-muted-foreground mt-1">Disables open tracking for better deliverability</p>
                             </div>
                             <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[10px]">Recommended</Badge>
                         </div>
@@ -2017,14 +2017,14 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                                     checked={opts.send_as_text}
                                     onCheckedChange={(c) => setOpts({ ...opts, send_as_text: !!c })}
                                 />
-                                <span className="text-sm text-zinc-400">Send emails as text-only (no HTML)</span>
+                                <span className="text-sm text-muted-foreground">Send emails as text-only (no HTML)</span>
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <Checkbox
                                     checked={opts.first_email_text_only}
                                     onCheckedChange={(c) => setOpts({ ...opts, first_email_text_only: !!c })}
                                 />
-                                <span className="text-sm text-zinc-400">Send first email as text-only</span>
+                                <span className="text-sm text-muted-foreground">Send first email as text-only</span>
                             </label>
                         </div>
                     </div>
@@ -2032,34 +2032,34 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
             </Card>
 
             {/* Daily Limit */}
-            <Card className="bg-zinc-950 border-zinc-800">
+            <Card className="bg-card border-border">
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="font-bold text-foreground">Daily Limit</h3>
-                            <p className="text-sm text-zinc-500 mt-1">Max number of emails to send per day for this campaign</p>
+                            <p className="text-sm text-muted-foreground mt-1">Max number of emails to send per day for this campaign</p>
                         </div>
                         <Input
                             type="number"
                             value={opts.daily_limit ?? 50}
                             onChange={(e) => setOpts({ ...opts, daily_limit: parseInt(e.target.value) || 0 })}
-                            className="w-24 bg-zinc-900 border-zinc-800 text-right"
+                            className="w-24 bg-muted border-border text-right"
                         />
                     </div>
                 </CardContent>
             </Card>
 
             {/* Sending Pattern */}
-            <Card className="bg-zinc-950 border-zinc-800">
+            <Card className="bg-card border-border">
                 <CardContent className="p-6 space-y-5">
                     <h3 className="font-bold text-foreground">Sending Pattern</h3>
-                    <p className="text-sm text-zinc-500 -mt-3">Specify how you want your emails to go</p>
+                    <p className="text-sm text-muted-foreground -mt-3">Specify how you want your emails to go</p>
 
                     {/* Time gap between emails */}
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-zinc-300">Time gap between emails</p>
-                            <p className="text-xs text-zinc-500 mt-0.5">Minimum and random additional time per email</p>
+                            <p className="text-sm font-medium text-foreground/70">Time gap between emails</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">Minimum and random additional time per email</p>
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2">
@@ -2067,19 +2067,19 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                                     type="number"
                                     value={opts.minimum_wait_time ?? 9}
                                     onChange={(e) => setOpts({ ...opts, minimum_wait_time: parseInt(e.target.value) || 0 })}
-                                    className="w-20 bg-zinc-900 border-zinc-800 text-right"
+                                    className="w-20 bg-muted border-border text-right"
                                 />
-                                <span className="text-xs text-zinc-500">min</span>
+                                <span className="text-xs text-muted-foreground">min</span>
                             </div>
-                            <span className="text-zinc-600">+</span>
+                            <span className="text-muted-foreground">+</span>
                             <div className="flex items-center gap-2">
                                 <Input
                                     type="number"
                                     value={opts.random_variance ?? 5}
                                     onChange={(e) => setOpts({ ...opts, random_variance: parseInt(e.target.value) || 0 })}
-                                    className="w-20 bg-zinc-900 border-zinc-800 text-right"
+                                    className="w-20 bg-muted border-border text-right"
                                 />
-                                <span className="text-xs text-zinc-500">min random</span>
+                                <span className="text-xs text-muted-foreground">min random</span>
                             </div>
                         </div>
                     </div>
@@ -2087,79 +2087,79 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                     {/* Prioritize New Leads */}
                     <div className="flex items-center justify-between border-t border-border pt-4">
                         <div>
-                            <p className="text-sm font-medium text-zinc-300">Prioritize New Leads</p>
-                            <p className="text-xs text-zinc-500 mt-0.5">Prioritize reaching out to new leads over scheduled follow-ups</p>
+                            <p className="text-sm font-medium text-foreground/70">Prioritize New Leads</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">Prioritize reaching out to new leads over scheduled follow-ups</p>
                         </div>
                         <label className="flex items-center gap-2 cursor-pointer">
                             <Checkbox
                                 checked={opts.prioritize_new_leads}
                                 onCheckedChange={(c) => setOpts({ ...opts, prioritize_new_leads: !!c })}
                             />
-                            <span className="text-sm text-zinc-400">Enable</span>
+                            <span className="text-sm text-muted-foreground">Enable</span>
                         </label>
                     </div>
                 </CardContent>
             </Card>
 
             {/* Stop on Auto-Reply */}
-            <Card className="bg-zinc-950 border-zinc-800">
+            <Card className="bg-card border-border">
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="font-bold text-foreground">Stop Sending Emails on Auto-Reply</h3>
-                            <p className="text-sm text-zinc-500 mt-1">Stop sending if an automatic response (e.g. out-of-office) is received</p>
+                            <p className="text-sm text-muted-foreground mt-1">Stop sending if an automatic response (e.g. out-of-office) is received</p>
                         </div>
                         <label className="flex items-center gap-2 cursor-pointer">
                             <Checkbox
                                 checked={opts.stop_on_auto_reply}
                                 onCheckedChange={(c) => setOpts({ ...opts, stop_on_auto_reply: !!c })}
                             />
-                            <span className="text-sm text-zinc-400">Stop on auto-reply</span>
+                            <span className="text-sm text-muted-foreground">Stop on auto-reply</span>
                         </label>
                     </div>
                 </CardContent>
             </Card>
 
             {/* Stop for Company on Reply */}
-            <Card className="bg-zinc-950 border-zinc-800">
+            <Card className="bg-card border-border">
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="font-bold text-foreground">Stop Campaign for Company on Reply</h3>
-                            <p className="text-sm text-zinc-500 mt-1">Stops the campaign for all leads from a company if any of them replies</p>
+                            <p className="text-sm text-muted-foreground mt-1">Stops the campaign for all leads from a company if any of them replies</p>
                         </div>
                         <label className="flex items-center gap-2 cursor-pointer">
                             <Checkbox
                                 checked={opts.stop_campaign_for_company}
                                 onCheckedChange={(c) => setOpts({ ...opts, stop_campaign_for_company: !!c })}
                             />
-                            <span className="text-sm text-zinc-400">Enable company reply stop</span>
+                            <span className="text-sm text-muted-foreground">Enable company reply stop</span>
                         </label>
                     </div>
                 </CardContent>
             </Card>
 
             {/* Insert Unsubscribe Link Header */}
-            <Card className="bg-zinc-950 border-zinc-800">
+            <Card className="bg-card border-border">
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="font-bold text-foreground">Insert Unsubscribe Link Header</h3>
-                            <p className="text-sm text-zinc-500 mt-1">Automatically adds an unsubscribe link to email headers for one-click unsubscription</p>
+                            <p className="text-sm text-muted-foreground mt-1">Automatically adds an unsubscribe link to email headers for one-click unsubscription</p>
                         </div>
                         <label className="flex items-center gap-2 cursor-pointer">
                             <Checkbox
                                 checked={opts.show_unsubscribe}
                                 onCheckedChange={(c) => setOpts({ ...opts, show_unsubscribe: !!c })}
                             />
-                            <span className="text-sm text-zinc-400">Insert unsubscribe header</span>
+                            <span className="text-sm text-muted-foreground">Insert unsubscribe header</span>
                         </label>
                     </div>
                 </CardContent>
             </Card>
 
             {/* Action Bar */}
-            <div className="flex items-center justify-end pt-4 border-t border-zinc-800">
+            <div className="flex items-center justify-end pt-4 border-t border-border">
                 <Button
                     className="bg-primary hover:bg-primary/90 min-w-[160px]"
                     onClick={handleSaveOptions}

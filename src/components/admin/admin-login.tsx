@@ -52,22 +52,22 @@ export function AdminLogin() {
     }
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950 px-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-card px-4">
             {/* Ambient glow effect */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-40 -right-40 w-96 h-96 bg-rose-500/10 rounded-full blur-[120px] opacity-40" />
                 <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-amber-500/10 rounded-full blur-[120px] opacity-40" />
             </div>
 
-            <Card className="w-full max-w-md relative backdrop-blur-3xl bg-foreground/5 border-zinc-800/50 shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)]">
+            <Card className="w-full max-w-md relative backdrop-blur-3xl bg-foreground/5 border-border/50 shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)]">
                 <CardHeader className="space-y-1 text-center pb-2">
                     <div className="flex justify-center mb-6">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-b from-zinc-800 to-zinc-900 border border-zinc-700/50 shadow-2xl group transition-all hover:border-zinc-500/50">
-                            <ShieldCheck className="h-8 w-8 text-zinc-400 group-hover:text-zinc-100 transition-colors" />
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-b from-zinc-800 to-zinc-900 border border-border/50 shadow-2xl group transition-all hover:border-zinc-500/50">
+                            <ShieldCheck className="h-8 w-8 text-muted-foreground group-hover:text-foreground transition-colors" />
                         </div>
                     </div>
-                    <CardTitle className="text-2xl font-bold tracking-tight text-zinc-100">Command Center</CardTitle>
-                    <CardDescription className="text-zinc-500 text-sm">
+                    <CardTitle className="text-2xl font-bold tracking-tight text-foreground">Command Center</CardTitle>
+                    <CardDescription className="text-muted-foreground text-sm">
                         Enterprise Access Protocol
                     </CardDescription>
                 </CardHeader>
@@ -80,15 +80,15 @@ export function AdminLogin() {
                         )}
 
                         <div className="space-y-2">
-                            <Label htmlFor="email" className="text-zinc-500 ml-1 text-[10px] uppercase tracking-widest font-bold">Admin Email</Label>
+                            <Label htmlFor="email" className="text-muted-foreground ml-1 text-[10px] uppercase tracking-widest font-bold">Admin Email</Label>
                             <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     id="email"
                                     name="email"
                                     type="email"
                                     placeholder="admin@acquifix.com"
-                                    className="pl-11 h-12 bg-zinc-800/20 border-zinc-700/50 text-zinc-100 placeholder:text-zinc-800 focus:border-zinc-500 focus:ring-zinc-500/20 rounded-xl transition-all"
+                                    className="pl-11 h-12 bg-muted/20 border-border/50 text-foreground placeholder:text-zinc-800 focus:border-zinc-500 focus:ring-zinc-500/20 rounded-xl transition-all"
                                     required
                                     autoFocus
                                     disabled={isLoading}
@@ -97,15 +97,15 @@ export function AdminLogin() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password" className="text-zinc-500 ml-1 text-[10px] uppercase tracking-widest font-bold">System Access Key</Label>
+                            <Label htmlFor="password" className="text-muted-foreground ml-1 text-[10px] uppercase tracking-widest font-bold">System Access Key</Label>
                             <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     id="password"
                                     name="password"
                                     type="password"
                                     placeholder="••••••••••••"
-                                    className="pl-11 h-12 bg-zinc-800/20 border-zinc-700/50 text-zinc-100 placeholder:text-zinc-800 focus:border-zinc-500 focus:ring-zinc-500/20 rounded-xl transition-all"
+                                    className="pl-11 h-12 bg-muted/20 border-border/50 text-foreground placeholder:text-zinc-800 focus:border-zinc-500 focus:ring-zinc-500/20 rounded-xl transition-all"
                                     required
                                     disabled={isLoading}
                                 />

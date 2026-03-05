@@ -153,7 +153,7 @@ export default function OperatorCampaignsPage() {
             case 'active': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
             case 'paused': return 'bg-amber-500/10 text-amber-500 border-amber-500/20'
             case 'completed': return 'bg-blue-500/10 text-blue-500 border-blue-500/20'
-            default: return 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20'
+            default: return 'bg-zinc-500/10 text-muted-foreground border-zinc-500/20'
         }
     }
 
@@ -205,7 +205,7 @@ export default function OperatorCampaignsPage() {
                         variant="outline"
                         onClick={handleRelink}
                         disabled={isRelinking || isSyncing}
-                        className="border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-foreground hover:bg-zinc-900 font-bold h-11 px-5 shadow-sm"
+                        className="border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted font-bold h-11 px-5 shadow-sm"
                     >
                         <ArrowRightLeft className={cn("mr-2 h-4 w-4", isRelinking && "animate-spin")} />
                         {isRelinking ? 'Re-linking...' : 'Re-link Campaigns'}
@@ -214,7 +214,7 @@ export default function OperatorCampaignsPage() {
                         variant="outline"
                         onClick={handleSyncAll}
                         disabled={isSyncing}
-                        className="border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-foreground hover:bg-zinc-900 font-bold h-11 px-5 shadow-sm"
+                        className="border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted font-bold h-11 px-5 shadow-sm"
                     >
                         <ArrowRightLeft className={cn("mr-2 h-4 w-4", isSyncing && "animate-spin")} />
                         {isSyncing ? 'Syncing...' : 'Sync Live Stats'}
@@ -229,14 +229,14 @@ export default function OperatorCampaignsPage() {
             </div>
 
             {/* Filter Bar */}
-            <div className="flex items-center gap-4 bg-foreground/5 p-4 rounded-xl border border-zinc-800">
+            <div className="flex items-center gap-4 bg-foreground/5 p-4 rounded-xl border border-border">
                 <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-2">Filter Customer:</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest pl-2">Filter Customer:</span>
                     <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
-                        <SelectTrigger className="w-[240px] h-9 bg-zinc-950 border-zinc-800 text-xs font-semibold">
+                        <SelectTrigger className="w-[240px] h-9 bg-card border-border text-xs font-semibold">
                             <SelectValue placeholder="Select Customer" />
                         </SelectTrigger>
-                        <SelectContent className="bg-zinc-950 border-border">
+                        <SelectContent className="bg-card border-border">
                             {organizations.map(org => (
                                 <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
                             ))}
@@ -249,18 +249,18 @@ export default function OperatorCampaignsPage() {
             {isLoading ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {[1, 2, 3].map(i => (
-                        <Card key={i} className="bg-zinc-950 border-zinc-800 h-[200px] animate-pulse" />
+                        <Card key={i} className="bg-card border-border h-[200px] animate-pulse" />
                     ))}
                 </div>
             ) : campaigns.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-20 border-2 border-dashed border-zinc-800 rounded-3xl bg-foreground/5">
-                    <div className="h-16 w-16 bg-zinc-900 rounded-full flex items-center justify-center mb-6">
+                <div className="flex flex-col items-center justify-center p-20 border-2 border-dashed border-border rounded-3xl bg-foreground/5">
+                    <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-6">
                         <Mail className="h-8 w-8 text-zinc-700" />
                     </div>
-                    <h3 className="text-xl font-bold text-zinc-400">No active campaigns</h3>
-                    <p className="text-zinc-600 mt-2 max-w-sm text-center">There are no campaigns being run for this customer yet. Start a new one to begin outreach.</p>
+                    <h3 className="text-xl font-bold text-muted-foreground">No active campaigns</h3>
+                    <p className="text-muted-foreground mt-2 max-w-sm text-center">There are no campaigns being run for this customer yet. Start a new one to begin outreach.</p>
                     <Link href="/operator/campaigns/new" className="mt-8">
-                        <Button variant="outline" className="border-zinc-800 text-zinc-400 hover:bg-zinc-900">
+                        <Button variant="outline" className="border-border text-muted-foreground hover:bg-muted">
                             Create First Campaign
                         </Button>
                     </Link>
@@ -273,9 +273,9 @@ export default function OperatorCampaignsPage() {
                             type="checkbox"
                             checked={selectedIds.size === campaigns.length && campaigns.length > 0}
                             onChange={toggleSelectAll}
-                            className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 accent-amber-500 cursor-pointer"
+                            className="h-4 w-4 rounded border-border bg-muted accent-amber-500 cursor-pointer"
                         />
-                        <span className="text-xs text-zinc-500 font-medium">
+                        <span className="text-xs text-muted-foreground font-medium">
                             {selectedIds.size > 0 ? `${selectedIds.size} selected` : 'Select all'}
                         </span>
                     </div>
@@ -283,7 +283,7 @@ export default function OperatorCampaignsPage() {
                         <Card
                             key={campaign.id}
                             className={cn(
-                                "bg-zinc-950 border-zinc-800 hover:border-zinc-700 transition-all group overflow-hidden shadow-none",
+                                "bg-card border-border hover:border-border transition-all group overflow-hidden shadow-none",
                                 selectedIds.has(campaign.id) && "border-amber-500/40 bg-amber-500/5"
                             )}
                         >
@@ -295,7 +295,7 @@ export default function OperatorCampaignsPage() {
                                         checked={selectedIds.has(campaign.id)}
                                         onChange={() => toggleSelect(campaign.id)}
                                         onClick={(e) => e.stopPropagation()}
-                                        className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 accent-amber-500 cursor-pointer flex-shrink-0"
+                                        className="h-4 w-4 rounded border-border bg-muted accent-amber-500 cursor-pointer flex-shrink-0"
                                     />
                                     {/* Status Badge */}
                                     <div className="flex-shrink-0">
@@ -305,13 +305,13 @@ export default function OperatorCampaignsPage() {
                                     </div>
 
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="text-base font-bold text-zinc-200 truncate">{campaign.name}</h3>
+                                        <h3 className="text-base font-bold text-foreground truncate">{campaign.name}</h3>
                                         <div className="flex items-center gap-2 mt-0.5">
-                                            <p className="text-[11px] text-zinc-600 font-mono">ID: {campaign.id.slice(0, 13)}...</p>
+                                            <p className="text-[11px] text-muted-foreground font-mono">ID: {campaign.id.slice(0, 13)}...</p>
                                             {campaign.last_synced_at && (
                                                 <>
                                                     <span className="text-zinc-800 text-[10px]">•</span>
-                                                    <p className="text-[11px] text-zinc-500 flex items-center gap-1">
+                                                    <p className="text-[11px] text-muted-foreground flex items-center gap-1">
                                                         <Clock className="h-2.5 w-2.5" />
                                                         {new Date(campaign.last_synced_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </p>
@@ -323,15 +323,15 @@ export default function OperatorCampaignsPage() {
                                     {/* Stats */}
                                     <div className="hidden md:flex items-center gap-8">
                                         <div className="text-center">
-                                            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Sent</p>
-                                            <p className="text-sm font-bold text-zinc-300 mt-1">{campaign.emails_sent || 0}</p>
+                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Sent</p>
+                                            <p className="text-sm font-bold text-foreground/70 mt-1">{campaign.emails_sent || 0}</p>
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Replies</p>
+                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Replies</p>
                                             <p className="text-sm font-bold text-emerald-500 mt-1">{campaign.emails_replied || 0}</p>
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Rate</p>
+                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Rate</p>
                                             <p className="text-sm font-bold text-blue-500 mt-1">
                                                 {campaign.emails_sent > 0
                                                     ? Math.round((campaign.emails_opened / campaign.emails_sent) * 100)
@@ -343,7 +343,7 @@ export default function OperatorCampaignsPage() {
                                     {/* Actions */}
                                     <div className="flex items-center gap-2">
                                         <Link href={`/operator/campaigns/${campaign.id}`}>
-                                            <Button variant="outline" size="sm" className="h-8 px-3 text-[10px] font-bold border-zinc-800 text-zinc-400 hover:text-foreground hover:bg-zinc-900 uppercase tracking-wider">
+                                            <Button variant="outline" size="sm" className="h-8 px-3 text-[10px] font-bold border-border text-muted-foreground hover:text-foreground hover:bg-muted uppercase tracking-wider">
                                                 View Details
                                                 <ChevronRight className="ml-1 h-3 w-3" />
                                             </Button>
@@ -352,7 +352,7 @@ export default function OperatorCampaignsPage() {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="h-8 w-8 p-0 text-zinc-400 hover:text-foreground hover:bg-zinc-800"
+                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
                                             onClick={(e) => {
                                                 e.stopPropagation()
                                                 setCampaignToMove(campaign)
@@ -390,13 +390,13 @@ export default function OperatorCampaignsPage() {
             {/* Floating Bulk Action Bar */}
             {selectedIds.size > 0 && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 duration-200">
-                    <div className="flex items-center gap-4 bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-3 shadow-2xl shadow-black/50">
-                        <span className="text-sm font-bold text-zinc-200">{selectedIds.size} campaign{selectedIds.size > 1 ? 's' : ''} selected</span>
+                    <div className="flex items-center gap-4 bg-muted border border-border rounded-2xl px-6 py-3 shadow-2xl shadow-black/50">
+                        <span className="text-sm font-bold text-foreground">{selectedIds.size} campaign{selectedIds.size > 1 ? 's' : ''} selected</span>
                         <div className="w-px h-5 bg-zinc-700" />
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="text-zinc-400 hover:text-foreground"
+                            className="text-muted-foreground hover:text-foreground"
                             onClick={() => setSelectedIds(new Set())}
                         >
                             Clear
@@ -417,7 +417,7 @@ export default function OperatorCampaignsPage() {
 
             {/* Move Campaign Dialog */}
             <Dialog open={moveModalOpen} onOpenChange={setMoveModalOpen}>
-                <DialogContent className="bg-zinc-950 border-border">
+                <DialogContent className="bg-card border-border">
                     <DialogHeader>
                         <DialogTitle>Move Campaign</DialogTitle>
                         <DialogDescription>
@@ -427,12 +427,12 @@ export default function OperatorCampaignsPage() {
 
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-400">Select Target Customer</label>
+                            <label className="text-sm font-medium text-muted-foreground">Select Target Customer</label>
                             <Select value={targetOrgId} onValueChange={setTargetOrgId}>
-                                <SelectTrigger className="bg-zinc-900 border-zinc-800">
+                                <SelectTrigger className="bg-muted border-border">
                                     <SelectValue placeholder="Select customer..." />
                                 </SelectTrigger>
-                                <SelectContent className="bg-zinc-950 border-border max-h-[300px]">
+                                <SelectContent className="bg-card border-border max-h-[300px]">
                                     {organizations.map(org => (
                                         <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
                                     ))}
@@ -483,7 +483,7 @@ export default function OperatorCampaignsPage() {
 
             {/* Delete Campaign Dialog */}
             <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
-                <DialogContent className="bg-zinc-950 border-border">
+                <DialogContent className="bg-card border-border">
                     <DialogHeader>
                         <DialogTitle>Delete Campaign</DialogTitle>
                         <DialogDescription>
@@ -531,7 +531,7 @@ export default function OperatorCampaignsPage() {
 
             {/* Bulk Delete Confirm Dialog */}
             <Dialog open={bulkDeleteModalOpen} onOpenChange={setBulkDeleteModalOpen}>
-                <DialogContent className="bg-zinc-950 border-border">
+                <DialogContent className="bg-card border-border">
                     <DialogHeader>
                         <DialogTitle>Delete {selectedIds.size} Campaign{selectedIds.size > 1 ? 's' : ''}?</DialogTitle>
                         <DialogDescription>

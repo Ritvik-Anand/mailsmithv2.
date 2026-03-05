@@ -100,7 +100,7 @@ export default function InfrastructurePage() {
             <div className="flex items-end justify-between">
                 <div className="space-y-1">
                     <h1 className="text-2xl font-bold text-foreground tracking-tight">Outreach Infrastructure</h1>
-                    <p className="text-zinc-500 text-sm font-medium">Manage and assign Instantly outreach nodes to your clients.</p>
+                    <p className="text-muted-foreground text-sm font-medium">Manage and assign Instantly outreach nodes to your clients.</p>
                 </div>
                 <Button
                     onClick={handleSync}
@@ -135,15 +135,15 @@ export default function InfrastructurePage() {
             </div>
 
             {/* Nodes Table */}
-            <Card className="bg-zinc-950 border-zinc-800 rounded-xl overflow-hidden shadow-none">
+            <Card className="bg-card border-border rounded-xl overflow-hidden shadow-none">
                 <CardHeader className="flex flex-row items-center justify-between border-b border-border px-6 py-4 bg-foreground/5">
                     <div className="flex items-center gap-4">
-                        <CardTitle className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Outreach Nodes</CardTitle>
+                        <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Outreach Nodes</CardTitle>
                         <div className="relative">
-                            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-zinc-600" />
+                            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                             <Input
                                 placeholder="Filter by email or ID..."
-                                className="h-8 w-64 bg-foreground/5 border-zinc-800 pl-9 text-xs text-foreground placeholder:text-zinc-700 focus:ring-1 focus:ring-primary rounded-lg"
+                                className="h-8 w-64 bg-foreground/5 border-border pl-9 text-xs text-foreground placeholder:text-zinc-700 focus:ring-1 focus:ring-primary rounded-lg"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -154,28 +154,28 @@ export default function InfrastructurePage() {
                     <Table>
                         <TableHeader>
                             <TableRow className="border-border hover:bg-transparent bg-background">
-                                <TableHead className="text-[10px] font-bold text-zinc-500 pl-6 h-10 uppercase tracking-wider">Email Address</TableHead>
-                                <TableHead className="text-[10px] font-bold text-zinc-500 h-10 uppercase tracking-wider">Status</TableHead>
-                                <TableHead className="text-[10px] font-bold text-zinc-500 h-10 uppercase tracking-wider text-right">Reputation</TableHead>
-                                <TableHead className="text-[10px] font-bold text-zinc-500 h-10 uppercase tracking-wider text-right pr-6">Assignment</TableHead>
+                                <TableHead className="text-[10px] font-bold text-muted-foreground pl-6 h-10 uppercase tracking-wider">Email Address</TableHead>
+                                <TableHead className="text-[10px] font-bold text-muted-foreground h-10 uppercase tracking-wider">Status</TableHead>
+                                <TableHead className="text-[10px] font-bold text-muted-foreground h-10 uppercase tracking-wider text-right">Reputation</TableHead>
+                                <TableHead className="text-[10px] font-bold text-muted-foreground h-10 uppercase tracking-wider text-right pr-6">Assignment</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
                                 Array(8).fill(0).map((_, i) => (
                                     <TableRow key={i} className="border-foreground/5">
-                                        <TableCell className="pl-6 py-4"><div className="h-3 w-32 bg-zinc-900 animate-pulse rounded" /></TableCell>
-                                        <TableCell><div className="h-3 w-16 bg-zinc-900 animate-pulse rounded" /></TableCell>
-                                        <TableCell className="text-right"><div className="h-3 w-8 ml-auto bg-zinc-900 animate-pulse rounded" /></TableCell>
-                                        <TableCell className="pr-6 text-right"><div className="h-8 w-40 ml-auto bg-zinc-900 animate-pulse rounded" /></TableCell>
+                                        <TableCell className="pl-6 py-4"><div className="h-3 w-32 bg-muted animate-pulse rounded" /></TableCell>
+                                        <TableCell><div className="h-3 w-16 bg-muted animate-pulse rounded" /></TableCell>
+                                        <TableCell className="text-right"><div className="h-3 w-8 ml-auto bg-muted animate-pulse rounded" /></TableCell>
+                                        <TableCell className="pr-6 text-right"><div className="h-8 w-40 ml-auto bg-muted animate-pulse rounded" /></TableCell>
                                     </TableRow>
                                 ))
                             ) : filteredNodes.map((node) => (
                                 <TableRow key={node.id} className="border-foreground/5 hover:bg-foreground/5 transition-colors">
                                     <TableCell className="pl-6 py-4">
                                         <div className="flex flex-col">
-                                            <span className="font-bold text-sm text-zinc-200">{node.email_address}</span>
-                                            <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-tighter">ID: {node.instantly_account_id}</span>
+                                            <span className="font-bold text-sm text-foreground">{node.email_address}</span>
+                                            <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-tighter">ID: {node.instantly_account_id}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell>
@@ -188,7 +188,7 @@ export default function InfrastructurePage() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex flex-col items-end gap-1">
-                                            <span className="text-xs font-bold text-zinc-300 font-mono">{node.reputation_score}%</span>
+                                            <span className="text-xs font-bold text-foreground/70 font-mono">{node.reputation_score}%</span>
                                             {node.warmup_enabled && (
                                                 <span className="text-[8px] font-black text-primary uppercase tracking-widest">Warmup Active</span>
                                             )}
@@ -200,10 +200,10 @@ export default function InfrastructurePage() {
                                                 defaultValue={node.organization_id || "unassigned"}
                                                 onValueChange={(value) => handleAssign(node.id, value)}
                                             >
-                                                <SelectTrigger className="h-8 w-48 bg-foreground/5 border-zinc-800 text-xs font-semibold rounded-lg focus:ring-primary/20">
+                                                <SelectTrigger className="h-8 w-48 bg-foreground/5 border-border text-xs font-semibold rounded-lg focus:ring-primary/20">
                                                     <SelectValue placeholder="Select Customer" />
                                                 </SelectTrigger>
-                                                <SelectContent className="bg-zinc-950 border-border text-zinc-300">
+                                                <SelectContent className="bg-card border-border text-foreground/70">
                                                     <SelectItem value="unassigned" className="text-xs font-bold text-red-400">UNASSIGNED</SelectItem>
                                                     {organizations.map((org) => (
                                                         <SelectItem key={org.id} value={org.id} className="text-xs font-medium">
@@ -226,17 +226,17 @@ export default function InfrastructurePage() {
 
 function InfrastructureStat({ title, value, icon: Icon, sub }: any) {
     return (
-        <Card className="bg-zinc-950 border-zinc-800 rounded-xl shadow-none">
+        <Card className="bg-card border-border rounded-xl shadow-none">
             <CardContent className="p-6">
                 <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 border border-zinc-800 rounded-lg flex items-center justify-center bg-zinc-900">
+                    <div className="h-10 w-10 border border-border rounded-lg flex items-center justify-center bg-muted">
                         <Icon className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                        <p className="text-[10px] text-zinc-600 uppercase font-black tracking-widest mb-1">{title}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">{title}</p>
                         <div className="flex items-baseline gap-2">
                             <h3 className="text-xl font-bold text-foreground">{value}</h3>
-                            <span className="text-[10px] text-zinc-500 font-medium">{sub}</span>
+                            <span className="text-[10px] text-muted-foreground font-medium">{sub}</span>
                         </div>
                     </div>
                 </div>

@@ -67,7 +67,7 @@ export default function OperatorJobsPage() {
             case 'failed':
                 return <XCircle className="h-4 w-4 text-red-500" />
             default:
-                return <Clock className="h-4 w-4 text-zinc-500" />
+                return <Clock className="h-4 w-4 text-muted-foreground" />
         }
     }
 
@@ -81,7 +81,7 @@ export default function OperatorJobsPage() {
             case 'failed':
                 return 'bg-red-500/10 text-red-500 border-red-500/20'
             default:
-                return 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20'
+                return 'bg-zinc-500/10 text-muted-foreground border-zinc-500/20'
         }
     }
 
@@ -89,7 +89,7 @@ export default function OperatorJobsPage() {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <p className="text-zinc-500 font-medium">Loading scrape jobs...</p>
+                <p className="text-muted-foreground font-medium">Loading scrape jobs...</p>
             </div>
         )
     }
@@ -100,10 +100,10 @@ export default function OperatorJobsPage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="space-y-2">
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">Scrape Jobs</h1>
-                    <p className="text-zinc-500 font-medium">Monitor all lead scraping operations in real-time.</p>
+                    <p className="text-muted-foreground font-medium">Monitor all lead scraping operations in real-time.</p>
                 </div>
                 <div className="flex gap-3">
-                    <Button variant="outline" size="sm" onClick={fetchJobs} className="border-zinc-800">
+                    <Button variant="outline" size="sm" onClick={fetchJobs} className="border-border">
                         <RefreshCw className="h-4 w-4 mr-2" />
                         Refresh
                     </Button>
@@ -125,7 +125,7 @@ export default function OperatorJobsPage() {
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-amber-500">{runningJobs.length}</p>
-                            <p className="text-xs text-zinc-500 font-medium uppercase tracking-widest">Running</p>
+                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Running</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -136,7 +136,7 @@ export default function OperatorJobsPage() {
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-emerald-500">{completedJobs.length}</p>
-                            <p className="text-xs text-zinc-500 font-medium uppercase tracking-widest">Completed</p>
+                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Completed</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -147,7 +147,7 @@ export default function OperatorJobsPage() {
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-red-500">{failedJobs.length}</p>
-                            <p className="text-xs text-zinc-500 font-medium uppercase tracking-widest">Failed</p>
+                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Failed</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -155,10 +155,10 @@ export default function OperatorJobsPage() {
 
             {/* Search */}
             <div className="relative max-w-md">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-600" />
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     placeholder="Search by job title or ID..."
-                    className="pl-10 bg-zinc-950 border-zinc-800"
+                    className="pl-10 bg-card border-border"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -167,10 +167,10 @@ export default function OperatorJobsPage() {
             {/* Jobs List */}
             <div className="space-y-3">
                 {filteredJobs.length === 0 ? (
-                    <Card className="bg-zinc-950 border-border">
+                    <Card className="bg-card border-border">
                         <CardContent className="py-16 text-center">
                             <Target className="h-12 w-12 text-zinc-800 mx-auto mb-4" />
-                            <h3 className="text-zinc-500 font-bold">No scrape jobs found</h3>
+                            <h3 className="text-muted-foreground font-bold">No scrape jobs found</h3>
                             <p className="text-zinc-700 text-sm mt-2">Start a new scrape to see jobs here.</p>
                             <Link href="/operator/scraper">
                                 <Button className="mt-4" variant="outline">
@@ -182,7 +182,7 @@ export default function OperatorJobsPage() {
                 ) : (
                     filteredJobs.map((job) => (
                         <Link key={job.id} href={`/operator/leads/${job.id}`}>
-                            <Card className="bg-zinc-950 border-border hover:border-zinc-700 transition-all cursor-pointer group">
+                            <Card className="bg-card border-border hover:border-border transition-all cursor-pointer group">
                                 <CardContent className="p-4">
                                     <div className="flex items-center gap-4">
                                         {/* Status Icon */}
@@ -198,25 +198,25 @@ export default function OperatorJobsPage() {
                                                 <Badge variant="outline" className={`text-[10px] uppercase ${getStatusColor(job.status)}`}>
                                                     {job.status}
                                                 </Badge>
-                                                <span className="text-[10px] text-zinc-600 font-mono">
+                                                <span className="text-[10px] text-muted-foreground font-mono">
                                                     {job.id.slice(0, 8)}...
                                                 </span>
                                             </div>
                                             <p className="text-sm font-bold text-foreground truncate">
                                                 {job.name || job.input_params.contact_job_title?.join(', ') || 'General Search'}
                                             </p>
-                                            <p className="text-xs text-zinc-500 mt-1">
+                                            <p className="text-xs text-muted-foreground mt-1">
                                                 {new Date(job.created_at).toLocaleString()}
                                             </p>
                                         </div>
 
                                         {/* Stats */}
                                         <div className="text-right hidden md:block">
-                                            <div className="flex items-center gap-1 text-zinc-400">
+                                            <div className="flex items-center gap-1 text-muted-foreground">
                                                 <Users className="h-4 w-4" />
                                                 <span className="text-lg font-bold">{job.leads_imported || 0}</span>
                                             </div>
-                                            <p className="text-[10px] text-zinc-600 uppercase tracking-widest">Leads</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Leads</p>
                                         </div>
 
                                         {/* Arrow */}

@@ -411,7 +411,7 @@ function NewCampaignContent() {
     return (
         <div className="min-h-screen pb-20">
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-zinc-800">
+            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
                 <div className="container py-4">
                     <div className="flex items-center justify-between">
                         {/* Left: Back + Title */}
@@ -428,7 +428,7 @@ function NewCampaignContent() {
                                     placeholder="New Campaign Name..."
                                     className="text-lg font-bold bg-transparent border-none focus-visible:ring-0 px-0 h-auto w-[300px]"
                                 />
-                                <Badge variant="outline" className="bg-zinc-800 text-zinc-400 border-zinc-700">
+                                <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
                                     DRAFT
                                 </Badge>
                             </div>
@@ -438,7 +438,7 @@ function NewCampaignContent() {
                         <div className="flex items-center gap-3">
                             <Button
                                 variant="outline"
-                                className="border-zinc-700 text-zinc-400"
+                                className="border-border text-muted-foreground"
                                 onClick={() => handleLaunch(false)}
                                 disabled={isSubmitting}
                             >
@@ -468,7 +468,7 @@ function NewCampaignContent() {
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === tab.id
                                     ? 'bg-amber-500/10 text-amber-500'
-                                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                                    : 'text-muted-foreground hover:text-foreground/70 hover:bg-muted/50'
                                     }`}
                             >
                                 <tab.icon className="h-4 w-4" />
@@ -481,7 +481,7 @@ function NewCampaignContent() {
 
             <div className="container py-6">
                 {/* Customer Selection Banner */}
-                <Card className="bg-foreground/5 border-zinc-800 mb-6">
+                <Card className="bg-foreground/5 border-border mb-6">
                     <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
@@ -489,12 +489,12 @@ function NewCampaignContent() {
                                     <Users className="h-5 w-5 text-amber-500" />
                                 </div>
                                 <div>
-                                    <Label className="text-xs text-zinc-500 uppercase tracking-wider">Target Customer</Label>
+                                    <Label className="text-xs text-muted-foreground uppercase tracking-wider">Target Customer</Label>
                                     <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
-                                        <SelectTrigger className="w-[300px] mt-1 bg-zinc-950 border-zinc-800">
+                                        <SelectTrigger className="w-[300px] mt-1 bg-card border-border">
                                             <SelectValue placeholder="Select customer organization..." />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-zinc-950 border-zinc-800">
+                                        <SelectContent className="bg-card border-border">
                                             {organizations.map(org => (
                                                 <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
                                             ))}
@@ -518,7 +518,7 @@ function NewCampaignContent() {
                         {/* Sequence Steps */}
                         <div className="lg:col-span-1 space-y-3">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Email Steps</h3>
+                                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Email Steps</h3>
                                 <Button
                                     variant="ghost"
                                     size="sm"
@@ -539,12 +539,12 @@ function NewCampaignContent() {
                                     }}
                                     className={`p-4 rounded-xl border transition-all cursor-pointer ${selectedStepId === seq.id
                                         ? 'bg-amber-500/5 border-amber-500/30'
-                                        : 'bg-foreground/5 border-zinc-800 hover:border-zinc-700'
+                                        : 'bg-foreground/5 border-border hover:border-border'
                                         }`}
                                 >
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2">
-                                            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${idx === 0 ? 'bg-amber-500 text-background' : 'bg-zinc-800 text-zinc-400'
+                                            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${idx === 0 ? 'bg-amber-500 text-background' : 'bg-muted text-muted-foreground'
                                                 }`}>
                                                 {seq.stepNumber}
                                             </div>
@@ -554,7 +554,7 @@ function NewCampaignContent() {
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-6 w-6 text-zinc-600 hover:text-red-500"
+                                                className="h-6 w-6 text-muted-foreground hover:text-red-500"
                                                 onClick={() => removeSequenceStep(seq.id)}
                                             >
                                                 <Trash2 className="h-3 w-3" />
@@ -564,28 +564,28 @@ function NewCampaignContent() {
 
                                     {idx > 0 && (
                                         <div className="flex items-center gap-2 mb-3">
-                                            <Clock className="h-3 w-3 text-zinc-600" />
-                                            <span className="text-xs text-zinc-600">Wait</span>
+                                            <Clock className="h-3 w-3 text-muted-foreground" />
+                                            <span className="text-xs text-muted-foreground">Wait</span>
                                             <div className="flex items-center gap-1">
                                                 <Input
                                                     type="number"
                                                     value={seq.delayDays}
                                                     onChange={(e) => updateVariant(seq.id, 'A', 'delayDays', parseInt(e.target.value))}
-                                                    className="w-14 h-6 text-xs bg-zinc-950 border-zinc-800 text-center"
+                                                    className="w-14 h-6 text-xs bg-card border-border text-center"
                                                 />
                                             </div>
-                                            <span className="text-xs text-zinc-600">days</span>
+                                            <span className="text-xs text-muted-foreground">days</span>
                                         </div>
                                     )}
 
                                     <div className="flex flex-wrap gap-1 mt-2">
                                         {seq.variants.map((v: any) => (
-                                            <span key={v.label} className="text-[10px] px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-400">
+                                            <span key={v.label} className="text-[10px] px-1.5 py-0.5 bg-muted rounded text-muted-foreground">
                                                 Var {v.label}
                                             </span>
                                         ))}
                                     </div>
-                                    <p className="text-xs text-zinc-500 truncate mt-1">
+                                    <p className="text-xs text-muted-foreground truncate mt-1">
                                         {seq.variants[0]?.subject || 'No subject yet...'}
                                     </p>
                                 </div>
@@ -599,21 +599,21 @@ function NewCampaignContent() {
                                 const activeVariant = activeStep.variants.find((v: any) => v.label === activeVariantLabel) || activeStep.variants[0]
 
                                 return (
-                                    <Card className="bg-foreground/5 border-zinc-800">
-                                        <CardHeader className="border-b border-zinc-800">
+                                    <Card className="bg-foreground/5 border-border">
+                                        <CardHeader className="border-b border-border">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <CardTitle className="text-base">Step {activeStep?.stepNumber} Content</CardTitle>
 
                                                     {/* Variant Tabs */}
-                                                    <div className="flex items-center bg-zinc-950 rounded-lg p-1 ml-4 border border-zinc-800">
+                                                    <div className="flex items-center bg-card rounded-lg p-1 ml-4 border border-border">
                                                         {activeStep.variants.map((v: any) => (
                                                             <button
                                                                 key={v.label}
                                                                 onClick={() => setActiveVariantLabel(v.label)}
                                                                 className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeVariantLabel === v.label
-                                                                    ? 'bg-zinc-800 text-foreground shadow-sm'
-                                                                    : 'text-zinc-500 hover:text-zinc-300'
+                                                                    ? 'bg-muted text-foreground shadow-sm'
+                                                                    : 'text-muted-foreground hover:text-foreground/70'
                                                                     }`}
                                                             >
                                                                 {v.label}
@@ -621,7 +621,7 @@ function NewCampaignContent() {
                                                         ))}
                                                         <button
                                                             onClick={() => addVariant(activeStep.id)}
-                                                            className="px-2 py-1 text-zinc-600 hover:text-amber-500 transition-colors ml-1"
+                                                            className="px-2 py-1 text-muted-foreground hover:text-amber-500 transition-colors ml-1"
                                                             title="Add Variant"
                                                         >
                                                             <Plus className="h-3 w-3" />
@@ -630,7 +630,7 @@ function NewCampaignContent() {
                                                         {activeStep.variants.length > 1 && (
                                                             <button
                                                                 onClick={() => removeVariant(activeStep.id, activeVariantLabel)}
-                                                                className="px-2 py-1 text-zinc-600 hover:text-red-500 transition-colors ml-1"
+                                                                className="px-2 py-1 text-muted-foreground hover:text-red-500 transition-colors ml-1"
                                                                 title={`Remove Current Variant (${activeVariantLabel})`}
                                                             >
                                                                 <Trash2 className="h-3 w-3" />
@@ -642,7 +642,7 @@ function NewCampaignContent() {
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="text-zinc-500 hover:text-foreground"
+                                                    className="text-muted-foreground hover:text-foreground"
                                                     onClick={handlePreview}
                                                 >
                                                     <Eye className="h-4 w-4 mr-2" />
@@ -652,30 +652,30 @@ function NewCampaignContent() {
                                         </CardHeader>
                                         <CardContent className="p-6 space-y-4">
                                             <div>
-                                                <Label className="text-xs text-zinc-500 mb-2 block">Subject Line</Label>
+                                                <Label className="text-xs text-muted-foreground mb-2 block">Subject Line</Label>
                                                 <Input
                                                     value={activeVariant?.subject || ''}
                                                     onChange={(e) => updateVariant(activeStep?.id || 1, activeVariantLabel, 'subject', e.target.value)}
                                                     onFocus={() => { setLastFocusedStepId(activeStep?.id || 1); setLastFocusedField('subject') }}
                                                     placeholder={`Enter subject line for Variant ${activeVariantLabel}...`}
-                                                    className="bg-zinc-950 border-zinc-800"
+                                                    className="bg-card border-border"
                                                 />
                                             </div>
 
                                             <div>
-                                                <Label className="text-xs text-zinc-500 mb-2 block">Email Body</Label>
+                                                <Label className="text-xs text-muted-foreground mb-2 block">Email Body</Label>
                                                 <Textarea
                                                     value={activeVariant?.body || ''}
                                                     onChange={(e) => updateVariant(activeStep?.id || 1, activeVariantLabel, 'body', e.target.value)}
                                                     onFocus={() => { setLastFocusedStepId(activeStep?.id || 1); setLastFocusedField('body') }}
                                                     placeholder={`Write your email for Variant ${activeVariantLabel}...`}
-                                                    className="min-h-[300px] bg-zinc-950 border-zinc-800 font-mono text-sm"
+                                                    className="min-h-[300px] bg-card border-border font-mono text-sm"
                                                 />
                                             </div>
 
                                             {/* Variable hints */}
                                             <div className="flex flex-wrap gap-2 pt-2">
-                                                <span className="text-xs text-zinc-600">Available variables:</span>
+                                                <span className="text-xs text-muted-foreground">Available variables:</span>
                                                 {[
                                                     { var: '{{firstName}}', desc: 'Leads first name' },
                                                     { var: '{{lastName}}', desc: 'Leads last name' },
@@ -689,7 +689,7 @@ function NewCampaignContent() {
                                                         variant="outline"
                                                         className={`text-[10px] cursor-pointer ${v.highlight
                                                             ? 'bg-amber-500/10 border-amber-500/50 text-amber-500 hover:bg-amber-500/20'
-                                                            : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-amber-500/50 hover:text-amber-500'
+                                                            : 'bg-card border-border text-muted-foreground hover:border-amber-500/50 hover:text-amber-500'
                                                             }`}
                                                         title={v.desc}
                                                         onClick={() => insertVariable(v.var)}
@@ -708,7 +708,7 @@ function NewCampaignContent() {
 
                 {activeTab === 'schedule' && (
                     <div className="max-w-2xl">
-                        <Card className="bg-foreground/5 border-zinc-800">
+                        <Card className="bg-foreground/5 border-border">
                             <CardHeader>
                                 <CardTitle className="text-base flex items-center gap-2">
                                     <Calendar className="h-4 w-4 text-amber-500" />
@@ -719,15 +719,15 @@ function NewCampaignContent() {
                                 {/* Time Range */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <Label className="text-xs text-zinc-500 mb-2 block">Send From</Label>
+                                        <Label className="text-xs text-muted-foreground mb-2 block">Send From</Label>
                                         <Select
                                             value={schedule.sendFromHour.toString()}
                                             onValueChange={(v) => setSchedule({ ...schedule, sendFromHour: parseInt(v) })}
                                         >
-                                            <SelectTrigger className="bg-zinc-950 border-zinc-800">
+                                            <SelectTrigger className="bg-card border-border">
                                                 <SelectValue />
                                             </SelectTrigger>
-                                            <SelectContent className="bg-zinc-950 border-zinc-800">
+                                            <SelectContent className="bg-card border-border">
                                                 {[...Array(24)].map((_, i) => (
                                                     <SelectItem key={i} value={i.toString()}>
                                                         {i.toString().padStart(2, '0')}:00
@@ -737,15 +737,15 @@ function NewCampaignContent() {
                                         </Select>
                                     </div>
                                     <div>
-                                        <Label className="text-xs text-zinc-500 mb-2 block">Send To</Label>
+                                        <Label className="text-xs text-muted-foreground mb-2 block">Send To</Label>
                                         <Select
                                             value={schedule.sendToHour.toString()}
                                             onValueChange={(v) => setSchedule({ ...schedule, sendToHour: parseInt(v) })}
                                         >
-                                            <SelectTrigger className="bg-zinc-950 border-zinc-800">
+                                            <SelectTrigger className="bg-card border-border">
                                                 <SelectValue />
                                             </SelectTrigger>
-                                            <SelectContent className="bg-zinc-950 border-zinc-800">
+                                            <SelectContent className="bg-card border-border">
                                                 {[...Array(24)].map((_, i) => (
                                                     <SelectItem key={i} value={i.toString()}>
                                                         {i.toString().padStart(2, '0')}:00
@@ -758,15 +758,15 @@ function NewCampaignContent() {
 
                                 {/* Timezone */}
                                 <div>
-                                    <Label className="text-xs text-zinc-500 mb-2 block">Timezone</Label>
+                                    <Label className="text-xs text-muted-foreground mb-2 block">Timezone</Label>
                                     <Select
                                         value={schedule.timezone}
                                         onValueChange={(v) => setSchedule({ ...schedule, timezone: v })}
                                     >
-                                        <SelectTrigger className="bg-zinc-950 border-zinc-800">
+                                        <SelectTrigger className="bg-card border-border">
                                             <SelectValue />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-zinc-950 border-zinc-800">
+                                        <SelectContent className="bg-card border-border">
                                             {TIMEZONES.map(tz => (
                                                 <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>
                                             ))}
@@ -776,7 +776,7 @@ function NewCampaignContent() {
 
                                 {/* Days of Week */}
                                 <div>
-                                    <Label className="text-xs text-zinc-500 mb-3 block">Active Days</Label>
+                                    <Label className="text-xs text-muted-foreground mb-3 block">Active Days</Label>
                                     <div className="flex flex-wrap gap-2">
                                         {Object.entries(schedule.days).map(([day, active]) => (
                                             <button
@@ -787,7 +787,7 @@ function NewCampaignContent() {
                                                 })}
                                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${active
                                                     ? 'bg-amber-500 text-background'
-                                                    : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800'
+                                                    : 'bg-muted text-muted-foreground hover:bg-muted'
                                                     }`}
                                             >
                                                 {day.charAt(0).toUpperCase() + day.slice(1, 3)}
@@ -803,26 +803,26 @@ function NewCampaignContent() {
                 {activeTab === 'options' && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Sending Accounts */}
-                        <Card className="bg-foreground/5 border-zinc-800">
+                        <Card className="bg-foreground/5 border-border">
                             <CardHeader>
                                 <div className="flex items-center justify-between">
                                     <CardTitle className="text-base flex items-center gap-2">
                                         <Mail className="h-4 w-4 text-amber-500" />
                                         Sending Accounts
                                     </CardTitle>
-                                    <Badge variant="outline" className="bg-zinc-800 border-zinc-700">
+                                    <Badge variant="outline" className="bg-muted border-border">
                                         {selectedNodeIds.length} Selected
                                     </Badge>
                                 </div>
                             </CardHeader>
                             <CardContent>
                                 {!selectedOrgId ? (
-                                    <div className="text-center py-8 text-zinc-600">
+                                    <div className="text-center py-8 text-muted-foreground">
                                         <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
                                         <p className="text-sm">Select a customer first</p>
                                     </div>
                                 ) : orgNodes.length === 0 ? (
-                                    <div className="text-center py-8 text-zinc-600">
+                                    <div className="text-center py-8 text-muted-foreground">
                                         <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
                                         <p className="text-sm">No sending accounts assigned</p>
                                     </div>
@@ -834,14 +834,14 @@ function NewCampaignContent() {
                                                 onClick={() => toggleNode(node.id)}
                                                 className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center justify-between ${selectedNodeIds.includes(node.id)
                                                     ? 'border-amber-500/50 bg-amber-500/5'
-                                                    : 'border-zinc-800 hover:border-zinc-700'
+                                                    : 'border-border hover:border-border'
                                                     }`}
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <div className={`h-2 w-2 rounded-full ${node.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'}`} />
                                                     <div>
                                                         <p className="text-sm font-medium">{node.email_address}</p>
-                                                        <p className="text-xs text-zinc-600">Warmup: {node.reputation_score || 0}%</p>
+                                                        <p className="text-xs text-muted-foreground">Warmup: {node.reputation_score || 0}%</p>
                                                     </div>
                                                 </div>
                                                 {selectedNodeIds.includes(node.id) && (
@@ -855,7 +855,7 @@ function NewCampaignContent() {
                         </Card>
 
                         {/* Campaign Settings */}
-                        <Card className="bg-foreground/5 border-zinc-800">
+                        <Card className="bg-foreground/5 border-border">
                             <CardHeader>
                                 <CardTitle className="text-base flex items-center gap-2">
                                     <Settings className="h-4 w-4 text-amber-500" />
@@ -865,12 +865,12 @@ function NewCampaignContent() {
                             <CardContent className="space-y-6">
                                 {/* Basic Settings */}
                                 <div className="space-y-4">
-                                    <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Behavior</h4>
+                                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Behavior</h4>
 
                                     <div className="flex items-center justify-between py-2">
                                         <div>
                                             <p className="text-sm font-medium">Stop on Reply</p>
-                                            <p className="text-xs text-zinc-600">Pause sequence when lead replies</p>
+                                            <p className="text-xs text-muted-foreground">Pause sequence when lead replies</p>
                                         </div>
                                         <Checkbox
                                             checked={options.stopOnReply}
@@ -881,7 +881,7 @@ function NewCampaignContent() {
                                     <div className="flex items-center justify-between py-2">
                                         <div>
                                             <p className="text-sm font-medium">Prioritize New Leads</p>
-                                            <p className="text-xs text-zinc-600">Send to new leads first</p>
+                                            <p className="text-xs text-muted-foreground">Send to new leads first</p>
                                         </div>
                                         <Checkbox
                                             checked={options.prioritizeNewLeads}
@@ -892,7 +892,7 @@ function NewCampaignContent() {
                                     <div className="flex items-center justify-between py-2">
                                         <div>
                                             <p className="text-sm font-medium">Match Lead Timezone</p>
-                                            <p className="text-xs text-zinc-600">Send based on lead&apos;s timezone</p>
+                                            <p className="text-xs text-muted-foreground">Send based on lead&apos;s timezone</p>
                                         </div>
                                         <Checkbox
                                             checked={options.matchLeadTimezone}
@@ -903,7 +903,7 @@ function NewCampaignContent() {
                                     <div className="flex items-center justify-between py-2">
                                         <div>
                                             <p className="text-sm font-medium">Skip Weekends</p>
-                                            <p className="text-xs text-zinc-600">Don&apos;t count weekends in delays</p>
+                                            <p className="text-xs text-muted-foreground">Don&apos;t count weekends in delays</p>
                                         </div>
                                         <Checkbox
                                             checked={options.skipWeekends}
@@ -913,13 +913,13 @@ function NewCampaignContent() {
                                 </div>
 
                                 {/* Tracking Settings */}
-                                <div className="space-y-4 pt-4 border-t border-zinc-800">
-                                    <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Tracking</h4>
+                                <div className="space-y-4 pt-4 border-t border-border">
+                                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Tracking</h4>
 
                                     <div className="flex items-center justify-between py-2">
                                         <div>
                                             <p className="text-sm font-medium">Open Tracking</p>
-                                            <p className="text-xs text-zinc-600">Track when emails are opened</p>
+                                            <p className="text-xs text-muted-foreground">Track when emails are opened</p>
                                         </div>
                                         <Checkbox
                                             checked={options.openTracking}
@@ -930,7 +930,7 @@ function NewCampaignContent() {
                                     <div className="flex items-center justify-between py-2">
                                         <div>
                                             <p className="text-sm font-medium">Link Tracking</p>
-                                            <p className="text-xs text-zinc-600">Track link clicks in emails</p>
+                                            <p className="text-xs text-muted-foreground">Track link clicks in emails</p>
                                         </div>
                                         <Checkbox
                                             checked={options.linkTracking}
@@ -941,7 +941,7 @@ function NewCampaignContent() {
                                     <div className="flex items-center justify-between py-2">
                                         <div>
                                             <p className="text-sm font-medium">Send as Plain Text</p>
-                                            <p className="text-xs text-zinc-600">Better deliverability, no formatting</p>
+                                            <p className="text-xs text-muted-foreground">Better deliverability, no formatting</p>
                                         </div>
                                         <Checkbox
                                             checked={options.sendAsText}
@@ -951,26 +951,26 @@ function NewCampaignContent() {
                                 </div>
 
                                 {/* Limits */}
-                                <div className="space-y-4 pt-4 border-t border-zinc-800">
-                                    <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Limits & Delays</h4>
+                                <div className="space-y-4 pt-4 border-t border-border">
+                                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Limits & Delays</h4>
 
                                     <div className="flex items-center justify-between py-2">
                                         <div>
                                             <p className="text-sm font-medium">Daily Email Limit</p>
-                                            <p className="text-xs text-zinc-600">Max emails per account per day</p>
+                                            <p className="text-xs text-muted-foreground">Max emails per account per day</p>
                                         </div>
                                         <Input
                                             type="number"
                                             value={options.dailyLimit}
                                             onChange={(e) => setOptions({ ...options, dailyLimit: parseInt(e.target.value) || 50 })}
-                                            className="w-20 h-8 bg-zinc-950 border-zinc-800 text-center"
+                                            className="w-20 h-8 bg-card border-border text-center"
                                         />
                                     </div>
 
                                     <div className="flex items-center justify-between py-2">
                                         <div>
                                             <p className="text-sm font-medium">Randomize Delay</p>
-                                            <p className="text-xs text-zinc-600">Add random variation to sequence delays</p>
+                                            <p className="text-xs text-muted-foreground">Add random variation to sequence delays</p>
                                         </div>
                                         <Checkbox
                                             checked={options.randomizeDelay}
@@ -980,46 +980,46 @@ function NewCampaignContent() {
 
                                     {options.randomizeDelay && (
                                         <div className="flex items-center gap-3 py-2 pl-4 border-l-2 border-amber-500/30">
-                                            <span className="text-xs text-zinc-600">Delay range:</span>
+                                            <span className="text-xs text-muted-foreground">Delay range:</span>
                                             <Input
                                                 type="number"
                                                 value={options.minDelay}
                                                 onChange={(e) => setOptions({ ...options, minDelay: parseInt(e.target.value) || 1 })}
-                                                className="w-16 h-7 text-xs bg-zinc-950 border-zinc-800 text-center"
+                                                className="w-16 h-7 text-xs bg-card border-border text-center"
                                             />
-                                            <span className="text-xs text-zinc-600">to</span>
+                                            <span className="text-xs text-muted-foreground">to</span>
                                             <Input
                                                 type="number"
                                                 value={options.maxDelay}
                                                 onChange={(e) => setOptions({ ...options, maxDelay: parseInt(e.target.value) || 7 })}
-                                                className="w-16 h-7 text-xs bg-zinc-950 border-zinc-800 text-center"
+                                                className="w-16 h-7 text-xs bg-card border-border text-center"
                                             />
-                                            <span className="text-xs text-zinc-600">days</span>
+                                            <span className="text-xs text-muted-foreground">days</span>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* CC/BCC */}
-                                <div className="space-y-4 pt-4 border-t border-zinc-800">
-                                    <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Email Copies</h4>
+                                <div className="space-y-4 pt-4 border-t border-border">
+                                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Email Copies</h4>
 
                                     <div className="space-y-2">
-                                        <Label className="text-xs text-zinc-500">CC Email (optional)</Label>
+                                        <Label className="text-xs text-muted-foreground">CC Email (optional)</Label>
                                         <Input
                                             value={options.ccEmail}
                                             onChange={(e) => setOptions({ ...options, ccEmail: e.target.value })}
                                             placeholder="cc@example.com"
-                                            className="bg-zinc-950 border-zinc-800 text-sm"
+                                            className="bg-card border-border text-sm"
                                         />
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label className="text-xs text-zinc-500">BCC Email (optional)</Label>
+                                        <Label className="text-xs text-muted-foreground">BCC Email (optional)</Label>
                                         <Input
                                             value={options.bccEmail}
                                             onChange={(e) => setOptions({ ...options, bccEmail: e.target.value })}
                                             placeholder="bcc@example.com"
-                                            className="bg-zinc-950 border-zinc-800 text-sm"
+                                            className="bg-card border-border text-sm"
                                         />
                                     </div>
                                 </div>
@@ -1033,10 +1033,10 @@ function NewCampaignContent() {
 
             {/* Preview Dialog */}
             <Dialog open={showPreview} onOpenChange={setShowPreview}>
-                <DialogContent className="sm:max-w-2xl bg-zinc-950 border-zinc-800 max-h-[80vh] overflow-y-auto">
+                <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="text-foreground">Email Preview</DialogTitle>
-                        <DialogDescription className="text-zinc-500">
+                        <DialogDescription className="text-muted-foreground">
                             See how this email will look for a sample lead from {organizations?.find(o => o.id === selectedOrgId)?.name || 'the customer'}.
                         </DialogDescription>
                     </DialogHeader>
@@ -1054,11 +1054,11 @@ function NewCampaignContent() {
                             <div className="space-y-4 mt-2">
                                 {/* Lead Selector */}
                                 <div className="space-y-1">
-                                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Preview as</span>
+                                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Preview as</span>
                                     <select
                                         value={selectedPreviewLeadId}
                                         onChange={(e) => setSelectedPreviewLeadId(e.target.value)}
-                                        className="w-full h-9 px-3 text-sm bg-zinc-900 border border-zinc-800 rounded-md text-foreground focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                        className="w-full h-9 px-3 text-sm bg-muted border border-border rounded-md text-foreground focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                                         disabled={isLoadingPreview}
                                     >
                                         <option value="sample">📋 Sample Data (Alex Johnson)</option>
@@ -1076,7 +1076,7 @@ function NewCampaignContent() {
 
                                 {/* Lead Info Banner */}
                                 <div
-                                    className={`p-3 bg-foreground/5 rounded-lg border border-zinc-800 flex items-center justify-between transition-colors ${selectedPreviewLeadId !== 'sample' ? 'cursor-pointer hover:bg-zinc-900' : ''}`}
+                                    className={`p-3 bg-foreground/5 rounded-lg border border-border flex items-center justify-between transition-colors ${selectedPreviewLeadId !== 'sample' ? 'cursor-pointer hover:bg-muted' : ''}`}
                                     onClick={() => selectedPreviewLeadId !== 'sample' && setDetailLead(currentPreviewData)}
                                 >
                                     <div className="flex items-center gap-2">
@@ -1087,27 +1087,27 @@ function NewCampaignContent() {
                                             <p className="text-xs font-bold text-foreground">
                                                 {currentPreviewData.first_name} {currentPreviewData.last_name}
                                             </p>
-                                            <p className="text-[10px] text-zinc-500">
+                                            <p className="text-[10px] text-muted-foreground">
                                                 {currentPreviewData.email} • {currentPreviewData.company_name}
                                             </p>
                                         </div>
                                     </div>
-                                    {isLoadingPreview && <Loader2 className="h-3 w-3 animate-spin text-zinc-500" />}
+                                    {isLoadingPreview && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
                                 </div>
 
                                 {/* Subject */}
                                 <div className="space-y-1">
-                                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Subject</span>
-                                    <div className="p-3 bg-zinc-900 rounded-lg border border-zinc-800 text-sm text-foreground font-medium">
-                                        {replaceVariablesForPreview(activeVariant?.subject || '') || <span className="text-zinc-600 italic">No subject</span>}
+                                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Subject</span>
+                                    <div className="p-3 bg-muted rounded-lg border border-border text-sm text-foreground font-medium">
+                                        {replaceVariablesForPreview(activeVariant?.subject || '') || <span className="text-muted-foreground italic">No subject</span>}
                                     </div>
                                 </div>
 
                                 {/* Body */}
                                 <div className="space-y-1">
-                                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Body</span>
+                                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Body</span>
                                     <div className="p-4 bg-foreground rounded-lg text-zinc-900 text-sm leading-relaxed whitespace-pre-wrap min-h-[200px]">
-                                        {replaceVariablesForPreview(activeVariant?.body || '') || <span className="text-zinc-400 italic">No body content</span>}
+                                        {replaceVariablesForPreview(activeVariant?.body || '') || <span className="text-muted-foreground italic">No body content</span>}
                                     </div>
                                 </div>
                             </div>
@@ -1126,20 +1126,20 @@ function NewCampaignContent() {
                     />
 
                     {/* Panel */}
-                    <div className="relative w-full max-w-xl bg-zinc-950 border-l border-zinc-800 h-full overflow-y-auto animate-in slide-in-from-right duration-300 shadow-2xl">
+                    <div className="relative w-full max-w-xl bg-card border-l border-border h-full overflow-y-auto animate-in slide-in-from-right duration-300 shadow-2xl">
                         {/* Header */}
-                        <div className="sticky top-0 bg-foreground/5 backdrop-blur border-b border-zinc-800 p-6 flex items-start justify-between z-10">
+                        <div className="sticky top-0 bg-foreground/5 backdrop-blur border-b border-border p-6 flex items-start justify-between z-10">
                             <div>
                                 <h2 className="text-xl font-bold text-foreground">
                                     {detailLead.first_name} {detailLead.last_name}
                                 </h2>
-                                <p className="text-zinc-500 text-sm">{detailLead.job_title} @ {detailLead.company_name}</p>
+                                <p className="text-muted-foreground text-sm">{detailLead.job_title} @ {detailLead.company_name}</p>
                             </div>
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setDetailLead(null)}
-                                className="text-zinc-500 hover:text-foreground"
+                                className="text-muted-foreground hover:text-foreground"
                             >
                                 <X className="h-5 w-5" />
                             </Button>
@@ -1149,16 +1149,16 @@ function NewCampaignContent() {
                         <div className="p-6 space-y-6">
                             {/* Contact Info */}
                             <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Contact Info</h3>
+                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Contact Info</h3>
                                 <div className="grid gap-3">
                                     <div className="flex items-center gap-3 text-sm">
-                                        <Mail className="h-4 w-4 text-zinc-600" />
-                                        <span className="text-zinc-200">{detailLead.email}</span>
+                                        <Mail className="h-4 w-4 text-muted-foreground" />
+                                        <span className="text-foreground">{detailLead.email}</span>
                                     </div>
                                     {detailLead.phone && (
                                         <div className="flex items-center gap-3 text-sm">
-                                            <Phone className="h-4 w-4 text-zinc-600" />
-                                            <span className="text-zinc-200">{detailLead.phone}</span>
+                                            <Phone className="h-4 w-4 text-muted-foreground" />
+                                            <span className="text-foreground">{detailLead.phone}</span>
                                         </div>
                                     )}
                                     {detailLead.linkedin_url && (
@@ -1178,34 +1178,34 @@ function NewCampaignContent() {
                             {/* Icebreaker (Read Only) */}
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">AI Icebreaker</h3>
+                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">AI Icebreaker</h3>
                                     {detailLead.icebreaker_status === 'completed' && (
                                         <Badge variant="outline" className="text-[10px] text-emerald-500 border-emerald-500/20 bg-emerald-500/5">
                                             AI Generated
                                         </Badge>
                                     )}
                                 </div>
-                                <div className="p-4 bg-foreground/5 rounded-lg border border-zinc-800 text-sm text-zinc-300 italic whitespace-pre-wrap">
+                                <div className="p-4 bg-foreground/5 rounded-lg border border-border text-sm text-foreground/70 italic whitespace-pre-wrap">
                                     {detailLead.icebreaker || 'No icebreaker generated.'}
                                 </div>
                             </div>
 
                             {/* Raw Apify Data */}
                             <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                                     Full Scraped Data
                                 </h3>
-                                <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800 max-h-[400px] overflow-y-auto">
+                                <div className="bg-muted p-4 rounded-lg border border-border max-h-[400px] overflow-y-auto">
                                     {detailLead.raw_scraped_data && typeof detailLead.raw_scraped_data === 'object' ? (
                                         <div className="space-y-2">
                                             {Object.entries(detailLead.raw_scraped_data as Record<string, any>).map(([key, value]) => {
                                                 if (value === null || value === undefined || value === '') return null;
                                                 return (
-                                                    <div key={key} className="grid grid-cols-3 gap-2 py-1 border-b border-zinc-800 last:border-0">
-                                                        <span className="text-[10px] text-zinc-500 font-mono uppercase truncate" title={key.replace(/_/g, ' ')}>
+                                                    <div key={key} className="grid grid-cols-3 gap-2 py-1 border-b border-border last:border-0">
+                                                        <span className="text-[10px] text-muted-foreground font-mono uppercase truncate" title={key.replace(/_/g, ' ')}>
                                                             {key.replace(/_/g, ' ')}
                                                         </span>
-                                                        <span className="col-span-2 text-xs text-zinc-300 break-words">
+                                                        <span className="col-span-2 text-xs text-foreground/70 break-words">
                                                             {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                                                         </span>
                                                     </div>
@@ -1213,17 +1213,17 @@ function NewCampaignContent() {
                                             })}
                                         </div>
                                     ) : (
-                                        <p className="text-zinc-600 text-sm italic">No raw data available</p>
+                                        <p className="text-muted-foreground text-sm italic">No raw data available</p>
                                     )}
                                 </div>
                             </div>
 
                             {/* Raw JSON */}
                             <details className="group">
-                                <summary className="text-xs font-bold text-zinc-600 uppercase tracking-widest cursor-pointer hover:text-zinc-400">
+                                <summary className="text-xs font-bold text-muted-foreground uppercase tracking-widest cursor-pointer hover:text-muted-foreground">
                                     View Raw JSON
                                 </summary>
-                                <pre className="mt-3 bg-background p-4 rounded-lg border border-zinc-800 text-[10px] text-zinc-400 overflow-x-auto max-h-[300px] overflow-y-auto">
+                                <pre className="mt-3 bg-background p-4 rounded-lg border border-border text-[10px] text-muted-foreground overflow-x-auto max-h-[300px] overflow-y-auto">
                                     {JSON.stringify(detailLead.raw_scraped_data || detailLead, null, 2)}
                                 </pre>
                             </details>
@@ -1240,7 +1240,7 @@ export default function NewCampaignPage() {
     return (
         <Suspense fallback={
             <div className="flex items-center justify-center p-12">
-                <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
         }>
             <NewCampaignContent />

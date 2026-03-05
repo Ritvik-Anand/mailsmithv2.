@@ -543,7 +543,7 @@ export default function AdminCustomerDetailPage() {
                 {/* Infrastructure Tab */}
                 <TabsContent value="infrastructure" className="space-y-6">
                     <div className="grid gap-6 md:grid-cols-2">
-                        <Card className="bg-zinc-950 border-zinc-800">
+                        <Card className="bg-card border-border">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <ShieldCheck className="h-5 w-5 text-primary" />
@@ -554,23 +554,23 @@ export default function AdminCustomerDetailPage() {
                             <CardContent>
                                 {isNodesLoading ? (
                                     <div className="space-y-4">
-                                        {[1, 2].map(i => <div key={i} className="h-12 bg-zinc-900 animate-pulse rounded-lg" />)}
+                                        {[1, 2].map(i => <div key={i} className="h-12 bg-muted animate-pulse rounded-lg" />)}
                                     </div>
                                 ) : orgNodes.length === 0 ? (
                                     <div className="py-10 text-center border-2 border-dashed border-border rounded-xl">
-                                        <p className="text-sm text-zinc-500">No nodes assigned yet.</p>
+                                        <p className="text-sm text-muted-foreground">No nodes assigned yet.</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
                                         {orgNodes.map(node => (
-                                            <div key={node.id} className="flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-foreground/5">
+                                            <div key={node.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-foreground/5">
                                                 <div className="flex items-center gap-3">
                                                     <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center">
                                                         <Monitor className="h-4 w-4 text-primary" />
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-bold text-zinc-200">{node.email_address}</p>
-                                                        <p className="text-[10px] text-zinc-500 font-mono">ID: {node.instantly_account_id.slice(0, 15)}...</p>
+                                                        <p className="text-sm font-bold text-foreground">{node.email_address}</p>
+                                                        <p className="text-[10px] text-muted-foreground font-mono">ID: {node.instantly_account_id.slice(0, 15)}...</p>
                                                     </div>
                                                 </div>
                                                 <Button
@@ -588,7 +588,7 @@ export default function AdminCustomerDetailPage() {
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-zinc-950 border-zinc-800">
+                        <Card className="bg-card border-border">
                             <CardHeader>
                                 <CardTitle>Available Nodes</CardTitle>
                                 <CardDescription>Global unassigned capacity</CardDescription>
@@ -596,26 +596,26 @@ export default function AdminCustomerDetailPage() {
                             <CardContent>
                                 {isNodesLoading ? (
                                     <div className="space-y-4">
-                                        {[1, 2].map(i => <div key={i} className="h-12 bg-zinc-900 animate-pulse rounded-lg" />)}
+                                        {[1, 2].map(i => <div key={i} className="h-12 bg-muted animate-pulse rounded-lg" />)}
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
                                         {allNodes.filter(n => !n.organization_id).length === 0 ? (
                                             <div className="py-10 text-center border-2 border-dashed border-border rounded-xl">
-                                                <p className="text-sm text-zinc-500">No unassigned nodes available.</p>
+                                                <p className="text-sm text-muted-foreground">No unassigned nodes available.</p>
                                                 <Link href="/admin-console/infrastructure">
                                                     <Button variant="link" className="text-primary text-xs">Manage Global Infra</Button>
                                                 </Link>
                                             </div>
                                         ) : (
                                             allNodes.filter(n => !n.organization_id).map(node => (
-                                                <div key={node.id} className="flex items-center justify-between p-3 rounded-lg border border-zinc-800 hover:border-zinc-700 transition-colors">
+                                                <div key={node.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-border transition-colors">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="h-8 w-8 rounded bg-zinc-800 flex items-center justify-center">
-                                                            <Monitor className="h-4 w-4 text-zinc-400" />
+                                                        <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
+                                                            <Monitor className="h-4 w-4 text-muted-foreground" />
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-medium text-zinc-300">{node.email_address}</p>
+                                                            <p className="text-sm font-medium text-foreground/70">{node.email_address}</p>
                                                             <Badge variant="outline" className="text-[9px] px-1 py-0 border-emerald-500/20 text-emerald-500">{node.reputation_score}% score</Badge>
                                                         </div>
                                                     </div>

@@ -65,7 +65,7 @@ export default function OperatorDashboardPage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="space-y-2">
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">Operator Dashboard</h1>
-                    <p className="text-zinc-500 font-medium">Manage outreach operations for your assigned customers.</p>
+                    <p className="text-muted-foreground font-medium">Manage outreach operations for your assigned customers.</p>
                 </div>
                 <Link href="/operator/scraper">
                     <Button className="bg-primary hover:bg-primary/90 text-foreground font-bold px-6 shadow-lg shadow-primary/20">
@@ -117,11 +117,11 @@ export default function OperatorDashboardPage() {
                     <CardContent className="space-y-4">
                         {isLoading ? (
                             <div className="flex justify-center py-8">
-                                <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                             </div>
                         ) : jobs.length === 0 ? (
                             <div className="text-center py-8 border-2 border-dashed rounded-lg">
-                                <p className="text-sm text-zinc-500">No recent jobs found.</p>
+                                <p className="text-sm text-muted-foreground">No recent jobs found.</p>
                             </div>
                         ) : (
                             jobs.map((job) => (
@@ -133,14 +133,14 @@ export default function OperatorDashboardPage() {
                                             job.status === 'completed' ? 'bg-green-500/10' :
                                                 'bg-zinc-500/10'
                                             }`}>
-                                            <Target className={`h-5 w-5 ${job.status === 'running' ? 'text-purple-500' : job.status === 'completed' ? 'text-green-500' : 'text-zinc-500'}`} />
+                                            <Target className={`h-5 w-5 ${job.status === 'running' ? 'text-purple-500' : job.status === 'completed' ? 'text-green-500' : 'text-muted-foreground'}`} />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <Badge variant="outline" className="text-[10px] uppercase">
                                                     {job.status}
                                                 </Badge>
-                                                <span className="text-[10px] text-zinc-500 font-mono">{job.id.slice(0, 8)}</span>
+                                                <span className="text-[10px] text-muted-foreground font-mono">{job.id.slice(0, 8)}</span>
                                             </div>
                                             <p className="text-sm font-medium truncate">
                                                 {job.input_params.contact_job_title?.join(', ') || 'General Search'}

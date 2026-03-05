@@ -92,7 +92,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <p className="text-zinc-500 font-medium">Loading customer data...</p>
+                <p className="text-muted-foreground font-medium">Loading customer data...</p>
             </div>
         )
     }
@@ -101,7 +101,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
                 <Building2 className="h-12 w-12 text-zinc-800" />
-                <h3 className="text-zinc-500 font-bold">Customer not found</h3>
+                <h3 className="text-muted-foreground font-bold">Customer not found</h3>
                 <Link href="/operator/customers">
                     <Button variant="outline">Back to Customers</Button>
                 </Link>
@@ -125,13 +125,13 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-foreground">{organization.name}</h1>
-                            <p className="text-zinc-500 font-mono text-sm">{organization.slug}</p>
+                            <p className="text-muted-foreground font-mono text-sm">{organization.slug}</p>
                         </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <Link href={`/operator/customers/${id}/icebreaker`}>
-                        <Button variant="outline" className="border-zinc-800 text-zinc-400 hover:text-foreground">
+                        <Button variant="outline" className="border-border text-muted-foreground hover:text-foreground">
                             <Wand2 className="h-4 w-4 mr-2" />
                             Icebreaker Settings
                         </Button>
@@ -147,43 +147,43 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
 
             {/* Quick Stats */}
             <div className="grid gap-4 md:grid-cols-4">
-                <Card className="bg-zinc-950 border-border">
+                <Card className="bg-card border-border">
                     <CardContent className="p-4 flex items-center gap-3">
                         <Users className="h-8 w-8 text-primary" />
                         <div>
                             <p className="text-2xl font-bold text-foreground">{leads.length}</p>
-                            <p className="text-xs text-zinc-500 uppercase tracking-widest">Total Leads</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-widest">Total Leads</p>
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-zinc-950 border-border">
+                <Card className="bg-card border-border">
                     <CardContent className="p-4 flex items-center gap-3">
                         <Sparkles className="h-8 w-8 text-amber-500" />
                         <div>
                             <p className="text-2xl font-bold text-foreground">
                                 {leads.filter(l => l.icebreaker).length}
                             </p>
-                            <p className="text-xs text-zinc-500 uppercase tracking-widest">With Icebreakers</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-widest">With Icebreakers</p>
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-zinc-950 border-border">
+                <Card className="bg-card border-border">
                     <CardContent className="p-4 flex items-center gap-3">
                         <Send className="h-8 w-8 text-emerald-500" />
                         <div>
                             <p className="text-2xl font-bold text-foreground">
                                 {leads.filter(l => l.campaign_status === 'sent').length}
                             </p>
-                            <p className="text-xs text-zinc-500 uppercase tracking-widest">Sent to Campaign</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-widest">Sent to Campaign</p>
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-zinc-950 border-border">
+                <Card className="bg-card border-border">
                     <CardContent className="p-4 flex items-center gap-3">
                         <Target className="h-8 w-8 text-purple-500" />
                         <div>
                             <p className="text-2xl font-bold text-foreground">{jobs.length}</p>
-                            <p className="text-xs text-zinc-500 uppercase tracking-widest">Scrape Jobs</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-widest">Scrape Jobs</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -191,16 +191,16 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
 
             {/* Tabs */}
             <Tabs defaultValue="leads" className="w-full">
-                <TabsList className="bg-zinc-950 border border-border">
-                    <TabsTrigger value="leads" className="data-[state=active]:bg-zinc-900">
+                <TabsList className="bg-card border border-border">
+                    <TabsTrigger value="leads" className="data-[state=active]:bg-muted">
                         <Users className="h-4 w-4 mr-2" />
                         Leads ({leads.length})
                     </TabsTrigger>
-                    <TabsTrigger value="jobs" className="data-[state=active]:bg-zinc-900">
+                    <TabsTrigger value="jobs" className="data-[state=active]:bg-muted">
                         <Target className="h-4 w-4 mr-2" />
                         Scrape Jobs ({jobs.length})
                     </TabsTrigger>
-                    <TabsTrigger value="campaigns" className="data-[state=active]:bg-zinc-900">
+                    <TabsTrigger value="campaigns" className="data-[state=active]:bg-muted">
                         <Mail className="h-4 w-4 mr-2" />
                         Campaigns ({campaigns.length})
                     </TabsTrigger>
@@ -209,20 +209,20 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                 {/* Leads Tab */}
                 <TabsContent value="leads" className="mt-6 space-y-4">
                     <div className="relative max-w-md">
-                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-600" />
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Search leads..."
-                            className="pl-10 bg-zinc-950 border-zinc-800"
+                            className="pl-10 bg-card border-border"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
 
                     {filteredLeads.length === 0 ? (
-                        <Card className="bg-zinc-950 border-border">
+                        <Card className="bg-card border-border">
                             <CardContent className="py-16 text-center">
                                 <Users className="h-12 w-12 text-zinc-800 mx-auto mb-4" />
-                                <h3 className="text-zinc-500 font-bold">No leads yet</h3>
+                                <h3 className="text-muted-foreground font-bold">No leads yet</h3>
                                 <p className="text-zinc-700 text-sm mt-2">Start a scrape to generate leads for this customer.</p>
                                 <Link href={`/operator/scraper?org=${id}`}>
                                     <Button className="mt-4" variant="outline">
@@ -235,8 +235,8 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                     ) : (
                         <div className="rounded-lg border border-border overflow-hidden">
                             <table className="w-full">
-                                <thead className="bg-zinc-950">
-                                    <tr className="text-left text-[10px] text-zinc-500 uppercase tracking-widest">
+                                <thead className="bg-card">
+                                    <tr className="text-left text-[10px] text-muted-foreground uppercase tracking-widest">
                                         <th className="p-3 font-bold">Contact</th>
                                         <th className="p-3 font-bold">Company</th>
                                         <th className="p-3 font-bold">Title</th>
@@ -251,12 +251,12 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                                                 <p className="font-medium text-foreground text-sm">
                                                     {lead.first_name} {lead.last_name}
                                                 </p>
-                                                <p className="text-xs text-zinc-500">{lead.email}</p>
+                                                <p className="text-xs text-muted-foreground">{lead.email}</p>
                                             </td>
-                                            <td className="p-3 text-sm text-zinc-400">
+                                            <td className="p-3 text-sm text-muted-foreground">
                                                 {lead.company_name || '-'}
                                             </td>
-                                            <td className="p-3 text-sm text-zinc-400">
+                                            <td className="p-3 text-sm text-muted-foreground">
                                                 {lead.job_title || '-'}
                                             </td>
                                             <td className="p-3">
@@ -266,7 +266,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                                                         Ready
                                                     </Badge>
                                                 ) : (
-                                                    <Badge className="bg-zinc-500/10 text-zinc-500 border-zinc-500/20 text-[10px]">
+                                                    <Badge className="bg-zinc-500/10 text-muted-foreground border-zinc-500/20 text-[10px]">
                                                         <Clock className="h-3 w-3 mr-1" />
                                                         Pending
                                                     </Badge>
@@ -282,7 +282,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                                 </tbody>
                             </table>
                             {filteredLeads.length > 50 && (
-                                <div className="p-3 text-center text-xs text-zinc-500 bg-zinc-950 border-t border-border">
+                                <div className="p-3 text-center text-xs text-muted-foreground bg-card border-t border-border">
                                     Showing 50 of {filteredLeads.length} leads
                                 </div>
                             )}
@@ -293,10 +293,10 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                 {/* Jobs Tab */}
                 <TabsContent value="jobs" className="mt-6 space-y-3">
                     {jobs.length === 0 ? (
-                        <Card className="bg-zinc-950 border-border">
+                        <Card className="bg-card border-border">
                             <CardContent className="py-16 text-center">
                                 <Target className="h-12 w-12 text-zinc-800 mx-auto mb-4" />
-                                <h3 className="text-zinc-500 font-bold">No scrape jobs yet</h3>
+                                <h3 className="text-muted-foreground font-bold">No scrape jobs yet</h3>
                                 <p className="text-zinc-700 text-sm mt-2">Start a scrape for this customer.</p>
                                 <Link href={`/operator/scraper?org=${id}`}>
                                     <Button className="mt-4" variant="outline">
@@ -309,7 +309,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                     ) : (
                         jobs.map((job) => (
                             <Link key={job.id} href={`/operator/leads/${job.id}`}>
-                                <Card className="bg-zinc-950 border-border hover:border-zinc-700 transition-all cursor-pointer">
+                                <Card className="bg-card border-border hover:border-border transition-all cursor-pointer">
                                     <CardContent className="p-4 flex items-center gap-4">
                                         <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${job.status === 'running' || job.status === 'pending' ? 'bg-amber-500/10' :
                                             job.status === 'completed' ? 'bg-emerald-500/10' : 'bg-red-500/10'
@@ -327,7 +327,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                                                 <Badge variant="outline" className="text-[10px] uppercase">
                                                     {job.status}
                                                 </Badge>
-                                                <span className="text-[10px] text-zinc-600 font-mono">
+                                                <span className="text-[10px] text-muted-foreground font-mono">
                                                     {job.id.slice(0, 8)}
                                                 </span>
                                             </div>
@@ -337,7 +337,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                                         </div>
                                         <div className="text-right">
                                             <p className="text-lg font-bold text-foreground">{job.leads_imported || 0}</p>
-                                            <p className="text-[10px] text-zinc-500 uppercase">Leads</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase">Leads</p>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -358,10 +358,10 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                     </div>
 
                     {campaigns.length === 0 ? (
-                        <Card className="bg-zinc-950 border-border">
+                        <Card className="bg-card border-border">
                             <CardContent className="py-16 text-center">
                                 <Mail className="h-12 w-12 text-zinc-800 mx-auto mb-4" />
-                                <h3 className="text-zinc-500 font-bold">No campaigns yet</h3>
+                                <h3 className="text-muted-foreground font-bold">No campaigns yet</h3>
                                 <p className="text-zinc-700 text-sm mt-2">Create a campaign to start outreach for this customer.</p>
                                 <Link href={`/operator/campaigns/new?orgId=${id}`}>
                                     <Button className="mt-4" variant="outline">
@@ -374,7 +374,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                         <div className="space-y-3">
                             {campaigns.map((campaign) => (
                                 <Link key={campaign.id} href={`/operator/campaigns/${campaign.id}`}>
-                                    <Card className="bg-zinc-950 border-border hover:border-zinc-700 transition-all cursor-pointer group">
+                                    <Card className="bg-card border-border hover:border-border transition-all cursor-pointer group">
                                         <CardContent className="p-4 flex items-center gap-4">
                                             <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${campaign.status === 'active' ? 'bg-emerald-500/10' :
                                                 campaign.status === 'paused' ? 'bg-amber-500/10' :
@@ -382,18 +382,18 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                                                 }`}>
                                                 <Mail className={`h-5 w-5 ${campaign.status === 'active' ? 'text-emerald-500' :
                                                     campaign.status === 'paused' ? 'text-amber-500' :
-                                                        'text-zinc-500'
+                                                        'text-muted-foreground'
                                                     }`} />
                                             </div>
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <Badge variant="outline" className={`text-[10px] uppercase ${campaign.status === 'active' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
                                                         campaign.status === 'paused' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
-                                                            'bg-zinc-500/10 text-zinc-500 border-zinc-500/20'
+                                                            'bg-zinc-500/10 text-muted-foreground border-zinc-500/20'
                                                         }`}>
                                                         {campaign.status}
                                                     </Badge>
-                                                    <span className="text-[10px] text-zinc-600 font-mono">
+                                                    <span className="text-[10px] text-muted-foreground font-mono">
                                                         {campaign.id.slice(0, 8)}
                                                     </span>
                                                 </div>
@@ -406,11 +406,11 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                                             <div className="hidden md:flex items-center gap-6 mr-4">
                                                 <div className="text-center">
                                                     <p className="text-lg font-bold text-foreground">{campaign.emails_sent || 0}</p>
-                                                    <p className="text-[10px] text-zinc-500 uppercase">Sent</p>
+                                                    <p className="text-[10px] text-muted-foreground uppercase">Sent</p>
                                                 </div>
                                                 <div className="text-center">
                                                     <p className="text-lg font-bold text-emerald-500">{campaign.emails_replied || 0}</p>
-                                                    <p className="text-[10px] text-zinc-500 uppercase">Replies</p>
+                                                    <p className="text-[10px] text-muted-foreground uppercase">Replies</p>
                                                 </div>
                                             </div>
 

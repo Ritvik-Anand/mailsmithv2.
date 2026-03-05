@@ -520,7 +520,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
         return (
             <div className="h-96 flex flex-col items-center justify-center gap-4">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-zinc-500 font-medium">Crunching data...</p>
+                <p className="text-sm text-muted-foreground font-medium">Crunching data...</p>
             </div>
         )
     }
@@ -548,7 +548,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                             {job?.status === 'completed' ? <CheckCircle2 className="mr-1 h-3 w-3" /> : <Loader className="mr-1 h-3 w-3" />}
                             {job?.status.toUpperCase()}
                         </Badge>
-                        <span className="text-xs text-zinc-500 font-mono">Job: {jobId.slice(0, 8)}</span>
+                        <span className="text-xs text-muted-foreground font-mono">Job: {jobId.slice(0, 8)}</span>
                         {job?.apify_run_id && (
                             <a
                                 href={`https://console.apify.com/actors/runs/${job.apify_run_id}`}
@@ -571,7 +571,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                     setIsRenamingJob(true)
                                     setNewJobName(job?.name || job?.input_params.contact_job_title?.join(', ') || 'General Search')
                                 }}
-                                className="p-1.5 rounded hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors"
+                                className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground/70 transition-colors"
                                 title="Rename job"
                             >
                                 <Pencil className="h-4 w-4" />
@@ -582,7 +582,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                             <Input
                                 value={newJobName}
                                 onChange={(e) => setNewJobName(e.target.value)}
-                                className="text-xl font-bold bg-zinc-900 border-zinc-700 text-foreground max-w-md"
+                                className="text-xl font-bold bg-muted border-border text-foreground max-w-md"
                                 placeholder="Enter job name"
                                 autoFocus
                                 onKeyDown={(e) => {
@@ -613,7 +613,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                             </Button>
                         </div>
                     )}
-                    <p className="text-zinc-500 text-sm font-medium">
+                    <p className="text-muted-foreground text-sm font-medium">
                         Found {job?.leads_found || 0} potential leads. Imported {job?.leads_imported || 0} to MailSmith.
                     </p>
                 </div>
@@ -649,7 +649,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     </Button>
                     <Button
                         variant="outline"
-                        className="bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-foreground"
+                        className="bg-card border-border text-muted-foreground hover:text-foreground"
                         onClick={() => fetchData(true)}
                     >
                         <RefreshCw className="h-4 w-4 mr-2" />
@@ -658,13 +658,13 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     {/* Generation Controls */}
                     <div className="flex flex-wrap items-center gap-3">
                         {/* Icebreaker Config Selector */}
-                        <div className="flex items-center gap-2 bg-zinc-900 px-3 py-2 rounded-lg border border-zinc-800">
-                            <label className="text-xs text-zinc-400 font-medium whitespace-nowrap">Config:</label>
+                        <div className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg border border-border">
+                            <label className="text-xs text-muted-foreground font-medium whitespace-nowrap">Config:</label>
                             <select
                                 value={selectedConfigOrgId}
                                 onChange={(e) => setSelectedConfigOrgId(e.target.value)}
                                 disabled={isGenerating}
-                                className="bg-zinc-950 border border-zinc-700 rounded px-2 py-1 text-xs text-foreground focus:ring-1 focus:ring-primary outline-none min-w-[150px]"
+                                className="bg-card border border-border rounded px-2 py-1 text-xs text-foreground focus:ring-1 focus:ring-primary outline-none min-w-[150px]"
                             >
                                 <option value="">Default (Job's Org)</option>
                                 {icebreakerConfigs.map(org => (
@@ -674,20 +674,20 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                         </div>
 
                         {/* Regenerate Mode Toggle */}
-                        <label className="flex items-center gap-2 cursor-pointer bg-zinc-900 px-3 py-2 rounded-lg border border-zinc-800 hover:border-zinc-700">
+                        <label className="flex items-center gap-2 cursor-pointer bg-muted px-3 py-2 rounded-lg border border-border hover:border-border">
                             <input
                                 type="checkbox"
                                 checked={regenerateMode}
                                 onChange={(e) => setRegenerateMode(e.target.checked)}
                                 disabled={isGenerating}
-                                className="w-4 h-4 rounded border-zinc-700 text-primary focus:ring-primary"
+                                className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
                             />
-                            <span className="text-xs text-zinc-400 font-medium">Regenerate All</span>
+                            <span className="text-xs text-muted-foreground font-medium">Regenerate All</span>
                         </label>
 
                         {/* Quantity Limit */}
-                        <div className="flex items-center gap-2 bg-zinc-900 px-3 py-2 rounded-lg border border-zinc-800">
-                            <label className="text-xs text-zinc-400 font-medium">Limit:</label>
+                        <div className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg border border-border">
+                            <label className="text-xs text-muted-foreground font-medium">Limit:</label>
                             <input
                                 type="number"
                                 min="1"
@@ -696,7 +696,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                 onChange={(e) => setGenerateLimit(e.target.value ? parseInt(e.target.value) : null)}
                                 placeholder="All"
                                 disabled={isGenerating}
-                                className="w-20 bg-zinc-950 border border-zinc-700 rounded px-2 py-1 text-xs text-foreground focus:ring-1 focus:ring-primary outline-none"
+                                className="w-20 bg-card border border-border rounded px-2 py-1 text-xs text-foreground focus:ring-1 focus:ring-primary outline-none"
                             />
                         </div>
 
@@ -708,11 +708,11 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                         <Loader2 className="h-3 w-3 animate-spin" />
                                         Generating in background…
                                     </span>
-                                    <span className="text-[10px] text-zinc-500 font-mono">
+                                    <span className="text-[10px] text-muted-foreground font-mono">
                                         {bgGenProgress.completed}/{bgGenProgress.total}
                                     </span>
                                 </div>
-                                <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+                                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                                     <div
                                         className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
                                         style={{
@@ -722,7 +722,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                         }}
                                     />
                                 </div>
-                                <p className="text-[10px] text-zinc-600">You can navigate away — this runs server-side</p>
+                                <p className="text-[10px] text-muted-foreground">You can navigate away — this runs server-side</p>
                             </div>
                         ) : bgGenStatus === 'completed' ? (
                             <div className="flex items-center gap-2">
@@ -736,7 +736,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                 <Button
                                     size="sm"
                                     variant="outline"
-                                    className="text-xs border-zinc-700 text-zinc-400"
+                                    className="text-xs border-border text-muted-foreground"
                                     onClick={() => setBgGenStatus('idle')}
                                 >
                                     Regenerate
@@ -745,7 +745,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                         ) : isGenerating ? (
                             <Button
                                 variant="outline"
-                                className="border-zinc-700 text-zinc-400"
+                                className="border-border text-muted-foreground"
                                 disabled
                             >
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -770,10 +770,10 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                 <div className="lg:col-span-2 space-y-4">
                     <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                         <div className="relative flex-1 w-full">
-                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
+                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Search leads by name, email, or company..."
-                                className="pl-10 bg-zinc-950 border-zinc-800 h-10 text-sm"
+                                className="pl-10 bg-card border-border h-10 text-sm"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -784,7 +784,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                     key={status}
                                     variant="outline"
                                     size="sm"
-                                    className={`text-[10px] font-bold uppercase tracking-widest h-8 px-3 ${filterStatus === status ? 'border-primary text-primary bg-primary/5' : 'border-zinc-800 text-zinc-500'}`}
+                                    className={`text-[10px] font-bold uppercase tracking-widest h-8 px-3 ${filterStatus === status ? 'border-primary text-primary bg-primary/5' : 'border-border text-muted-foreground'}`}
                                     onClick={() => setFilterStatus(status)}
                                 >
                                     {status}
@@ -793,12 +793,12 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                         </div>
                     </div>
 
-                    <Card className="bg-zinc-950 border-zinc-800 rounded-xl overflow-hidden shadow-none">
+                    <Card className="bg-card border-border rounded-xl overflow-hidden shadow-none">
                         <CardHeader className="border-b border-border bg-foreground/5 py-3">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <CardTitle className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Prospect List</CardTitle>
-                                    <span className="text-[10px] text-zinc-500 font-mono">
+                                    <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Prospect List</CardTitle>
+                                    <span className="text-[10px] text-muted-foreground font-mono">
                                         Showing {leads.length} of {totalLeads} leads {!loadAll && totalLeads > pageSize && `(Page ${currentPage})`}
                                     </span>
                                 </div>
@@ -818,15 +818,15 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                             <Table>
                                 <TableHeader>
                                     <TableRow className="border-border hover:bg-transparent bg-background">
-                                        <TableHead className="text-[10px] font-bold text-zinc-500 pl-6 h-10 uppercase">Lead</TableHead>
-                                        <TableHead className="text-[10px] font-bold text-zinc-500 h-10 uppercase">Icebreaker</TableHead>
-                                        <TableHead className="text-[10px] font-bold text-zinc-500 h-10 uppercase pr-6 text-right">Status</TableHead>
+                                        <TableHead className="text-[10px] font-bold text-muted-foreground pl-6 h-10 uppercase">Lead</TableHead>
+                                        <TableHead className="text-[10px] font-bold text-muted-foreground h-10 uppercase">Icebreaker</TableHead>
+                                        <TableHead className="text-[10px] font-bold text-muted-foreground h-10 uppercase pr-6 text-right">Status</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {filteredLeads.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={3} className="h-32 text-center text-zinc-600 italic text-xs">
+                                            <TableCell colSpan={3} className="h-32 text-center text-muted-foreground italic text-xs">
                                                 No leads matching your filters
                                             </TableCell>
                                         </TableRow>
@@ -841,10 +841,10 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                         >
                                             <TableCell className="pl-6 py-4 max-w-[200px]">
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-sm text-zinc-200">{lead.first_name} {lead.last_name}</span>
-                                                    <span className="text-xs text-zinc-500 truncate">{lead.job_title} @ {lead.company_name}</span>
+                                                    <span className="font-bold text-sm text-foreground">{lead.first_name} {lead.last_name}</span>
+                                                    <span className="text-xs text-muted-foreground truncate">{lead.job_title} @ {lead.company_name}</span>
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-[10px] text-zinc-600 truncate">{lead.email}</span>
+                                                        <span className="text-[10px] text-muted-foreground truncate">{lead.email}</span>
                                                         {lead.linkedin_url && (
                                                             <a href={lead.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80" onClick={(e) => e.stopPropagation()}>
                                                                 <ExternalLink className="h-3 w-3" />
@@ -855,7 +855,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                             </TableCell>
                                             <TableCell className="py-4">
                                                 {lead.icebreaker_status === 'completed' ? (
-                                                    <p className="text-xs text-zinc-300 italic line-clamp-2 max-w-[300px]">"{lead.icebreaker}"</p>
+                                                    <p className="text-xs text-foreground/70 italic line-clamp-2 max-w-[300px]">"{lead.icebreaker}"</p>
                                                 ) : lead.icebreaker_status === 'generating' ? (
                                                     <div className="flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-tighter">
                                                         <Loader2 className="h-3 w-3 animate-spin" />
@@ -864,7 +864,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                                 ) : lead.icebreaker_status === 'failed' ? (
                                                     <span className="text-xs text-red-500 font-medium">Wait, let me try again</span>
                                                 ) : (
-                                                    <span className="text-[10px] text-zinc-600 uppercase font-black tracking-widest">Pending AI Review</span>
+                                                    <span className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Pending AI Review</span>
                                                 )}
                                             </TableCell>
                                             <TableCell className="pr-6 text-right">
@@ -873,11 +873,11 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                                         text-[10px] font-bold px-1.5 py-0 rounded lowercase
                                                         ${lead.campaign_status === 'queued' ? 'bg-amber-500/5 text-amber-500 border-amber-500/20' :
                                                             lead.campaign_status === 'sent' ? 'bg-emerald-500/5 text-emerald-500 border-emerald-500/20' :
-                                                                'bg-zinc-500/5 text-zinc-500 border-zinc-500/20'}
+                                                                'bg-zinc-500/5 text-muted-foreground border-zinc-500/20'}
                                                     `}>
                                                         {lead.campaign_status === 'not_added' ? 'ready' : lead.campaign_status}
                                                     </Badge>
-                                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-zinc-500 hover:text-primary">
+                                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-primary">
                                                         <Eye className="h-3.5 w-3.5" />
                                                     </Button>
                                                 </div>
@@ -889,14 +889,14 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                         </CardContent>
                         {!loadAll && totalLeads > pageSize && (
                             <div className="border-t border-border bg-foreground/5 px-6 py-3 flex items-center justify-between">
-                                <span className="text-xs text-zinc-500">
+                                <span className="text-xs text-muted-foreground">
                                     Page {currentPage} of {Math.ceil(totalLeads / pageSize)}
                                 </span>
                                 <div className="flex items-center gap-2">
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        className="h-8 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-foreground disabled:opacity-50"
+                                        className="h-8 px-3 bg-muted border-border text-muted-foreground hover:text-foreground disabled:opacity-50"
                                         onClick={handlePrevPage}
                                         disabled={currentPage === 1}
                                     >
@@ -905,7 +905,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        className="h-8 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-foreground disabled:opacity-50"
+                                        className="h-8 px-3 bg-muted border-border text-muted-foreground hover:text-foreground disabled:opacity-50"
                                         onClick={handleNextPage}
                                         disabled={currentPage * pageSize >= totalLeads}
                                     >
@@ -919,18 +919,18 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
 
                 {/* Automation Panel */}
                 <div className="space-y-6">
-                    <Card className="bg-zinc-950 border-zinc-800 shadow-none border-t-primary/30 border-t-2">
+                    <Card className="bg-card border-border shadow-none border-t-primary/30 border-t-2">
                         <CardHeader>
                             <CardTitle className="text-sm font-bold uppercase tracking-widest text-primary">Push to Outreach</CardTitle>
-                            <CardDescription className="text-[11px] text-zinc-500">Send these high-quality leads to an active Instantly campaign.</CardDescription>
+                            <CardDescription className="text-[11px] text-muted-foreground">Send these high-quality leads to an active Instantly campaign.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="space-y-2">
-                                <Label className="text-xs text-zinc-400">Target Campaign</Label>
+                                <Label className="text-xs text-muted-foreground">Target Campaign</Label>
                                 {!isCreatingCampaign ? (
                                     <>
                                         <select
-                                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg h-10 px-3 text-sm focus:ring-1 focus:ring-primary outline-none"
+                                            className="w-full bg-muted border border-border rounded-lg h-10 px-3 text-sm focus:ring-1 focus:ring-primary outline-none"
                                             value={selectedCampaign}
                                             onChange={(e) => {
                                                 if (e.target.value === '__create_new__') {
@@ -958,7 +958,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                         <Input
                                             value={newCampaignName}
                                             onChange={(e) => setNewCampaignName(e.target.value)}
-                                            className="bg-zinc-950 border-zinc-700 text-sm"
+                                            className="bg-card border-border text-sm"
                                             placeholder="Enter campaign name"
                                             autoFocus
                                             onKeyDown={(e) => {
@@ -985,7 +985,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                                     setIsCreatingCampaign(false)
                                                     setNewCampaignName('')
                                                 }}
-                                                className="border-zinc-700"
+                                                className="border-border"
                                             >
                                                 Cancel
                                             </Button>
@@ -996,19 +996,19 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
 
                             <div className="space-y-4 pt-2">
                                 <div className="flex items-center justify-between text-xs">
-                                    <span className="text-zinc-500">Total Leads</span>
+                                    <span className="text-muted-foreground">Total Leads</span>
                                     <span className="font-bold text-foreground">{allLeadsStats.total}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs">
-                                    <span className="text-zinc-500">Icebreakers Ready</span>
+                                    <span className="text-muted-foreground">Icebreakers Ready</span>
                                     <span className="font-bold text-green-500">{allLeadsStats.completed}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs">
-                                    <span className="text-zinc-500">Pending Generation</span>
+                                    <span className="text-muted-foreground">Pending Generation</span>
                                     <span className="font-bold text-amber-500">{allLeadsStats.pending + allLeadsStats.failed}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs border-t border-border pt-3">
-                                    <span className="text-zinc-500">Available to push</span>
+                                    <span className="text-muted-foreground">Available to push</span>
                                     <span className="font-bold text-foreground">{allLeadsStats.readyToPush}</span>
                                 </div>
                             </div>
@@ -1034,21 +1034,21 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     </Card>
 
                     {/* Assign to Customer Card */}
-                    <Card className="bg-zinc-950 border-zinc-800 shadow-none border-t-blue-500/30 border-t-2">
+                    <Card className="bg-card border-border shadow-none border-t-blue-500/30 border-t-2">
                         <CardHeader>
                             <CardTitle className="text-sm font-bold uppercase tracking-widest text-blue-500 flex items-center gap-2">
                                 <UserPlus className="h-4 w-4" />
                                 Assign to Customer
                             </CardTitle>
-                            <CardDescription className="text-[11px] text-zinc-500">
+                            <CardDescription className="text-[11px] text-muted-foreground">
                                 Transfer these leads to a customer's account without adding to campaign.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="space-y-2">
-                                <Label className="text-xs text-zinc-400">Target Customer</Label>
+                                <Label className="text-xs text-muted-foreground">Target Customer</Label>
                                 <select
-                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg h-10 px-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none"
+                                    className="w-full bg-muted border border-border rounded-lg h-10 px-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                                     value={selectedTargetOrg}
                                     onChange={(e) => setSelectedTargetOrg(e.target.value)}
                                 >
@@ -1060,8 +1060,8 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                             </div>
 
                             <div className="space-y-2 bg-blue-500/5 border border-blue-500/20 rounded-lg p-3">
-                                <p className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">What This Does:</p>
-                                <ul className="text-[11px] text-zinc-400 space-y-1">
+                                <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">What This Does:</p>
+                                <ul className="text-[11px] text-muted-foreground space-y-1">
                                     <li>• Transfers {allLeadsStats.total} leads to customer's account</li>
                                     <li>• Leads become visible in customer's dashboard</li>
                                     <li>• Does NOT add to any campaign yet</li>
@@ -1089,19 +1089,19 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-zinc-950 border-zinc-800 shadow-none">
+                    <Card className="bg-card border-border shadow-none">
                         <CardHeader>
-                            <CardTitle className="text-xs font-bold uppercase tracking-widest text-zinc-500">Processing Stats</CardTitle>
+                            <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Processing Stats</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden">
+                            <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-primary transition-all duration-500"
                                     style={{ width: `${(allLeadsStats.completed / (allLeadsStats.total || 1)) * 100}%` }}
                                 />
                             </div>
-                            <p className="text-[10px] text-zinc-500 font-medium">
-                                AI coverage: <span className="text-zinc-200">{(allLeadsStats.completed / (allLeadsStats.total || 1) * 100).toFixed(0)}%</span> across all {allLeadsStats.total} leads.
+                            <p className="text-[10px] text-muted-foreground font-medium">
+                                AI coverage: <span className="text-foreground">{(allLeadsStats.completed / (allLeadsStats.total || 1) * 100).toFixed(0)}%</span> across all {allLeadsStats.total} leads.
                             </p>
                         </CardContent>
                     </Card>
@@ -1118,20 +1118,20 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                     />
 
                     {/* Panel */}
-                    <div className="relative w-full max-w-xl bg-zinc-950 border-l border-zinc-800 h-full overflow-y-auto animate-in slide-in-from-right duration-300">
+                    <div className="relative w-full max-w-xl bg-card border-l border-border h-full overflow-y-auto animate-in slide-in-from-right duration-300">
                         {/* Header */}
-                        <div className="sticky top-0 bg-zinc-950 border-b border-zinc-800 p-6 flex items-start justify-between">
+                        <div className="sticky top-0 bg-card border-b border-border p-6 flex items-start justify-between">
                             <div>
                                 <h2 className="text-xl font-bold text-foreground">
                                     {selectedLead.first_name} {selectedLead.last_name}
                                 </h2>
-                                <p className="text-zinc-500 text-sm">{selectedLead.job_title} @ {selectedLead.company_name}</p>
+                                <p className="text-muted-foreground text-sm">{selectedLead.job_title} @ {selectedLead.company_name}</p>
                             </div>
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setSelectedLead(null)}
-                                className="text-zinc-500 hover:text-foreground"
+                                className="text-muted-foreground hover:text-foreground"
                             >
                                 <X className="h-5 w-5" />
                             </Button>
@@ -1141,16 +1141,16 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                         <div className="p-6 space-y-6">
                             {/* Contact Info */}
                             <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Contact Info</h3>
+                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Contact Info</h3>
                                 <div className="grid gap-3">
                                     <div className="flex items-center gap-3 text-sm">
-                                        <Mail className="h-4 w-4 text-zinc-600" />
-                                        <span className="text-zinc-200">{selectedLead.email}</span>
+                                        <Mail className="h-4 w-4 text-muted-foreground" />
+                                        <span className="text-foreground">{selectedLead.email}</span>
                                     </div>
                                     {selectedLead.phone && (
                                         <div className="flex items-center gap-3 text-sm">
-                                            <Phone className="h-4 w-4 text-zinc-600" />
-                                            <span className="text-zinc-200">{selectedLead.phone}</span>
+                                            <Phone className="h-4 w-4 text-muted-foreground" />
+                                            <span className="text-foreground">{selectedLead.phone}</span>
                                         </div>
                                     )}
                                     {selectedLead.linkedin_url && (
@@ -1170,7 +1170,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                             {/* Icebreaker (Editable) */}
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">AI Icebreaker</h3>
+                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">AI Icebreaker</h3>
                                     {selectedLead.icebreaker_status === 'completed' && (
                                         <Badge variant="outline" className="text-[10px] text-emerald-500 border-emerald-500/20 bg-emerald-500/5">
                                             AI Generated
@@ -1182,7 +1182,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                         value={editingIcebreaker}
                                         onChange={(e) => setEditingIcebreaker(e.target.value)}
                                         placeholder="No icebreaker generated yet..."
-                                        className="min-h-[120px] bg-zinc-900 border-zinc-800 text-sm text-zinc-300 italic resize-none focus:ring-1 focus:ring-primary"
+                                        className="min-h-[120px] bg-muted border-border text-sm text-foreground/70 italic resize-none focus:ring-1 focus:ring-primary"
                                     />
                                     <div className="flex justify-end">
                                         <Button
@@ -1200,20 +1200,20 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
 
                             {/* Raw Apify Data */}
                             <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                                     Full Scraped Data (from Apify)
                                 </h3>
-                                <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800 max-h-[400px] overflow-y-auto">
+                                <div className="bg-muted p-4 rounded-lg border border-border max-h-[400px] overflow-y-auto">
                                     {selectedLead.raw_scraped_data && typeof selectedLead.raw_scraped_data === 'object' ? (
                                         <div className="space-y-2">
                                             {Object.entries(selectedLead.raw_scraped_data as Record<string, any>).map(([key, value]) => {
                                                 if (value === null || value === undefined || value === '') return null;
                                                 return (
-                                                    <div key={key} className="grid grid-cols-3 gap-2 py-1 border-b border-zinc-800 last:border-0">
-                                                        <span className="text-[10px] text-zinc-500 font-mono uppercase">
+                                                    <div key={key} className="grid grid-cols-3 gap-2 py-1 border-b border-border last:border-0">
+                                                        <span className="text-[10px] text-muted-foreground font-mono uppercase">
                                                             {key.replace(/_/g, ' ')}
                                                         </span>
-                                                        <span className="col-span-2 text-xs text-zinc-300 break-words">
+                                                        <span className="col-span-2 text-xs text-foreground/70 break-words">
                                                             {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                                                         </span>
                                                     </div>
@@ -1221,17 +1221,17 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                                             })}
                                         </div>
                                     ) : (
-                                        <p className="text-zinc-600 text-sm italic">No raw data available</p>
+                                        <p className="text-muted-foreground text-sm italic">No raw data available</p>
                                     )}
                                 </div>
                             </div>
 
                             {/* Raw JSON (collapsible) */}
                             <details className="group">
-                                <summary className="text-xs font-bold text-zinc-600 uppercase tracking-widest cursor-pointer hover:text-zinc-400">
+                                <summary className="text-xs font-bold text-muted-foreground uppercase tracking-widest cursor-pointer hover:text-muted-foreground">
                                     View Raw JSON
                                 </summary>
-                                <pre className="mt-3 bg-background p-4 rounded-lg border border-zinc-800 text-[10px] text-zinc-400 overflow-x-auto max-h-[300px] overflow-y-auto">
+                                <pre className="mt-3 bg-background p-4 rounded-lg border border-border text-[10px] text-muted-foreground overflow-x-auto max-h-[300px] overflow-y-auto">
                                     {JSON.stringify(selectedLead.raw_scraped_data, null, 2)}
                                 </pre>
                             </details>
@@ -1241,10 +1241,10 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
             )}
             {/* Confirmation Dialogs */}
             <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-                <DialogContent className="bg-zinc-950 border-border text-zinc-100">
+                <DialogContent className="bg-card border-border text-foreground">
                     <DialogHeader>
                         <DialogTitle>Assign Leads to Customer</DialogTitle>
-                        <DialogDescription className="text-zinc-400">
+                        <DialogDescription className="text-muted-foreground">
                             Assign all {allLeadsStats.total} leads to the selected customer? This allows the customer to view these leads in their portal.
                         </DialogDescription>
                     </DialogHeader>
@@ -1256,10 +1256,10 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
             </Dialog>
 
             <Dialog open={generationDialogOpen} onOpenChange={setGenerationDialogOpen}>
-                <DialogContent className="bg-zinc-950 border-border text-zinc-100">
+                <DialogContent className="bg-card border-border text-foreground">
                     <DialogHeader>
                         <DialogTitle>Generate Icebreakers</DialogTitle>
-                        <DialogDescription className="text-zinc-400">
+                        <DialogDescription className="text-muted-foreground">
                             {generationMessage}
                         </DialogDescription>
                     </DialogHeader>

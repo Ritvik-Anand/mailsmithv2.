@@ -92,8 +92,8 @@ export default function AdminNotificationsPage() {
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-10">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight text-zinc-100 italic">Communications & Alerts</h1>
-                <p className="text-zinc-500">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground italic">Communications & Alerts</h1>
+                <p className="text-muted-foreground">
                     Monitor system events and broadcast critical updates to your customer base
                 </p>
             </div>
@@ -101,19 +101,19 @@ export default function AdminNotificationsPage() {
             <div className="grid gap-8 lg:grid-cols-3">
                 {/* Notification Feed */}
                 <div className="lg:col-span-2 space-y-6">
-                    <Card className="bg-foreground/5 border-zinc-800 h-full flex flex-col">
+                    <Card className="bg-foreground/5 border-border h-full flex flex-col">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0">
                             <div>
-                                <CardTitle className="text-zinc-100 text-lg flex items-center gap-2">
+                                <CardTitle className="text-foreground text-lg flex items-center gap-2">
                                     <Bell className="h-5 w-5 text-primary" />
                                     System Intelligence Feed
                                 </CardTitle>
-                                <CardDescription className="text-zinc-500 text-xs">
+                                <CardDescription className="text-muted-foreground text-xs">
                                     Real-time overview of platform activity and automated alerts
                                 </CardDescription>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+                                <Button variant="ghost" size="sm" className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
                                     Mark All As Read
                                 </Button>
                             </div>
@@ -125,8 +125,8 @@ export default function AdminNotificationsPage() {
                                         <div
                                             key={n.id}
                                             className={cn(
-                                                "p-4 rounded-xl border transition-all cursor-pointer group hover:bg-zinc-800/30",
-                                                n.read ? "bg-foreground/5 border-zinc-800/50 opacity-60" : "bg-zinc-900 border-zinc-800"
+                                                "p-4 rounded-xl border transition-all cursor-pointer group hover:bg-muted/30",
+                                                n.read ? "bg-foreground/5 border-border/50 opacity-60" : "bg-muted border-border"
                                             )}
                                             onClick={() => markAsRead(n.id)}
                                         >
@@ -135,7 +135,7 @@ export default function AdminNotificationsPage() {
                                                     "p-2 rounded-lg border",
                                                     n.type === 'critical' ? "bg-rose-500/10 border-rose-500/20" :
                                                         n.type === 'warning' ? "bg-amber-500/10 border-amber-500/20" :
-                                                            "bg-zinc-800 border-zinc-700"
+                                                            "bg-muted border-border"
                                                 )}>
                                                     {n.type === 'critical' ? <AlertTriangle className="h-4 w-4 text-rose-500" /> :
                                                         n.type === 'warning' ? <AlertTriangle className="h-4 w-4 text-amber-500" /> :
@@ -146,14 +146,14 @@ export default function AdminNotificationsPage() {
                                                     <div className="flex items-center justify-between">
                                                         <p className={cn(
                                                             "text-sm font-bold",
-                                                            !n.read ? "text-zinc-100" : "text-zinc-400"
+                                                            !n.read ? "text-foreground" : "text-muted-foreground"
                                                         )}>{n.title}</p>
-                                                        <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
+                                                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                                                             <Clock className="h-3 w-3" />
                                                             {n.timestamp}
                                                         </div>
                                                     </div>
-                                                    <p className="text-xs text-zinc-500 leading-relaxed">
+                                                    <p className="text-xs text-muted-foreground leading-relaxed">
                                                         {n.message}
                                                     </p>
                                                 </div>
@@ -168,36 +168,36 @@ export default function AdminNotificationsPage() {
 
                 {/* Broadcast Tool */}
                 <div className="space-y-6">
-                    <Card className="bg-zinc-900 border-primary/20 shadow-[0_0_20px_rgba(var(--primary-rgb),0.1)] relative overflow-hidden">
+                    <Card className="bg-muted border-primary/20 shadow-[0_0_20px_rgba(var(--primary-rgb),0.1)] relative overflow-hidden">
                         {/* Visual overlay */}
                         <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
                             <Megaphone className="h-32 w-32" />
                         </div>
 
                         <CardHeader>
-                            <CardTitle className="text-zinc-100 text-lg flex items-center gap-2">
+                            <CardTitle className="text-foreground text-lg flex items-center gap-2">
                                 <Megaphone className="h-5 w-5 text-primary" />
                                 Master Broadcast
                             </CardTitle>
-                            <CardDescription className="text-zinc-500 text-xs">
+                            <CardDescription className="text-muted-foreground text-xs">
                                 Send a global announcement to all customer dashboards instantly.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4 pt-2">
                             <div className="space-y-2">
-                                <Label className="text-zinc-400 text-xs uppercase tracking-widest font-bold">Broadcast Title</Label>
+                                <Label className="text-muted-foreground text-xs uppercase tracking-widest font-bold">Broadcast Title</Label>
                                 <Input
                                     placeholder="Maintenance Update..."
-                                    className="bg-zinc-950 border-zinc-800 h-10 focus:ring-primary/20"
+                                    className="bg-card border-border h-10 focus:ring-primary/20"
                                     value={broadcastTitle}
                                     onChange={(e) => setBroadcastTitle(e.target.value)}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-zinc-400 text-xs uppercase tracking-widest font-bold">Message Content</Label>
+                                <Label className="text-muted-foreground text-xs uppercase tracking-widest font-bold">Message Content</Label>
                                 <Textarea
                                     placeholder="Describe the update clearly..."
-                                    className="bg-zinc-950 border-zinc-800 min-h-[120px] focus:ring-primary/20"
+                                    className="bg-card border-border min-h-[120px] focus:ring-primary/20"
                                     value={broadcastMessage}
                                     onChange={(e) => setBroadcastMessage(e.target.value)}
                                 />
@@ -215,25 +215,25 @@ export default function AdminNotificationsPage() {
                                     )}
                                     Deploy Announcement
                                 </Button>
-                                <p className="text-[10px] text-center text-zinc-600 mt-3 italic">
+                                <p className="text-[10px] text-center text-muted-foreground mt-3 italic">
                                     Authorized agents only. This action cannot be undone.
                                 </p>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-foreground/5 border-zinc-800">
+                    <Card className="bg-foreground/5 border-border">
                         <CardHeader>
-                            <CardTitle className="text-zinc-100 text-sm flex items-center gap-2 uppercase tracking-tighter">
-                                <Filter className="h-4 w-4 text-zinc-500" />
+                            <CardTitle className="text-foreground text-sm flex items-center gap-2 uppercase tracking-tighter">
+                                <Filter className="h-4 w-4 text-muted-foreground" />
                                 Feed Filters
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2">
                             {['Critical Alerts', 'Development Logs', 'Customer Milestones', 'Resolved'].map((filter) => (
-                                <div key={filter} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-zinc-800/50 transition-colors cursor-pointer group">
+                                <div key={filter} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group">
                                     <div className="h-1.5 w-1.5 rounded-full bg-zinc-700 group-hover:bg-primary transition-colors" />
-                                    <span className="text-xs text-zinc-400 group-hover:text-zinc-200 transition-colors">{filter}</span>
+                                    <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">{filter}</span>
                                 </div>
                             ))}
                         </CardContent>

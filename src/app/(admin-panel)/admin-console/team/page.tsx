@@ -220,8 +220,8 @@ export default function AdminTeamPage() {
         <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-zinc-100 italic">Internal Command Team</h1>
-                    <p className="text-zinc-500">
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground italic">Internal Command Team</h1>
+                    <p className="text-muted-foreground">
                         Manage administrative roles and system-locked access keys
                     </p>
                 </div>
@@ -233,10 +233,10 @@ export default function AdminTeamPage() {
                                 Onboard New Admin
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100 sm:max-w-2xl">
+                        <DialogContent className="bg-muted border-border text-foreground sm:max-w-2xl">
                             <DialogHeader>
                                 <DialogTitle className="text-xl">Onboard New System Admin</DialogTitle>
-                                <DialogDescription className="text-zinc-500">
+                                <DialogDescription className="text-muted-foreground">
                                     Assign a starting role and define specific access permissions.
                                 </DialogDescription>
                             </DialogHeader>
@@ -244,69 +244,69 @@ export default function AdminTeamPage() {
                             <div className="grid gap-6 py-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="name" className="text-zinc-400">Full Name</Label>
+                                        <Label htmlFor="name" className="text-muted-foreground">Full Name</Label>
                                         <Input
                                             id="name"
                                             placeholder="John Doe"
-                                            className="bg-zinc-800 border-zinc-700"
+                                            className="bg-muted border-border"
                                             value={formData.name}
                                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="email" className="text-zinc-400">Email Address</Label>
+                                        <Label htmlFor="email" className="text-muted-foreground">Email Address</Label>
                                         <Input
                                             id="email"
                                             type="email"
                                             placeholder="john@acquifix.com"
-                                            className="bg-zinc-800 border-zinc-700"
+                                            className="bg-muted border-border"
                                             value={formData.email}
                                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                         />
                                     </div>
                                     <div className="space-y-2 col-span-2">
-                                        <Label htmlFor="avatar" className="text-zinc-400">Avatar URL (Optional)</Label>
+                                        <Label htmlFor="avatar" className="text-muted-foreground">Avatar URL (Optional)</Label>
                                         <div className="flex gap-2">
                                             <Input
                                                 id="avatar"
                                                 placeholder="https://..."
-                                                className="bg-zinc-800 border-zinc-700"
+                                                className="bg-muted border-border"
                                                 value={formData.avatar_url}
                                                 onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
                                             />
-                                            <Button variant="outline" size="icon" className="border-zinc-800 shrink-0">
-                                                <Camera className="h-4 w-4 text-zinc-500" />
+                                            <Button variant="outline" size="icon" className="border-border shrink-0">
+                                                <Camera className="h-4 w-4 text-muted-foreground" />
                                             </Button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="rounded-xl bg-zinc-950 p-4 border border-zinc-800/50 space-y-3">
+                                <div className="rounded-xl bg-card p-4 border border-border/50 space-y-3">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <Key className="h-4 w-4 text-emerald-500" />
-                                            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Auto-Generated Access Key</span>
+                                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Auto-Generated Access Key</span>
                                         </div>
                                         <Badge className="bg-emerald-500/10 text-emerald-500 border-none">SECURE</Badge>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <code className="flex-1 bg-zinc-900 px-4 py-2 rounded-lg border border-zinc-800 text-emerald-400 font-mono text-sm tracking-widest">
+                                        <code className="flex-1 bg-muted px-4 py-2 rounded-lg border border-border text-emerald-400 font-mono text-sm tracking-widest">
                                             {accessKey}
                                         </code>
-                                        <Button variant="outline" size="icon" className="border-zinc-800 h-9 w-9">
-                                            <RefreshCw className="h-4 w-4 text-zinc-500" />
+                                        <Button variant="outline" size="icon" className="border-border h-9 w-9">
+                                            <RefreshCw className="h-4 w-4 text-muted-foreground" />
                                         </Button>
                                     </div>
-                                    <p className="text-[10px] text-zinc-600">
+                                    <p className="text-[10px] text-muted-foreground">
                                         Note: This key will only be shown once. Please provide it securely to the team member.
                                     </p>
                                 </div>
 
                                 <div className="space-y-4">
-                                    <Label className="text-zinc-400">Permission Set</Label>
+                                    <Label className="text-muted-foreground">Permission Set</Label>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {PERMISSIONS.map((permission) => (
-                                            <div key={permission.id} className="flex items-start space-x-3 space-y-0 rounded-lg border border-zinc-800 p-3 hover:bg-zinc-800/50 transition-colors">
+                                            <div key={permission.id} className="flex items-start space-x-3 space-y-0 rounded-lg border border-border p-3 hover:bg-muted/50 transition-colors">
                                                 <Checkbox
                                                     id={permission.id}
                                                     className="mt-1 border-zinc-600 data-[state=checked]:bg-primary"
@@ -320,7 +320,7 @@ export default function AdminTeamPage() {
                                                     >
                                                         {permission.label}
                                                     </label>
-                                                    <p className="text-xs text-zinc-500">
+                                                    <p className="text-xs text-muted-foreground">
                                                         {permission.description}
                                                     </p>
                                                 </div>
@@ -333,7 +333,7 @@ export default function AdminTeamPage() {
                             <DialogFooter>
                                 <Button
                                     variant="outline"
-                                    className="border-zinc-800 hover:bg-zinc-800"
+                                    className="border-border hover:bg-muted"
                                     onClick={handleCancel}
                                     disabled={isPending}
                                 >
@@ -358,9 +358,9 @@ export default function AdminTeamPage() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-4">
-                <Card className="bg-foreground/5 border-zinc-800">
+                <Card className="bg-foreground/5 border-border">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-zinc-500">Master Admins</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Master Admins</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold flex items-center gap-2">
@@ -369,9 +369,9 @@ export default function AdminTeamPage() {
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-foreground/5 border-zinc-800">
+                <Card className="bg-foreground/5 border-border">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-zinc-500">Operational Admins</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Operational Admins</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
@@ -379,9 +379,9 @@ export default function AdminTeamPage() {
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-foreground/5 border-zinc-800">
+                <Card className="bg-foreground/5 border-border">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-zinc-500">Support Staff</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Support Staff</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
@@ -389,9 +389,9 @@ export default function AdminTeamPage() {
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-foreground/5 border-zinc-800">
+                <Card className="bg-foreground/5 border-border">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-zinc-500">Total Force</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Force</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-emerald-500">
@@ -401,7 +401,7 @@ export default function AdminTeamPage() {
                 </Card>
             </div>
 
-            <Card className="bg-foreground/5 border-zinc-800">
+            <Card className="bg-foreground/5 border-border">
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div>
@@ -409,10 +409,10 @@ export default function AdminTeamPage() {
                             <CardDescription>Review and adjust internal permissions per user</CardDescription>
                         </div>
                         <div className="relative w-64">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500" />
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Search team members..."
-                                className="pl-9 bg-zinc-800/50 border-zinc-700"
+                                className="pl-9 bg-muted/50 border-border"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -421,20 +421,20 @@ export default function AdminTeamPage() {
                 </CardHeader>
                 <CardContent>
                     <Table>
-                        <TableHeader className="border-zinc-800">
-                            <TableRow className="hover:bg-zinc-800/50 border-zinc-800">
-                                <TableHead className="text-zinc-400">Team Member</TableHead>
-                                <TableHead className="text-zinc-400">Authority</TableHead>
-                                <TableHead className="text-zinc-400">Access Key (Master Only)</TableHead>
-                                <TableHead className="text-zinc-400">Permissions</TableHead>
-                                <TableHead className="text-zinc-400">Last Active</TableHead>
-                                <TableHead className="text-right text-zinc-400">Actions</TableHead>
+                        <TableHeader className="border-border">
+                            <TableRow className="hover:bg-muted/50 border-border">
+                                <TableHead className="text-muted-foreground">Team Member</TableHead>
+                                <TableHead className="text-muted-foreground">Authority</TableHead>
+                                <TableHead className="text-muted-foreground">Access Key (Master Only)</TableHead>
+                                <TableHead className="text-muted-foreground">Permissions</TableHead>
+                                <TableHead className="text-muted-foreground">Last Active</TableHead>
+                                <TableHead className="text-right text-muted-foreground">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredTeam.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-24 text-center text-zinc-500">
+                                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                                         {isLoading ? (
                                             <div className="flex items-center justify-center gap-2">
                                                 <RefreshCw className="h-4 w-4 animate-spin" />
@@ -447,18 +447,18 @@ export default function AdminTeamPage() {
                                 </TableRow>
                             ) : (
                                 filteredTeam.map((admin) => (
-                                    <TableRow key={admin.id} className="hover:bg-zinc-800/30 border-zinc-800 group transition-all">
+                                    <TableRow key={admin.id} className="hover:bg-muted/30 border-border group transition-all">
                                         <TableCell>
                                             <div className="flex items-center gap-3">
-                                                <Avatar className="h-9 w-9 border border-zinc-800">
+                                                <Avatar className="h-9 w-9 border border-border">
                                                     <AvatarImage src={admin.avatar_url || ''} />
-                                                    <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs text-center leading-9">
+                                                    <AvatarFallback className="bg-muted text-muted-foreground text-xs text-center leading-9">
                                                         {admin.full_name?.substring(0, 2).toUpperCase() || '??'}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-zinc-100">{admin.full_name}</span>
-                                                    <span className="text-xs text-zinc-500">{admin.email}</span>
+                                                    <span className="font-bold text-foreground">{admin.full_name}</span>
+                                                    <span className="text-xs text-muted-foreground">{admin.email}</span>
                                                 </div>
                                             </div>
                                         </TableCell>
@@ -470,12 +470,12 @@ export default function AdminTeamPage() {
                                                         Master Root
                                                     </Badge>
                                                 ) : admin.role === 'admin' ? (
-                                                    <Badge variant="secondary" className="bg-zinc-800 text-zinc-300 uppercase text-[10px] tracking-wider">
+                                                    <Badge variant="secondary" className="bg-muted text-foreground/70 uppercase text-[10px] tracking-wider">
                                                         <Shield className="mr-1 h-3 w-3" />
                                                         Operational
                                                     </Badge>
                                                 ) : (
-                                                    <Badge variant="outline" className="border-zinc-800 text-zinc-500 uppercase text-[10px] tracking-wider">
+                                                    <Badge variant="outline" className="border-border text-muted-foreground uppercase text-[10px] tracking-wider">
                                                         <Users className="mr-1 h-3 w-3" />
                                                         {admin.role}
                                                     </Badge>
@@ -485,13 +485,13 @@ export default function AdminTeamPage() {
                                         <TableCell>
                                             {isMasterAdmin ? (
                                                 <div className="flex items-center gap-2">
-                                                    <code className="text-[10px] font-mono bg-zinc-950 px-2 py-1 rounded border border-zinc-800/50 text-emerald-500/80">
+                                                    <code className="text-[10px] font-mono bg-card px-2 py-1 rounded border border-border/50 text-emerald-500/80">
                                                         {visibleKeys[admin.id] ? admin.access_key : '••••••••••••'}
                                                     </code>
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        className="h-7 w-7 text-zinc-600 hover:text-zinc-300"
+                                                        className="h-7 w-7 text-muted-foreground hover:text-foreground/70"
                                                         onClick={() => toggleKeyVisibility(admin.id)}
                                                     >
                                                         {visibleKeys[admin.id] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -507,13 +507,13 @@ export default function AdminTeamPage() {
                                                     <span className="text-[10px] text-primary font-bold tracking-tight">FULL ACCESS</span>
                                                 ) : (
                                                     admin.permissions?.slice(0, 3).map(p => (
-                                                        <Badge key={p} variant="outline" className="bg-zinc-800/50 border-zinc-800 text-[9px] px-1.5 font-medium text-zinc-400">
+                                                        <Badge key={p} variant="outline" className="bg-muted/50 border-border text-[9px] px-1.5 font-medium text-muted-foreground">
                                                             {p.replace('_', ' ')}
                                                         </Badge>
                                                     ))
                                                 )}
                                                 {admin.permissions?.length > 3 && (
-                                                    <Badge variant="outline" className="bg-zinc-800/50 border-zinc-800 text-[9px] px-1.5 text-zinc-500">
+                                                    <Badge variant="outline" className="bg-muted/50 border-border text-[9px] px-1.5 text-muted-foreground">
                                                         +{admin.permissions.length - 3}
                                                     </Badge>
                                                 )}
@@ -521,8 +521,8 @@ export default function AdminTeamPage() {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex flex-col">
-                                                <span className="text-sm text-zinc-300">{new Date(admin.created_at).toLocaleDateString()}</span>
-                                                <span className="text-[10px] text-zinc-500">{new Date(admin.created_at).toLocaleTimeString()}</span>
+                                                <span className="text-sm text-foreground/70">{new Date(admin.created_at).toLocaleDateString()}</span>
+                                                <span className="text-[10px] text-muted-foreground">{new Date(admin.created_at).toLocaleTimeString()}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -530,7 +530,7 @@ export default function AdminTeamPage() {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="text-zinc-500 hover:text-rose-500 hover:bg-rose-500/10"
+                                                    className="text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10"
                                                     onClick={() => handleRevoke(admin.id)}
                                                 >
                                                     <ShieldAlert className="h-4 w-4" />
@@ -552,9 +552,9 @@ export default function AdminTeamPage() {
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-6 space-y-4">
                     <div className="flex items-center gap-3">
                         <ShieldAlert className="h-6 w-6 text-primary" />
-                        <h2 className="text-lg font-bold text-zinc-100">Master Admin Security Control</h2>
+                        <h2 className="text-lg font-bold text-foreground">Master Admin Security Control</h2>
                     </div>
-                    <p className="text-sm text-zinc-400 max-w-2xl">
+                    <p className="text-sm text-muted-foreground max-w-2xl">
                         As the Master Admin, any internal permissions you grant can be revoked instantly.
                         You are the only user with the authority to create others at the "Operational" level.
                     </p>
