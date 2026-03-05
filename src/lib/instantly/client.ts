@@ -439,6 +439,29 @@ export class InstantlyClient {
     // =========================================================================
 
     /**
+     * Fetch interest/intent label definitions from Instantly.
+     * Returns labels with their numeric ID (matches ai_interest_value on emails),
+     * display name, and color. Use this instead of hardcoding the mapping.
+     */
+    async getLeadLabels(): Promise<InstantlyLeadLabel[]> {
+        try {
+            const response = await this.request<any>('/lead-labels')
+            // Normalise whatever shape the API returns
+            const items: any[] = Array.isArray(response)
+                ? response
+                : (response?.items ?? response?.data ?? response?.labels ?? [])
+            return items.map((item: any) => ({
+                id: item.id ?? item.value ?? item.interest_value,
+                name: item.label ?? item.name ?? item.title ?? String(item.id),
+                color: item.color ?? item.hex_color ?? null,
+            }))
+        } catch {
+            // Non-fatal — fall back to hardcoded defaults in the server action
+            return []
+        }
+    }
+
+    /**
      * List emails visible in the Unibox (replies, sent, etc.)
      * Supports filtering by account, campaign, and type.
      * Paginates using next_starting_after cursor.
@@ -591,6 +614,12 @@ export interface InstantlyEmail {
     content_preview?: string            // text preview (inbound only)
     from_address_json?: Array<{ address: string; name: string }>  // inbound only
     to_address_json?: Array<{ address: string; name: string }>    // inbound only
+}
+
+export interface InstantlyLeadLabel {
+    id: number          // matches ai_interest_value on email objects
+    name: string        // e.g. "Interested", "Not Interested", "Meeting Booked"
+    color: string | null // hex color from Instantly, e.g. "#22c55e"
 }
 
 export const instantly = new InstantlyClient()

@@ -24,16 +24,33 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 // =============================================================================
-// INTENT LABEL STYLES
+// INTENT LABEL BADGE — uses live colors from Instantly /lead-labels
 // =============================================================================
 
-const INTENT_STYLES: Record<string, string> = {
-    Interested: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-    'Not Interested': 'bg-red-500/15 text-red-400 border-red-500/20',
-    'Meeting Booked': 'bg-blue-500/15 text-blue-400 border-blue-500/20',
-    'Out of Office': 'bg-amber-500/15 text-amber-400 border-amber-500/20',
-    'Do Not Contact': 'bg-red-700/15 text-red-300 border-red-700/20',
-    'Wrong Person': 'bg-zinc-500/15 text-zinc-400 border-zinc-500/20',
+function IntentBadge({ label, color, className }: {
+    label: string
+    color: string | null
+    className?: string
+}) {
+    // Convert Instantly hex color to a semi-transparent badge style
+    const style = color ? {
+        backgroundColor: `${color}22`,   // 13% opacity
+        color,
+        borderColor: `${color}44`,       // 27% opacity
+    } : undefined
+
+    return (
+        <span
+            className={cn(
+                'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border',
+                !color && 'bg-white/10 text-white/50 border-white/10',
+                className
+            )}
+            style={style}
+        >
+            {label}
+        </span>
+    )
 }
 
 // =============================================================================
@@ -235,12 +252,11 @@ function EmailRow({ email, isActive, onClick }: {
                     </p>
 
                     {email.interestLabel && (
-                        <span className={cn(
-                            'inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-medium border',
-                            INTENT_STYLES[email.interestLabel] ?? 'bg-white/10 text-white/50 border-white/10'
-                        )}>
-                            {email.interestLabel}
-                        </span>
+                        <IntentBadge
+                            label={email.interestLabel}
+                            color={email.interestColor}
+                            className="mt-1"
+                        />
                     )}
                 </div>
             </div>
@@ -306,13 +322,11 @@ function EmailDetail({ email, accounts, onReplySent }: {
                             {email.subject}
                         </h2>
                         {email.interestLabel && (
-                            <span className={cn(
-                                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border',
-                                INTENT_STYLES[email.interestLabel] ?? 'bg-white/10 text-white/40 border-white/10'
-                            )}>
-                                <Tag className="h-2.5 w-2.5" />
-                                {email.interestLabel}
-                            </span>
+                            <IntentBadge
+                                label={email.interestLabel}
+                                color={email.interestColor}
+                                className="px-2 py-0.5 rounded-full text-[11px]"
+                            />
                         )}
                     </div>
                 </div>

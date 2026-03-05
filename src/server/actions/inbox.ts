@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getCurrentUserWithRole } from '@/server/actions/roles'
 import { instantly } from '@/lib/instantly/client'
-import type { InstantlyEmail } from '@/lib/instantly/client'
+import type { InstantlyEmail, InstantlyLeadLabel } from '@/lib/instantly/client'
 
 // =============================================================================
 // INBOX SERVER ACTIONS
@@ -25,8 +25,12 @@ export interface InboxEmail {
     campaignId: string | null
     eaccount: string          // which of our accounts received this
     interestLabel: string | null
+    interestColor: string | null  // hex color from Instantly label definition
     replyToId: string | null
 }
+
+// Build a lookup map from Instantly label list
+export type LabelMap = Map<number, { name: string; color: string | null }>
 
 // -----------------------------------------------------------------------------
 // Helper: get current user's org ID
@@ -50,25 +54,43 @@ function extractBodyText(body: any): string {
     try { return String(body) } catch { return '' }
 }
 
+// Fallback hardcoded labels used when Instantly API returns no label definitions
+const FALLBACK_LABELS: LabelMap = new Map([
+    [0, { name: 'Not Interested', color: '#ef4444' }],
+    [1, { name: 'Interested', color: '#22c55e' }],
+    [2, { name: 'Meeting Booked', color: '#3b82f6' }],
+    [3, { name: 'Out of Office', color: '#f59e0b' }],
+    [4, { name: 'Do Not Contact', color: '#dc2626' }],
+    [5, { name: 'Wrong Person', color: '#6b7280' }],
+])
+
+// Build a LabelMap from Instantly's /lead-labels response
+function buildLabelMap(labels: InstantlyLeadLabel[]): LabelMap {
+    if (!labels.length) return FALLBACK_LABELS
+    const map: LabelMap = new Map()
+    for (const l of labels) {
+        map.set(l.id, { name: l.name, color: l.color })
+    }
+    return map
+}
+
 // -----------------------------------------------------------------------------
 // Helper: normalise a raw Instantly email to our InboxEmail shape
 // Uses the CONFIRMED field names from the /api/v2/emails response.
+// labelMap comes from the live Instantly /lead-labels API (with fallback).
 // -----------------------------------------------------------------------------
-function normaliseEmail(raw: InstantlyEmail): InboxEmail {
+function normaliseEmail(raw: InstantlyEmail, labelMap: LabelMap): InboxEmail {
     const bodyText = extractBodyText(raw.body)
-    // Strip HTML tags for the preview
     const cleanBody = bodyText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
     const preview = raw.content_preview ?? cleanBody.slice(0, 200)
 
-    // Sender name — from_address_json is only present on inbound emails
     const fromJson = raw.from_address_json?.[0]
     const fromName = fromJson?.name || raw.from_address_email || 'Unknown'
     const fromAddress = fromJson?.address || raw.from_address_email || raw.lead || ''
+    const toAddress = raw.to_address_json?.[0]?.address ?? raw.to_address_email_list ?? ''
 
-    // Recipient — to_address_email_list is a plain string in Instantly's response
-    const toAddress = raw.to_address_json?.[0]?.address
-        ?? raw.to_address_email_list
-        ?? ''
+    // Resolve interest label from live map (falls back to hardcoded)
+    const labelEntry = raw.ai_interest_value != null ? labelMap.get(raw.ai_interest_value) : null
 
     return {
         id: raw.id ?? '',
@@ -83,24 +105,10 @@ function normaliseEmail(raw: InstantlyEmail): InboxEmail {
         isRead: raw.is_unread === 0,
         campaignId: raw.campaign_id ?? null,
         eaccount: raw.eaccount ?? '',
-        interestLabel: raw.ai_interest_value != null
-            ? mapInterestValue(raw.ai_interest_value)
-            : null,
+        interestLabel: labelEntry?.name ?? null,
+        interestColor: labelEntry?.color ?? null,
         replyToId: raw.thread_id ?? null,
     }
-}
-
-// Instantly stores interest as a numeric value — map to label
-function mapInterestValue(val: number): string | null {
-    const map: Record<number, string> = {
-        0: 'Not Interested',
-        1: 'Interested',
-        2: 'Meeting Booked',
-        3: 'Out of Office',
-        4: 'Do Not Contact',
-        5: 'Wrong Person',
-    }
-    return map[val] ?? null
 }
 
 // =============================================================================
@@ -146,14 +154,16 @@ export async function getInboxEmails(params: {
             }
         }
 
-        // 2. Fetch ALL historical inbound replies via paginated Unibox walk.
-        // getAllInboundEmails pages through up to 2000 emails (20 pages × 100),
-        // filtering to ue_type===2 and only emails for this org's accounts.
-        const rawEmails = await instantly.getAllInboundEmails(accountEmails, {
-            campaign_id: params.campaignId,
-        })
+        // 2. Fetch labels + emails in parallel — no added latency.
+        // Labels come from the live Instantly /lead-labels API so names/colors
+        // stay in sync with whatever the workspace admin has configured.
+        const [rawEmails, rawLabels] = await Promise.all([
+            instantly.getAllInboundEmails(accountEmails, { campaign_id: params.campaignId }),
+            instantly.getLeadLabels(),
+        ])
 
-        const emails = rawEmails.map(normaliseEmail)
+        const labelMap = buildLabelMap(rawLabels)
+        const emails = rawEmails.map(e => normaliseEmail(e, labelMap))
 
         return {
             success: true,
@@ -226,8 +236,12 @@ export async function getInboxEmail(emailId: string): Promise<{
     if (!orgId) return { success: false, error: 'Not authenticated.' }
 
     try {
-        const raw = await instantly.getEmail(emailId)
-        return { success: true, email: normaliseEmail(raw) }
+        const [raw, rawLabels] = await Promise.all([
+            instantly.getEmail(emailId),
+            instantly.getLeadLabels(),
+        ])
+        const labelMap = buildLabelMap(rawLabels)
+        return { success: true, email: normaliseEmail(raw, labelMap) }
     } catch (error: any) {
         console.error('[Inbox] getInboxEmail error:', error)
         return { success: false, error: error.message }
