@@ -88,7 +88,7 @@ export default function AdminSettingsPage() {
 
                 <TabsContent value="general" className="space-y-6">
                     <div className="grid gap-6 md:grid-cols-2">
-                        <Card className="bg-zinc-900/50 border-zinc-800">
+                        <Card className="bg-foreground/5 border-zinc-800">
                             <CardHeader>
                                 <CardTitle className="text-zinc-100 text-lg flex items-center gap-2">
                                     <Globe className="h-5 w-5 text-primary" />
@@ -110,7 +110,7 @@ export default function AdminSettingsPage() {
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-zinc-900/50 border-zinc-800">
+                        <Card className="bg-foreground/5 border-zinc-800">
                             <CardHeader>
                                 <CardTitle className="text-zinc-100 text-lg flex items-center gap-2">
                                     <Shield className="h-5 w-5 text-amber-500" />
@@ -145,7 +145,7 @@ export default function AdminSettingsPage() {
                 </TabsContent>
 
                 <TabsContent value="infrastructure" className="space-y-6">
-                    <Card className="bg-zinc-900/50 border-zinc-800">
+                    <Card className="bg-foreground/5 border-zinc-800">
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
                                 <CardTitle className="text-zinc-100">Live Health Systems</CardTitle>
@@ -199,7 +199,7 @@ export default function AdminSettingsPage() {
                 </TabsContent>
 
                 <TabsContent value="security" className="space-y-6">
-                    <Card className="bg-zinc-900/50 border-zinc-800">
+                    <Card className="bg-foreground/5 border-zinc-800">
                         <CardHeader>
                             <CardTitle className="text-zinc-100">Global Security Protocols</CardTitle>
                             <CardDescription className="text-zinc-500">Manage sensitive access keys and platform-wide locks</CardDescription>

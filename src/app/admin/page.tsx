@@ -93,7 +93,7 @@ export default function AdminLoginPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#050505] px-4">
+        <div className="min-h-screen flex items-center justify-center bg-background px-4">
             <div className="w-full max-w-sm">
                 <div className="text-center mb-8">
                     <h1 className="text-2xl font-bold text-foreground tracking-tight">MailSmith</h1>
@@ -104,7 +104,7 @@ export default function AdminLoginPage() {
                     <form onSubmit={onSubmit}>
                         <CardContent className="space-y-5 pt-8 px-6">
                             {error && (
-                                <div className="rounded-md bg-red-950/20 border border-red-900/50 p-3 text-xs text-red-400 font-medium">
+                                <div className="rounded-md bg-foreground/5 border border-border/50 p-3 text-xs text-red-400 font-medium">
                                     {error}
                                 </div>
                             )}
@@ -120,7 +120,7 @@ export default function AdminLoginPage() {
                                         name="email"
                                         type="email"
                                         placeholder="admin@mailsmith.com"
-                                        className="pl-10 h-11 bg-zinc-900/50 border-zinc-800 text-foreground placeholder:text-zinc-700 focus:ring-1 focus:ring-primary focus:border-primary rounded-lg text-sm transition-all"
+                                        className="pl-10 h-11 bg-foreground/5 border-zinc-800 text-foreground placeholder:text-zinc-700 focus:ring-1 focus:ring-primary focus:border-primary rounded-lg text-sm transition-all"
                                         required
                                         disabled={isSubmitting}
                                     />
@@ -138,7 +138,7 @@ export default function AdminLoginPage() {
                                         name="password"
                                         type="password"
                                         placeholder="••••••••"
-                                        className="pl-10 h-11 bg-zinc-900/50 border-zinc-800 text-foreground placeholder:text-zinc-700 focus:ring-1 focus:ring-primary focus:border-primary rounded-lg transition-all"
+                                        className="pl-10 h-11 bg-foreground/5 border-zinc-800 text-foreground placeholder:text-zinc-700 focus:ring-1 focus:ring-primary focus:border-primary rounded-lg transition-all"
                                         required
                                         disabled={isSubmitting}
                                     />

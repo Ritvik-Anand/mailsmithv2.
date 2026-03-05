@@ -464,7 +464,7 @@ export default function SignupPage() {
                                                     key={goal.id}
                                                     className={cn(
                                                         "flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer group",
-                                                        formData.primaryGoal === goal.id ? "bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)]" : "bg-zinc-950/50 border-zinc-800 hover:border-zinc-700"
+                                                        formData.primaryGoal === goal.id ? "bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)]" : "bg-foreground/5 border-zinc-800 hover:border-zinc-700"
                                                     )}
                                                     onClick={() => updateField('primaryGoal', goal.id)}
                                                 >

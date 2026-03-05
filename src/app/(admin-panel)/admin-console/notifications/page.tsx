@@ -101,7 +101,7 @@ export default function AdminNotificationsPage() {
             <div className="grid gap-8 lg:grid-cols-3">
                 {/* Notification Feed */}
                 <div className="lg:col-span-2 space-y-6">
-                    <Card className="bg-zinc-900/50 border-zinc-800 h-full flex flex-col">
+                    <Card className="bg-foreground/5 border-zinc-800 h-full flex flex-col">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0">
                             <div>
                                 <CardTitle className="text-zinc-100 text-lg flex items-center gap-2">
@@ -126,7 +126,7 @@ export default function AdminNotificationsPage() {
                                             key={n.id}
                                             className={cn(
                                                 "p-4 rounded-xl border transition-all cursor-pointer group hover:bg-zinc-800/30",
-                                                n.read ? "bg-zinc-900/20 border-zinc-800/50 opacity-60" : "bg-zinc-900 border-zinc-800"
+                                                n.read ? "bg-foreground/5 border-zinc-800/50 opacity-60" : "bg-zinc-900 border-zinc-800"
                                             )}
                                             onClick={() => markAsRead(n.id)}
                                         >
@@ -222,7 +222,7 @@ export default function AdminNotificationsPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-zinc-900/50 border-zinc-800">
+                    <Card className="bg-foreground/5 border-zinc-800">
                         <CardHeader>
                             <CardTitle className="text-zinc-100 text-sm flex items-center gap-2 uppercase tracking-tighter">
                                 <Filter className="h-4 w-4 text-zinc-500" />

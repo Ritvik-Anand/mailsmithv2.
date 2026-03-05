@@ -59,7 +59,7 @@ export function AdminLogin() {
                 <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-amber-500/10 rounded-full blur-[120px] opacity-40" />
             </div>
 
-            <Card className="w-full max-w-md relative backdrop-blur-3xl bg-zinc-900/40 border-zinc-800/50 shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)]">
+            <Card className="w-full max-w-md relative backdrop-blur-3xl bg-foreground/5 border-zinc-800/50 shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)]">
                 <CardHeader className="space-y-1 text-center pb-2">
                     <div className="flex justify-center mb-6">
                         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-b from-zinc-800 to-zinc-900 border border-zinc-700/50 shadow-2xl group transition-all hover:border-zinc-500/50">

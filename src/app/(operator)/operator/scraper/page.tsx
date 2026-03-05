@@ -188,7 +188,7 @@ function ListInput({
                         onKeyDown={(e) => e.key === 'Enter' && isValidInput && handleAdd()}
                     />
                     {showSuggestions && (filteredSuggestions.length > 0 || (strict && input.length > 0)) && (
-                        <div className="absolute z-50 mt-1 w-full bg-zinc-950 border border-zinc-900 rounded-lg shadow-2xl overflow-y-auto max-h-60 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="absolute z-50 mt-1 w-full bg-zinc-950 border border-border rounded-lg shadow-2xl overflow-y-auto max-h-60 animate-in fade-in zoom-in-95 duration-200">
                             {filteredSuggestions.length > 0 ? filteredSuggestions.map((s, i) => (
                                 <button
                                     key={i}
@@ -280,7 +280,7 @@ function SaveTemplateModal({
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" onClick={onClose} />
             <div className="relative w-full max-w-md mx-4 bg-zinc-950 border-2 border-zinc-800 rounded-2xl shadow-2xl shadow-black/50 animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex items-center justify-between p-6 border-b border-zinc-900">
+                <div className="flex items-center justify-between p-6 border-b border-border">
                     <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                             <Save className="h-4 w-4 text-primary" />
@@ -296,7 +296,7 @@ function SaveTemplateModal({
                 </div>
                 <div className="p-6 space-y-5">
                     {filterSummary.length > 0 && (
-                        <div className="p-3 rounded-lg bg-zinc-900/50 border border-zinc-800">
+                        <div className="p-3 rounded-lg bg-foreground/5 border border-zinc-800">
                             <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-2">Current Filters</p>
                             <div className="flex flex-wrap gap-1.5">
                                 {filterSummary.map((s, i) => (
@@ -403,8 +403,8 @@ function TemplatesPanel({
 
     return (
         <>
-            <Card className="bg-zinc-950 border-zinc-900 shadow-none border-2">
-                <CardHeader className="pb-4 border-b border-zinc-900">
+            <Card className="bg-zinc-950 border-border shadow-none border-2">
+                <CardHeader className="pb-4 border-b border-border">
                     <div className="flex items-center justify-between">
                         <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-2">
                             <LayoutTemplate className="h-3.5 w-3.5" />
@@ -445,7 +445,7 @@ function TemplatesPanel({
                             const summary = getTemplateSummary(template.filters)
                             const isDeleting = deletingId === template.id
                             return (
-                                <div key={template.id} className="group relative rounded-xl border border-zinc-900 bg-zinc-900/30 hover:bg-zinc-900/60 hover:border-zinc-700 transition-all duration-200 overflow-hidden">
+                                <div key={template.id} className="group relative rounded-xl border border-border bg-foreground/5 hover:bg-foreground/5 hover:border-zinc-700 transition-all duration-200 overflow-hidden">
                                     <button className="w-full text-left p-3 pr-10" onClick={() => handleLoad(template)}>
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="min-w-0 flex-1">
@@ -611,8 +611,8 @@ function ScraperContent() {
 
                 {/* Left Sidebar */}
                 <div className="space-y-6">
-                    <Card className="bg-zinc-950 border-zinc-900 shadow-none border-2">
-                        <CardHeader className="pb-4 border-b border-zinc-900">
+                    <Card className="bg-zinc-950 border-border shadow-none border-2">
+                        <CardHeader className="pb-4 border-b border-border">
                             <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">System Parameters</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-8 pt-6">
@@ -673,7 +673,7 @@ function ScraperContent() {
                 {/* Main Filter Hub */}
                 <div className="lg:col-span-3 space-y-6">
                     <Tabs defaultValue="people" className="w-full">
-                        <TabsList className="bg-zinc-950 border border-zinc-900 w-full justify-start p-1 h-auto gap-1 border-2">
+                        <TabsList className="bg-zinc-950 border border-border w-full justify-start p-1 h-auto gap-1 border-2">
                             <TabsTrigger value="people" className="flex-1 py-3 data-[state=active]:bg-zinc-900 font-bold uppercase text-[10px] tracking-widest">
                                 <Users className="h-4 w-4 mr-2" />People
                             </TabsTrigger>
@@ -705,7 +705,7 @@ function ScraperContent() {
                                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                                     {SENIORITY_OPTIONS.map(opt => (
                                         <Button key={opt.value} variant="outline"
-                                            className={`h-12 text-[10px] font-black uppercase tracking-tight transition-all border-2 ${filters.seniority_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-900 bg-background text-zinc-600'}`}
+                                            className={`h-12 text-[10px] font-black uppercase tracking-tight transition-all border-2 ${filters.seniority_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-zinc-600'}`}
                                             onClick={() => toggleArrayFilter('seniority_level', opt.value)}>
                                             {opt.label}
                                         </Button>
@@ -741,7 +741,7 @@ function ScraperContent() {
                                 <div className="flex flex-wrap gap-2">
                                     {SIZE_OPTIONS.map(size => (
                                         <Badge key={size}
-                                            className={`cursor-pointer px-5 py-2.5 border-2 font-mono text-[10px] font-black transition-all ${filters.size?.includes(size) ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20' : 'bg-background text-zinc-600 border-zinc-900 hover:border-zinc-700'}`}
+                                            className={`cursor-pointer px-5 py-2.5 border-2 font-mono text-[10px] font-black transition-all ${filters.size?.includes(size) ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20' : 'bg-background text-zinc-600 border-border hover:border-zinc-700'}`}
                                             onClick={() => toggleArrayFilter('size', size)}>
                                             {size}
                                         </Badge>
@@ -762,7 +762,7 @@ function ScraperContent() {
                                     onAdd={(v) => handleListChange('contact_not_location', 'add', v)}
                                     onRemove={(v) => handleListChange('contact_not_location', 'remove', v)} isNegative />
                             </div>
-                            <div className="grid gap-10 md:grid-cols-2 border-t border-zinc-900 pt-10">
+                            <div className="grid gap-10 md:grid-cols-2 border-t border-border pt-10">
                                 <ListInput label="Cities" placeholder="e.g. London" icon={Search}
                                     values={filters.contact_city || []} suggestions={POPULAR_LOCATIONS}
                                     onAdd={(v) => handleListChange('contact_city', 'add', v)}
@@ -781,26 +781,26 @@ function ScraperContent() {
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                     {FUNCTIONAL_OPTIONS.map(opt => (
                                         <Button key={opt.value} variant="outline"
-                                            className={`h-12 text-[10px] font-black uppercase tracking-tight border-2 ${filters.functional_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-900 bg-background text-zinc-600'}`}
+                                            className={`h-12 text-[10px] font-black uppercase tracking-tight border-2 ${filters.functional_level?.includes(opt.value) ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-zinc-600'}`}
                                             onClick={() => toggleArrayFilter('functional_level', opt.value)}>
                                             {opt.label}
                                         </Button>
                                     ))}
                                 </div>
                             </div>
-                            <div className="space-y-4 border-t border-zinc-900 pt-10">
+                            <div className="space-y-4 border-t border-border pt-10">
                                 <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Funding Stages</Label>
                                 <div className="flex flex-wrap gap-2">
                                     {FUNDING_OPTIONS.map(opt => (
                                         <Button key={opt.value} variant="outline"
-                                            className={`px-8 h-12 text-[10px] font-black uppercase tracking-tight rounded-full border-2 ${filters.funding?.includes(opt.value) ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500' : 'border-zinc-900 bg-background text-zinc-600'}`}
+                                            className={`px-8 h-12 text-[10px] font-black uppercase tracking-tight rounded-full border-2 ${filters.funding?.includes(opt.value) ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500' : 'border-border bg-background text-zinc-600'}`}
                                             onClick={() => toggleArrayFilter('funding', opt.value)}>
                                             {opt.label}
                                         </Button>
                                     ))}
                                 </div>
                             </div>
-                            <div className="grid gap-10 md:grid-cols-2 border-t border-zinc-900 pt-10">
+                            <div className="grid gap-10 md:grid-cols-2 border-t border-border pt-10">
                                 <ListInput label="Target Domains" placeholder="e.g. apple.com" icon={Building2}
                                     values={filters.company_domain || []}
                                     onAdd={(v) => handleListChange('company_domain', 'add', v)}
@@ -810,12 +810,12 @@ function ScraperContent() {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="relative">
                                             <DollarSign className="absolute left-3 top-3 h-4 w-4 text-zinc-700" />
-                                            <Input placeholder="Min Revenue" className="bg-background border-2 border-zinc-900 pl-10 h-12 text-xs font-mono"
+                                            <Input placeholder="Min Revenue" className="bg-background border-2 border-border pl-10 h-12 text-xs font-mono"
                                                 onChange={(e) => setFilters({ ...filters, min_revenue: e.target.value })} />
                                         </div>
                                         <div className="relative">
                                             <DollarSign className="absolute left-3 top-3 h-4 w-4 text-zinc-700" />
-                                            <Input placeholder="Max Revenue" className="bg-background border-2 border-zinc-900 pl-10 h-12 text-xs font-mono"
+                                            <Input placeholder="Max Revenue" className="bg-background border-2 border-border pl-10 h-12 text-xs font-mono"
                                                 onChange={(e) => setFilters({ ...filters, max_revenue: e.target.value })} />
                                         </div>
                                     </div>

@@ -81,7 +81,7 @@ export default function OperatorCustomersPage() {
             {/* Organizations Grid */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredOrgs.map((org) => (
-                    <Card key={org.id} className="bg-zinc-950 border-zinc-900 hover:border-zinc-700 transition-all group shadow-2xl">
+                    <Card key={org.id} className="bg-zinc-950 border-border hover:border-zinc-700 transition-all group shadow-2xl">
                         <CardHeader className="pb-4">
                             <div className="flex justify-between items-start">
                                 <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
@@ -103,11 +103,11 @@ export default function OperatorCustomersPage() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-900">
+                                <div className="p-3 bg-foreground/5 rounded-lg border border-border">
                                     <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest mb-1">Status</p>
                                     <p className="text-sm font-bold text-zinc-300">Active</p>
                                 </div>
-                                <div className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-900">
+                                <div className="p-3 bg-foreground/5 rounded-lg border border-border">
                                     <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest mb-1">Role</p>
                                     <p className="text-sm font-bold text-zinc-300">{org.isPrimary ? 'Primary' : 'Support'}</p>
                                 </div>
@@ -131,7 +131,7 @@ export default function OperatorCustomersPage() {
                 ))}
 
                 {filteredOrgs.length === 0 && (
-                    <div className="col-span-full py-20 text-center border-2 border-dashed border-zinc-900 rounded-2xl bg-zinc-950/20">
+                    <div className="col-span-full py-20 text-center border-2 border-dashed border-border rounded-2xl bg-foreground/5">
                         <Users className="h-12 w-12 text-zinc-800 mx-auto mb-4" />
                         <h3 className="text-zinc-500 font-bold uppercase tracking-widest text-sm">Portfolio Empty</h3>
                         <p className="text-zinc-700 text-xs mt-2">You don't have any organizations assigned to your account yet.</p>

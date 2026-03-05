@@ -11,7 +11,7 @@ export default async function AdminLayout({
     await requireSuperAdmin()
 
     return (
-        <div className="flex h-screen overflow-hidden bg-[#0a0a0a]">
+        <div className="flex h-screen overflow-hidden bg-background">
             {/* Minimal Admin Sidebar */}
             <AdminSidebar />
 

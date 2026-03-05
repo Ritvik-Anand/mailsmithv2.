@@ -229,14 +229,14 @@ export default function OperatorCampaignsPage() {
             </div>
 
             {/* Filter Bar */}
-            <div className="flex items-center gap-4 bg-zinc-900/30 p-4 rounded-xl border border-zinc-800">
+            <div className="flex items-center gap-4 bg-foreground/5 p-4 rounded-xl border border-zinc-800">
                 <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-2">Filter Customer:</span>
                     <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
                         <SelectTrigger className="w-[240px] h-9 bg-zinc-950 border-zinc-800 text-xs font-semibold">
                             <SelectValue placeholder="Select Customer" />
                         </SelectTrigger>
-                        <SelectContent className="bg-zinc-950 border-zinc-900">
+                        <SelectContent className="bg-zinc-950 border-border">
                             {organizations.map(org => (
                                 <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
                             ))}
@@ -253,7 +253,7 @@ export default function OperatorCampaignsPage() {
                     ))}
                 </div>
             ) : campaigns.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-20 border-2 border-dashed border-zinc-800 rounded-3xl bg-zinc-900/10">
+                <div className="flex flex-col items-center justify-center p-20 border-2 border-dashed border-zinc-800 rounded-3xl bg-foreground/5">
                     <div className="h-16 w-16 bg-zinc-900 rounded-full flex items-center justify-center mb-6">
                         <Mail className="h-8 w-8 text-zinc-700" />
                     </div>
@@ -417,7 +417,7 @@ export default function OperatorCampaignsPage() {
 
             {/* Move Campaign Dialog */}
             <Dialog open={moveModalOpen} onOpenChange={setMoveModalOpen}>
-                <DialogContent className="bg-zinc-950 border-zinc-900">
+                <DialogContent className="bg-zinc-950 border-border">
                     <DialogHeader>
                         <DialogTitle>Move Campaign</DialogTitle>
                         <DialogDescription>
@@ -432,7 +432,7 @@ export default function OperatorCampaignsPage() {
                                 <SelectTrigger className="bg-zinc-900 border-zinc-800">
                                     <SelectValue placeholder="Select customer..." />
                                 </SelectTrigger>
-                                <SelectContent className="bg-zinc-950 border-zinc-900 max-h-[300px]">
+                                <SelectContent className="bg-zinc-950 border-border max-h-[300px]">
                                     {organizations.map(org => (
                                         <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
                                     ))}
@@ -483,7 +483,7 @@ export default function OperatorCampaignsPage() {
 
             {/* Delete Campaign Dialog */}
             <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
-                <DialogContent className="bg-zinc-950 border-zinc-900">
+                <DialogContent className="bg-zinc-950 border-border">
                     <DialogHeader>
                         <DialogTitle>Delete Campaign</DialogTitle>
                         <DialogDescription>
@@ -531,7 +531,7 @@ export default function OperatorCampaignsPage() {
 
             {/* Bulk Delete Confirm Dialog */}
             <Dialog open={bulkDeleteModalOpen} onOpenChange={setBulkDeleteModalOpen}>
-                <DialogContent className="bg-zinc-950 border-zinc-900">
+                <DialogContent className="bg-zinc-950 border-border">
                     <DialogHeader>
                         <DialogTitle>Delete {selectedIds.size} Campaign{selectedIds.size > 1 ? 's' : ''}?</DialogTitle>
                         <DialogDescription>

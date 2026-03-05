@@ -83,7 +83,7 @@ export default function DashboardNotificationsPage() {
                         <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">Scanning Network Clusters...</p>
                     </div>
                 ) : notifications.length === 0 ? (
-                    <Card className="bg-zinc-900/50 border-zinc-800 border-dashed py-20">
+                    <Card className="bg-foreground/5 border-zinc-800 border-dashed py-20">
                         <CardContent className="flex flex-col items-center justify-center text-center">
                             <Bell className="h-12 w-12 text-zinc-800 mb-4" />
                             <h3 className="text-zinc-300 font-bold">All Quiet on the Base</h3>
@@ -98,7 +98,7 @@ export default function DashboardNotificationsPage() {
                             key={n.id}
                             className={cn(
                                 "group transition-all border-zinc-800 hover:border-zinc-700 overflow-hidden",
-                                n.read ? "bg-zinc-900/30 opacity-60" : "bg-zinc-900 shadow-[0_0_20px_rgba(var(--primary-rgb),0.03)]"
+                                n.read ? "bg-foreground/5 opacity-60" : "bg-zinc-900 shadow-[0_0_20px_rgba(var(--primary-rgb),0.03)]"
                             )}
                         >
                             <div className="flex flex-col md:flex-row">

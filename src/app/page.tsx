@@ -22,7 +22,7 @@ const staggerContainer = {
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-[#030303] text-foreground selection:bg-primary/30 overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 overflow-x-hidden">
       {/* Ambient effects - CopperX style */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-full h-[800px] mesh-gradient opacity-60" />
@@ -338,7 +338,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-48 overflow-hidden bg-[#030303]">
+      <section className="relative py-48 overflow-hidden bg-background">
         <div className="container relative z-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}

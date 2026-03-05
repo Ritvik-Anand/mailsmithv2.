@@ -167,7 +167,7 @@ export default function OperatorJobsPage() {
             {/* Jobs List */}
             <div className="space-y-3">
                 {filteredJobs.length === 0 ? (
-                    <Card className="bg-zinc-950 border-zinc-900">
+                    <Card className="bg-zinc-950 border-border">
                         <CardContent className="py-16 text-center">
                             <Target className="h-12 w-12 text-zinc-800 mx-auto mb-4" />
                             <h3 className="text-zinc-500 font-bold">No scrape jobs found</h3>
@@ -182,7 +182,7 @@ export default function OperatorJobsPage() {
                 ) : (
                     filteredJobs.map((job) => (
                         <Link key={job.id} href={`/operator/leads/${job.id}`}>
-                            <Card className="bg-zinc-950 border-zinc-900 hover:border-zinc-700 transition-all cursor-pointer group">
+                            <Card className="bg-zinc-950 border-border hover:border-zinc-700 transition-all cursor-pointer group">
                                 <CardContent className="p-4">
                                     <div className="flex items-center gap-4">
                                         {/* Status Icon */}

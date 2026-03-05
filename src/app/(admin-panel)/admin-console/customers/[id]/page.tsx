@@ -557,13 +557,13 @@ export default function AdminCustomerDetailPage() {
                                         {[1, 2].map(i => <div key={i} className="h-12 bg-zinc-900 animate-pulse rounded-lg" />)}
                                     </div>
                                 ) : orgNodes.length === 0 ? (
-                                    <div className="py-10 text-center border-2 border-dashed border-zinc-900 rounded-xl">
+                                    <div className="py-10 text-center border-2 border-dashed border-border rounded-xl">
                                         <p className="text-sm text-zinc-500">No nodes assigned yet.</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
                                         {orgNodes.map(node => (
-                                            <div key={node.id} className="flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-zinc-900/10">
+                                            <div key={node.id} className="flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-foreground/5">
                                                 <div className="flex items-center gap-3">
                                                     <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center">
                                                         <Monitor className="h-4 w-4 text-primary" />
@@ -601,7 +601,7 @@ export default function AdminCustomerDetailPage() {
                                 ) : (
                                     <div className="space-y-3">
                                         {allNodes.filter(n => !n.organization_id).length === 0 ? (
-                                            <div className="py-10 text-center border-2 border-dashed border-zinc-900 rounded-xl">
+                                            <div className="py-10 text-center border-2 border-dashed border-border rounded-xl">
                                                 <p className="text-sm text-zinc-500">No unassigned nodes available.</p>
                                                 <Link href="/admin-console/infrastructure">
                                                     <Button variant="link" className="text-primary text-xs">Manage Global Infra</Button>

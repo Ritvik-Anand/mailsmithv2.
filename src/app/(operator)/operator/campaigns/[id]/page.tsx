@@ -477,7 +477,7 @@ function AnalyticsTab({ campaign }: { campaign: any }) {
                     </div>
 
                     {/* Placeholder Chart */}
-                    <div className="h-[200px] bg-zinc-900/50 rounded-lg flex items-center justify-center border border-zinc-800/50">
+                    <div className="h-[200px] bg-foreground/5 rounded-lg flex items-center justify-center border border-zinc-800/50">
                         <div className="text-center">
                             <TrendingUp className="h-8 w-8 text-zinc-700 mx-auto mb-2" />
                             <p className="text-xs text-zinc-600">Chart coming soon</p>
@@ -505,7 +505,7 @@ function AnalyticsTab({ campaign }: { campaign: any }) {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr className="border-b border-zinc-900">
+                                <tr className="border-b border-border">
                                     <td className="py-3 font-medium text-foreground">Step 1</td>
                                     <td className="py-3 text-zinc-300">{emailsSent.toLocaleString()}</td>
                                     <td className="py-3">
@@ -648,7 +648,7 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-zinc-800 bg-zinc-900/50">
+                                <tr className="border-b border-zinc-800 bg-foreground/5">
                                     <th className="w-10 p-3">
                                         <Checkbox />
                                     </th>
@@ -677,7 +677,7 @@ function LeadsTab({ campaignId }: { campaignId: string }) {
                                     filteredLeads.map((lead, idx) => (
                                         <tr
                                             key={lead.id}
-                                            className="border-b border-zinc-900 hover:bg-zinc-900/30 transition-colors cursor-pointer"
+                                            className="border-b border-border hover:bg-foreground/5 transition-colors cursor-pointer"
                                         >
                                             <td className="p-3 text-zinc-500">{(currentPage - 1) * pageSize + idx + 1}</td>
                                             <td className="p-3">
@@ -1307,7 +1307,7 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                         </div>
 
                         {/* Variables Reference */}
-                        <div id="variables-section" className="mt-4 p-3 bg-zinc-900/50 rounded-lg border border-zinc-800">
+                        <div id="variables-section" className="mt-4 p-3 bg-foreground/5 rounded-lg border border-zinc-800">
                             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Available Variables — click to insert</p>
                             <div className="flex flex-wrap gap-2">
                                 {['{{firstName}}', '{{lastName}}', '{{companyName}}', '{{jobTitle}}', '{{personalization}}', '{{sendingAccountFirstName}}'].map((v) => (
@@ -1375,7 +1375,7 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                             </div>
                         </div>
                         {/* Variable mapping reference */}
-                        <div className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-800">
+                        <div className="p-3 bg-foreground/5 rounded-lg border border-zinc-800">
                             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">
                                 {selectedLeadId === 'sample' ? 'Sample values used' : 'Lead data used'}
                             </p>
@@ -1394,7 +1394,7 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
             </Dialog>
             {/* Delete Step Confirmation Dialog */}
             <Dialog open={deleteStepDialogOpen} onOpenChange={setDeleteStepDialogOpen}>
-                <DialogContent className="bg-zinc-950 border-zinc-900">
+                <DialogContent className="bg-zinc-950 border-border">
                     <DialogHeader>
                         <DialogTitle>Delete Sequence Step</DialogTitle>
                         <DialogDescription>
@@ -1628,7 +1628,7 @@ function ScheduleTab({ campaignId }: { campaignId: string }) {
                 </div>
 
                 <div className="border-t border-zinc-800 pt-4">
-                    <div className="flex items-center gap-2 text-sm p-2 bg-zinc-900/50 rounded-lg border border-zinc-800">
+                    <div className="flex items-center gap-2 text-sm p-2 bg-foreground/5 rounded-lg border border-zinc-800">
                         <Calendar className="h-4 w-4 text-zinc-500" />
                         <span className="font-medium text-foreground">{schedule.name}</span>
                     </div>
@@ -1940,7 +1940,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                                             key={acc.id}
                                             className={cn(
                                                 "flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                                                isSelected ? "bg-primary/10 border-primary/50" : "bg-zinc-900/50 border-zinc-800 hover:border-zinc-700"
+                                                isSelected ? "bg-primary/10 border-primary/50" : "bg-foreground/5 border-zinc-800 hover:border-zinc-700"
                                             )}
                                         >
                                             <Checkbox
@@ -2085,7 +2085,7 @@ function OptionsTab({ campaign, setCampaign }: { campaign: any; setCampaign: any
                     </div>
 
                     {/* Prioritize New Leads */}
-                    <div className="flex items-center justify-between border-t border-zinc-900 pt-4">
+                    <div className="flex items-center justify-between border-t border-border pt-4">
                         <div>
                             <p className="text-sm font-medium text-zinc-300">Prioritize New Leads</p>
                             <p className="text-xs text-zinc-500 mt-0.5">Prioritize reaching out to new leads over scheduled follow-ups</p>

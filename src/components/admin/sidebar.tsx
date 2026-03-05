@@ -69,12 +69,12 @@ export function AdminSidebar() {
     return (
         <aside
             className={cn(
-                'hidden lg:flex flex-col bg-[#050505] border-r border-zinc-900 transition-all duration-300 ease-in-out relative',
+                'hidden lg:flex flex-col bg-background border-r border-border transition-all duration-300 ease-in-out relative',
                 collapsed ? 'w-20' : 'w-64'
             )}
         >
             {/* Branding area */}
-            <div className="flex h-20 items-center px-6 border-b border-zinc-900/50">
+            <div className="flex h-20 items-center px-6 border-b border-foreground/5">
                 <Link href="/admin-console" className="flex items-center gap-3 group">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary border border-primary/20 shadow-lg shadow-primary/10 transition-transform group-hover:scale-105">
                         <Monitor className="h-5 w-5 text-foreground" />
@@ -108,7 +108,7 @@ export function AdminSidebar() {
                                     'flex items-center gap-3 rounded-lg px-3.5 py-3 text-[13px] font-semibold transition-all group relative',
                                     isActive
                                         ? 'bg-primary/10 text-primary border border-primary/10'
-                                        : 'text-zinc-500 hover:text-foreground hover:bg-zinc-900/50'
+                                        : 'text-zinc-500 hover:text-foreground hover:bg-foreground/5'
                                 )}
                             >
                                 <item.icon className={cn(
@@ -130,7 +130,7 @@ export function AdminSidebar() {
             </ScrollArea>
 
             {/* Footer */}
-            <div className="p-4 border-t border-zinc-900 bg-zinc-950/20 flex items-center justify-between gap-2">
+            <div className="p-4 border-t border-border bg-foreground/5 flex items-center justify-between gap-2">
                 <Button
                     variant="ghost"
                     size="sm"

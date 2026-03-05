@@ -113,7 +113,7 @@ export function CustomerHeader({ user }: CustomerHeaderProps) {
                             <DropdownMenuItem
                                 onClick={handleSignOut}
                                 disabled={isLoading}
-                                className="text-red-400 focus:bg-red-950/50 focus:text-red-300 cursor-pointer"
+                                className="text-red-400 focus:bg-foreground/5 focus:text-red-300 cursor-pointer"
                             >
                                 {isLoading ? (
                                     <>

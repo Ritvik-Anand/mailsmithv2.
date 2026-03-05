@@ -153,8 +153,8 @@ export function Header({ isAdmin = false }: HeaderProps) {
 
     return (
         <header className={cn(
-            "sticky top-0 z-50 flex h-16 items-center justify-between gap-4 border-b border-zinc-900/50 px-6 backdrop-blur-md transition-all duration-300",
-            isAdmin ? "bg-background/90" : "bg-zinc-950/90"
+            "sticky top-0 z-50 flex h-16 items-center justify-between gap-4 border-b border-foreground/5 px-6 backdrop-blur-md transition-all duration-300",
+            isAdmin ? "bg-background/90" : "bg-foreground/5"
         )}>
             <div className="flex items-center gap-4">
                 <MobileSidebar isAdmin={isAdmin} />
@@ -165,9 +165,9 @@ export function Header({ isAdmin = false }: HeaderProps) {
                     </div>
                     <Input
                         placeholder="Search..."
-                        className="pl-10 h-10 w-64 md:w-80 bg-zinc-900/40 border-zinc-800/60 text-xs text-foreground placeholder:text-zinc-600 focus:ring-1 focus:ring-primary focus:border-primary transition-all rounded-lg"
+                        className="pl-10 h-10 w-64 md:w-80 bg-foreground/5 border-zinc-800/60 text-xs text-foreground placeholder:text-zinc-600 focus:ring-1 focus:ring-primary focus:border-primary transition-all rounded-lg"
                     />
-                    <kbd className="pointer-events-none absolute right-2.5 top-2.5 hidden h-5 select-none items-center gap-1 rounded bg-zinc-950 border border-zinc-900 px-1.5 font-mono text-[9px] font-medium text-zinc-600 opacity-100 sm:flex">
+                    <kbd className="pointer-events-none absolute right-2.5 top-2.5 hidden h-5 select-none items-center gap-1 rounded bg-zinc-950 border border-border px-1.5 font-mono text-[9px] font-medium text-zinc-600 opacity-100 sm:flex">
                         <Command className="h-2.5 w-2.5" />K
                     </kbd>
                 </div>

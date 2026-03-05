@@ -481,7 +481,7 @@ function NewCampaignContent() {
 
             <div className="container py-6">
                 {/* Customer Selection Banner */}
-                <Card className="bg-zinc-900/50 border-zinc-800 mb-6">
+                <Card className="bg-foreground/5 border-zinc-800 mb-6">
                     <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
@@ -539,7 +539,7 @@ function NewCampaignContent() {
                                     }}
                                     className={`p-4 rounded-xl border transition-all cursor-pointer ${selectedStepId === seq.id
                                         ? 'bg-amber-500/5 border-amber-500/30'
-                                        : 'bg-zinc-900/50 border-zinc-800 hover:border-zinc-700'
+                                        : 'bg-foreground/5 border-zinc-800 hover:border-zinc-700'
                                         }`}
                                 >
                                     <div className="flex items-center justify-between mb-3">
@@ -599,7 +599,7 @@ function NewCampaignContent() {
                                 const activeVariant = activeStep.variants.find((v: any) => v.label === activeVariantLabel) || activeStep.variants[0]
 
                                 return (
-                                    <Card className="bg-zinc-900/50 border-zinc-800">
+                                    <Card className="bg-foreground/5 border-zinc-800">
                                         <CardHeader className="border-b border-zinc-800">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
@@ -708,7 +708,7 @@ function NewCampaignContent() {
 
                 {activeTab === 'schedule' && (
                     <div className="max-w-2xl">
-                        <Card className="bg-zinc-900/50 border-zinc-800">
+                        <Card className="bg-foreground/5 border-zinc-800">
                             <CardHeader>
                                 <CardTitle className="text-base flex items-center gap-2">
                                     <Calendar className="h-4 w-4 text-amber-500" />
@@ -803,7 +803,7 @@ function NewCampaignContent() {
                 {activeTab === 'options' && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Sending Accounts */}
-                        <Card className="bg-zinc-900/50 border-zinc-800">
+                        <Card className="bg-foreground/5 border-zinc-800">
                             <CardHeader>
                                 <div className="flex items-center justify-between">
                                     <CardTitle className="text-base flex items-center gap-2">
@@ -855,7 +855,7 @@ function NewCampaignContent() {
                         </Card>
 
                         {/* Campaign Settings */}
-                        <Card className="bg-zinc-900/50 border-zinc-800">
+                        <Card className="bg-foreground/5 border-zinc-800">
                             <CardHeader>
                                 <CardTitle className="text-base flex items-center gap-2">
                                     <Settings className="h-4 w-4 text-amber-500" />
@@ -1076,7 +1076,7 @@ function NewCampaignContent() {
 
                                 {/* Lead Info Banner */}
                                 <div
-                                    className={`p-3 bg-zinc-900/50 rounded-lg border border-zinc-800 flex items-center justify-between transition-colors ${selectedPreviewLeadId !== 'sample' ? 'cursor-pointer hover:bg-zinc-900' : ''}`}
+                                    className={`p-3 bg-foreground/5 rounded-lg border border-zinc-800 flex items-center justify-between transition-colors ${selectedPreviewLeadId !== 'sample' ? 'cursor-pointer hover:bg-zinc-900' : ''}`}
                                     onClick={() => selectedPreviewLeadId !== 'sample' && setDetailLead(currentPreviewData)}
                                 >
                                     <div className="flex items-center gap-2">
@@ -1128,7 +1128,7 @@ function NewCampaignContent() {
                     {/* Panel */}
                     <div className="relative w-full max-w-xl bg-zinc-950 border-l border-zinc-800 h-full overflow-y-auto animate-in slide-in-from-right duration-300 shadow-2xl">
                         {/* Header */}
-                        <div className="sticky top-0 bg-zinc-950/80 backdrop-blur border-b border-zinc-800 p-6 flex items-start justify-between z-10">
+                        <div className="sticky top-0 bg-foreground/5 backdrop-blur border-b border-zinc-800 p-6 flex items-start justify-between z-10">
                             <div>
                                 <h2 className="text-xl font-bold text-foreground">
                                     {detailLead.first_name} {detailLead.last_name}
@@ -1185,7 +1185,7 @@ function NewCampaignContent() {
                                         </Badge>
                                     )}
                                 </div>
-                                <div className="p-4 bg-zinc-900/50 rounded-lg border border-zinc-800 text-sm text-zinc-300 italic whitespace-pre-wrap">
+                                <div className="p-4 bg-foreground/5 rounded-lg border border-zinc-800 text-sm text-zinc-300 italic whitespace-pre-wrap">
                                     {detailLead.icebreaker || 'No icebreaker generated.'}
                                 </div>
                             </div>

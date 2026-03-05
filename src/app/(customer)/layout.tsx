@@ -11,7 +11,7 @@ export default async function CustomerPortalLayout({
     const user = await requireCustomer()
 
     return (
-        <div className="flex h-screen overflow-hidden bg-[#030303]">
+        <div className="flex h-screen overflow-hidden bg-background">
             {/* Customer Sidebar */}
             <CustomerSidebar user={user} />
 

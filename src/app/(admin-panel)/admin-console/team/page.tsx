@@ -358,7 +358,7 @@ export default function AdminTeamPage() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-4">
-                <Card className="bg-zinc-900/50 border-zinc-800">
+                <Card className="bg-foreground/5 border-zinc-800">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-zinc-500">Master Admins</CardTitle>
                     </CardHeader>
@@ -369,7 +369,7 @@ export default function AdminTeamPage() {
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-zinc-900/50 border-zinc-800">
+                <Card className="bg-foreground/5 border-zinc-800">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-zinc-500">Operational Admins</CardTitle>
                     </CardHeader>
@@ -379,7 +379,7 @@ export default function AdminTeamPage() {
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-zinc-900/50 border-zinc-800">
+                <Card className="bg-foreground/5 border-zinc-800">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-zinc-500">Support Staff</CardTitle>
                     </CardHeader>
@@ -389,7 +389,7 @@ export default function AdminTeamPage() {
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-zinc-900/50 border-zinc-800">
+                <Card className="bg-foreground/5 border-zinc-800">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-zinc-500">Total Force</CardTitle>
                     </CardHeader>
@@ -401,7 +401,7 @@ export default function AdminTeamPage() {
                 </Card>
             </div>
 
-            <Card className="bg-zinc-900/50 border-zinc-800">
+            <Card className="bg-foreground/5 border-zinc-800">
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div>

@@ -253,7 +253,7 @@ export default async function CustomerPortalPage() {
 
             {/* Getting Started - Only show if no data */}
             {!hasData && (
-                <Card className="bg-zinc-900/50 border-zinc-800">
+                <Card className="bg-foreground/5 border-zinc-800">
                     <CardContent className="p-8 text-center">
                         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mx-auto mb-4">
                             <Zap className="h-8 w-8 text-primary" />

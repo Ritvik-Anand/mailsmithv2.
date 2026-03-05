@@ -147,7 +147,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
 
             {/* Quick Stats */}
             <div className="grid gap-4 md:grid-cols-4">
-                <Card className="bg-zinc-950 border-zinc-900">
+                <Card className="bg-zinc-950 border-border">
                     <CardContent className="p-4 flex items-center gap-3">
                         <Users className="h-8 w-8 text-primary" />
                         <div>
@@ -156,7 +156,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-zinc-950 border-zinc-900">
+                <Card className="bg-zinc-950 border-border">
                     <CardContent className="p-4 flex items-center gap-3">
                         <Sparkles className="h-8 w-8 text-amber-500" />
                         <div>
@@ -167,7 +167,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-zinc-950 border-zinc-900">
+                <Card className="bg-zinc-950 border-border">
                     <CardContent className="p-4 flex items-center gap-3">
                         <Send className="h-8 w-8 text-emerald-500" />
                         <div>
@@ -178,7 +178,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-zinc-950 border-zinc-900">
+                <Card className="bg-zinc-950 border-border">
                     <CardContent className="p-4 flex items-center gap-3">
                         <Target className="h-8 w-8 text-purple-500" />
                         <div>
@@ -191,7 +191,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
 
             {/* Tabs */}
             <Tabs defaultValue="leads" className="w-full">
-                <TabsList className="bg-zinc-950 border border-zinc-900">
+                <TabsList className="bg-zinc-950 border border-border">
                     <TabsTrigger value="leads" className="data-[state=active]:bg-zinc-900">
                         <Users className="h-4 w-4 mr-2" />
                         Leads ({leads.length})
@@ -219,7 +219,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                     </div>
 
                     {filteredLeads.length === 0 ? (
-                        <Card className="bg-zinc-950 border-zinc-900">
+                        <Card className="bg-zinc-950 border-border">
                             <CardContent className="py-16 text-center">
                                 <Users className="h-12 w-12 text-zinc-800 mx-auto mb-4" />
                                 <h3 className="text-zinc-500 font-bold">No leads yet</h3>
@@ -233,7 +233,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                             </CardContent>
                         </Card>
                     ) : (
-                        <div className="rounded-lg border border-zinc-900 overflow-hidden">
+                        <div className="rounded-lg border border-border overflow-hidden">
                             <table className="w-full">
                                 <thead className="bg-zinc-950">
                                     <tr className="text-left text-[10px] text-zinc-500 uppercase tracking-widest">
@@ -246,7 +246,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                                 </thead>
                                 <tbody className="divide-y divide-zinc-900">
                                     {filteredLeads.slice(0, 50).map((lead) => (
-                                        <tr key={lead.id} className="hover:bg-zinc-950/50">
+                                        <tr key={lead.id} className="hover:bg-foreground/5">
                                             <td className="p-3">
                                                 <p className="font-medium text-foreground text-sm">
                                                     {lead.first_name} {lead.last_name}
@@ -282,7 +282,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                                 </tbody>
                             </table>
                             {filteredLeads.length > 50 && (
-                                <div className="p-3 text-center text-xs text-zinc-500 bg-zinc-950 border-t border-zinc-900">
+                                <div className="p-3 text-center text-xs text-zinc-500 bg-zinc-950 border-t border-border">
                                     Showing 50 of {filteredLeads.length} leads
                                 </div>
                             )}
@@ -293,7 +293,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                 {/* Jobs Tab */}
                 <TabsContent value="jobs" className="mt-6 space-y-3">
                     {jobs.length === 0 ? (
-                        <Card className="bg-zinc-950 border-zinc-900">
+                        <Card className="bg-zinc-950 border-border">
                             <CardContent className="py-16 text-center">
                                 <Target className="h-12 w-12 text-zinc-800 mx-auto mb-4" />
                                 <h3 className="text-zinc-500 font-bold">No scrape jobs yet</h3>
@@ -309,7 +309,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                     ) : (
                         jobs.map((job) => (
                             <Link key={job.id} href={`/operator/leads/${job.id}`}>
-                                <Card className="bg-zinc-950 border-zinc-900 hover:border-zinc-700 transition-all cursor-pointer">
+                                <Card className="bg-zinc-950 border-border hover:border-zinc-700 transition-all cursor-pointer">
                                     <CardContent className="p-4 flex items-center gap-4">
                                         <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${job.status === 'running' || job.status === 'pending' ? 'bg-amber-500/10' :
                                             job.status === 'completed' ? 'bg-emerald-500/10' : 'bg-red-500/10'
@@ -358,7 +358,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                     </div>
 
                     {campaigns.length === 0 ? (
-                        <Card className="bg-zinc-950 border-zinc-900">
+                        <Card className="bg-zinc-950 border-border">
                             <CardContent className="py-16 text-center">
                                 <Mail className="h-12 w-12 text-zinc-800 mx-auto mb-4" />
                                 <h3 className="text-zinc-500 font-bold">No campaigns yet</h3>
@@ -374,7 +374,7 @@ export default function OperatorCustomerDetailPage({ params }: { params: Promise
                         <div className="space-y-3">
                             {campaigns.map((campaign) => (
                                 <Link key={campaign.id} href={`/operator/campaigns/${campaign.id}`}>
-                                    <Card className="bg-zinc-950 border-zinc-900 hover:border-zinc-700 transition-all cursor-pointer group">
+                                    <Card className="bg-zinc-950 border-border hover:border-zinc-700 transition-all cursor-pointer group">
                                         <CardContent className="p-4 flex items-center gap-4">
                                             <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${campaign.status === 'active' ? 'bg-emerald-500/10' :
                                                 campaign.status === 'paused' ? 'bg-amber-500/10' :

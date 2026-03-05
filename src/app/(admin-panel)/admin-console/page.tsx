@@ -90,7 +90,7 @@ export default function AdminDashboardPage() {
             <div className="grid gap-6 lg:grid-cols-3">
                 {/* Deployment Log */}
                 <Card className="lg:col-span-2 bg-zinc-950 border-zinc-800 rounded-xl overflow-hidden shadow-none">
-                    <CardHeader className="flex flex-row items-center justify-between border-b border-zinc-900 px-6 py-4 bg-zinc-900/10">
+                    <CardHeader className="flex flex-row items-center justify-between border-b border-border px-6 py-4 bg-foreground/5">
                         <CardTitle className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Recent Deployments</CardTitle>
                         <Link href="/admin-console/customers">
                             <Button variant="link" size="sm" className="text-xs text-primary hover:text-primary/80 font-bold p-0 h-auto">
@@ -102,7 +102,7 @@ export default function AdminDashboardPage() {
                     <CardContent className="p-0">
                         <Table>
                             <TableHeader>
-                                <TableRow className="border-zinc-900 hover:bg-transparent bg-background">
+                                <TableRow className="border-border hover:bg-transparent bg-background">
                                     <TableHead className="text-[10px] font-bold text-zinc-500 pl-6 h-10 uppercase tracking-wider">Account</TableHead>
                                     <TableHead className="text-[10px] font-bold text-zinc-500 h-10 uppercase tracking-wider">Plan</TableHead>
                                     <TableHead className="text-[10px] font-bold text-zinc-500 text-right h-10 uppercase tracking-wider">Seats</TableHead>
@@ -112,7 +112,7 @@ export default function AdminDashboardPage() {
                             <TableBody>
                                 {isLoading ? (
                                     Array(6).fill(0).map((_, i) => (
-                                        <TableRow key={i} className="border-zinc-900/50">
+                                        <TableRow key={i} className="border-foreground/5">
                                             <TableCell className="pl-6 py-4"><div className="h-3 w-24 bg-zinc-900 animate-pulse rounded" /></TableCell>
                                             <TableCell><div className="h-3 w-12 bg-zinc-900 animate-pulse rounded" /></TableCell>
                                             <TableCell className="text-right"><div className="h-3 w-8 ml-auto bg-zinc-900 animate-pulse rounded" /></TableCell>
@@ -120,7 +120,7 @@ export default function AdminDashboardPage() {
                                         </TableRow>
                                     ))
                                 ) : stats?.recentOrganizations?.map((org: any) => (
-                                    <TableRow key={org.id} className="border-zinc-900/50 hover:bg-zinc-900/30 transition-colors">
+                                    <TableRow key={org.id} className="border-foreground/5 hover:bg-foreground/5 transition-colors">
                                         <TableCell className="pl-6 py-4">
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-sm text-zinc-200">{org.name}</span>
@@ -153,7 +153,7 @@ export default function AdminDashboardPage() {
                 {/* System Diagnostics */}
                 <div className="space-y-6">
                     <Card className="bg-zinc-950 border-zinc-800 rounded-xl overflow-hidden shadow-none">
-                        <CardHeader className="border-b border-zinc-900 px-6 py-4">
+                        <CardHeader className="border-b border-border px-6 py-4">
                             <CardTitle className="text-xs font-bold text-zinc-400 uppercase tracking-widest">System Health</CardTitle>
                         </CardHeader>
                         <CardContent className="p-6 space-y-5">
