@@ -72,7 +72,6 @@ export function InboxLayout({ initialEmails, accounts }: InboxLayoutProps) {
     const [selectedId, setSelectedId] = useState<string | null>(initialEmails[0]?.id ?? null)
     const [search, setSearch] = useState('')
     const [isRefreshing, setIsRefreshing] = useState(false)
-    const [lastPolled, setLastPolled] = useState(new Date().toISOString())
 
     const filtered = emails.filter(e => {
         if (!search) return true
@@ -87,21 +86,36 @@ export function InboxLayout({ initialEmails, accounts }: InboxLayoutProps) {
 
     const selected = emails.find(e => e.id === selectedId) ?? filtered[0] ?? null
 
+    // ── Mark email as read when it becomes selected ───────────────────────────
+    useEffect(() => {
+        if (!selectedId) return
+        setEmails(prev => prev.map(e =>
+            e.id === selectedId && !e.isRead ? { ...e, isRead: true } : e
+        ))
+    }, [selectedId])
+
+    // ── Full re-fetch helper — returns the complete current email list ────────
+    const fetchAll = useCallback(async (): Promise<InboxEmail[]> => {
+        const res = await fetch('/api/inbox/all')
+        const data = await res.json()
+        if (!data.success) return []
+        return data.emails as InboxEmail[]
+    }, [])
+
     // ── Poll every 30s for new emails (fallback when webhook is not firing) ──
+    // Full re-fetch so we never lose older emails due to timestamp filtering.
     const poll = useCallback(async () => {
         try {
-            const res = await fetch(`/api/inbox?since=${encodeURIComponent(lastPolled)}`)
-            const data = await res.json()
-            if (data.success && data.emails?.length > 0) {
-                setEmails(prev => {
-                    const existingIds = new Set(prev.map(e => e.id))
-                    const fresh = (data.emails as InboxEmail[]).filter(e => !existingIds.has(e.id))
-                    return [...fresh, ...prev]
-                })
-                setLastPolled(new Date().toISOString())
-            }
+            const fresh = await fetchAll()
+            if (!fresh.length) return
+            setEmails(prev => {
+                // Merge: keep any optimistic label/read state from prev, add new emails
+                const prevMap = new Map(prev.map(e => [e.id, e]))
+                const merged = fresh.map(e => prevMap.has(e.id) ? { ...e, ...prevMap.get(e.id)! } : e)
+                return merged
+            })
         } catch { /* silent */ }
-    }, [lastPolled])
+    }, [fetchAll])
 
     useEffect(() => {
         const id = setInterval(poll, 30_000)
@@ -121,17 +135,12 @@ export function InboxLayout({ initialEmails, accounts }: InboxLayoutProps) {
         return () => { supabase.removeChannel(channel) }
     }, [poll])
 
-    // ── Manual refresh ────────────────────────────────────────────────────────
+    // ── Manual refresh — full re-fetch ────────────────────────────────────────
     const refresh = async () => {
         setIsRefreshing(true)
         try {
-            // Re-fetch page by reloading server data
-            const res = await fetch('/api/inbox?since=2020-01-01T00:00:00Z')
-            const data = await res.json()
-            if (data.success) {
-                setEmails(data.emails ?? [])
-                setLastPolled(new Date().toISOString())
-            }
+            const fresh = await fetchAll()
+            if (fresh.length) setEmails(fresh)
         } catch { /* ignore */ }
         setIsRefreshing(false)
     }
