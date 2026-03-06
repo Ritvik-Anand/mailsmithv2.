@@ -14,9 +14,9 @@ export default async function InboxPage() {
     const accounts = result.success ? (result.accounts ?? []) : []
 
     return (
-        <div className="space-y-6">
+        <div className="flex flex-col h-[calc(100vh-8rem)]">
             {/* Page header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-none mb-6">
                 <div className="space-y-1">
                     <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
@@ -52,7 +52,9 @@ export default async function InboxPage() {
             )}
 
             {/* Main inbox UI */}
-            <InboxLayout initialEmails={emails} accounts={accounts} />
+            <div className="flex-1 min-h-0">
+                <InboxLayout initialEmails={emails} accounts={accounts} />
+            </div>
         </div>
     )
 }

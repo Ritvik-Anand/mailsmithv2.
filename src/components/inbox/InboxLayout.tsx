@@ -162,7 +162,7 @@ export function InboxLayout({ initialEmails, accounts }: InboxLayoutProps) {
     if (accounts.length === 0) return <NoAccountsState />
 
     return (
-        <div className="flex h-full min-h-[calc(100vh-13rem)] rounded-2xl overflow-hidden border border-foreground/5 bg-foreground/[0.01]">
+        <div className="flex h-full w-full rounded-2xl overflow-hidden border border-foreground/5 bg-foreground/[0.01]">
 
             {/* ── LEFT: Email list ── */}
             <div className="w-[320px] shrink-0 flex flex-col border-r border-foreground/5">
