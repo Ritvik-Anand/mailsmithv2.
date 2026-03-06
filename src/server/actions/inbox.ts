@@ -321,8 +321,8 @@ export async function getInboxUnreadCount(): Promise<number> {
         const accountEmails = (accountRows ?? []).map(r => r.email_address)
         if (!accountEmails.length) return 0
 
-        // Fetch only first page — unread count from recent emails is enough
-        const rawEmails = await instantly.getEmails({ limit: 100 })
+        // Fetch only first page of replies — unread count from recent replies is enough
+        const rawEmails = await instantly.getEmails({ limit: 100, email_type: 'received', eaccount: accountEmails.slice(0, 20).join(',') })
         const ownAccounts = new Set(accountEmails.map(e => e.toLowerCase()))
 
         return rawEmails.filter(e =>

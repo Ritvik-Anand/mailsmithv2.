@@ -469,17 +469,19 @@ export class InstantlyClient {
     async getEmails(params: {
         limit?: number
         starting_after?: string
-        email_account?: string   // filter to a specific sending account
+        eaccount?: string   // filter to a specific sending account
         campaign_id?: string     // filter to a specific campaign
         type?: 'reply' | 'sent' | 'all'
+        email_type?: 'received' | 'sent'
         is_read?: boolean
     } = {}): Promise<InstantlyEmail[]> {
-        const { limit = 50, starting_after, email_account, campaign_id, type, is_read } = params
+        const { limit = 50, starting_after, eaccount, campaign_id, type, email_type, is_read } = params
 
         const query = new URLSearchParams()
         query.set('limit', String(limit))
         if (starting_after) query.set('starting_after', starting_after)
-        if (email_account) query.set('email_account', email_account)
+        if (eaccount) query.set('eaccount', eaccount)
+        if (email_type) query.set('email_type', email_type)
         if (campaign_id) query.set('campaign_id', campaign_id)
         if (type && type !== 'all') query.set('type', type)
         if (is_read !== undefined) query.set('is_read', String(is_read))
@@ -510,48 +512,61 @@ export class InstantlyClient {
         const ownAccountSet = new Set(ownAccounts.map(a => a.toLowerCase()))
 
         const inbound: InstantlyEmail[] = []
-        let startingAfter: string | undefined = undefined
 
-        for (let page = 0; page < maxPages; page++) {
-            // Throttle: 600ms between pages to stay under 20 req/min
-            if (page > 0) {
-                await new Promise(resolve => setTimeout(resolve, 600))
-            }
+        // Chunk accounts to avoid URL length limits 
+        // 20 accounts max per query string
+        const CHUNK_SIZE = 20
+        const accountChunks: string[][] = []
+        for (let i = 0; i < ownAccounts.length; i += CHUNK_SIZE) {
+            accountChunks.push(ownAccounts.slice(i, i + CHUNK_SIZE))
+        }
 
-            let batch: InstantlyEmail[]
-            try {
-                batch = await this.getEmails({
-                    limit: PAGE_SIZE,
-                    starting_after: startingAfter,
-                    campaign_id: params.campaign_id,
-                })
-            } catch (err: any) {
-                // On rate limit (429), return what we have so far — don't crash inbox
-                if (err?.message?.includes('429') || err?.status === 429) {
-                    console.warn('[Inbox] Rate limited by Instantly — returning partial results')
-                    break
+        for (const chunk of accountChunks) {
+            let startingAfter: string | undefined = undefined
+
+            for (let page = 0; page < maxPages; page++) {
+                // Throttle: 600ms between pages to stay under 20 req/min
+                if (page > 0 || chunk !== accountChunks[0]) {
+                    await new Promise(resolve => setTimeout(resolve, 600))
                 }
-                throw err
-            }
 
-            if (!batch.length) break
-
-            // Collect inbound emails for this org's accounts
-            for (const email of batch) {
-                if (
-                    email.ue_type === 2 &&
-                    email.eaccount &&
-                    ownAccountSet.has(email.eaccount.toLowerCase())
-                ) {
-                    inbound.push(email)
+                let batch: InstantlyEmail[]
+                try {
+                    batch = await this.getEmails({
+                        limit: PAGE_SIZE,
+                        starting_after: startingAfter,
+                        campaign_id: params.campaign_id,
+                        eaccount: chunk.join(','),
+                        email_type: 'received',
+                    })
+                } catch (err: any) {
+                    // On rate limit (429), return what we have so far — don't crash inbox
+                    if (err?.message?.includes('429') || err?.status === 429) {
+                        console.warn('[Inbox] Rate limited by Instantly — returning partial results')
+                        break
+                    }
+                    throw err
                 }
+
+                if (!batch.length) break
+
+                // Collect inbound emails for this org's accounts
+                for (const email of batch) {
+                    if (
+                        email.ue_type === 2 &&
+                        email.eaccount &&
+                        ownAccountSet.has(email.eaccount.toLowerCase())
+                    ) {
+                        inbound.push(email)
+                    }
+                }
+
+                // Stop if this was the last page
+                if (batch.length < PAGE_SIZE) break
+
+                // Cursor for next page = ID of last item in this batch
+                startingAfter = batch[batch.length - 1].id
             }
-
-            // Stop if this was the last page
-            if (batch.length < PAGE_SIZE) break
-
-            // Cursor for next page = ID of last item in this batch
-            startingAfter = batch[batch.length - 1].id
         }
 
         // Sort newest first
