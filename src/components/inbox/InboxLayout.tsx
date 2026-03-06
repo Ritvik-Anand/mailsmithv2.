@@ -26,6 +26,7 @@ import {
     Zap,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { cn } from '@/lib/utils'
 
 // =============================================================================
@@ -365,7 +366,7 @@ function EmailDetail({ email, accounts, onReplySent, onLabelChange }: {
     }, [email.id, email.eaccount, accounts])
 
     const send = () => {
-        if (!replyText.trim() || !fromAccount) return
+        if (!replyText.trim() || replyText === '<p></p>' || !fromAccount) return
         startTransition(async () => {
             const result = await replyToInboxEmail({
                 replyToId: email.id,
@@ -503,15 +504,15 @@ function EmailDetail({ email, accounts, onReplySent, onLabelChange }: {
 
                 {/* Textarea */}
                 <div className={cn(
-                    'rounded-xl border bg-foreground/[0.03] overflow-hidden transition-all',
+                    'flex flex-col rounded-xl border bg-foreground/[0.03] overflow-hidden transition-all',
                     status === 'error' ? 'border-red-500/40' : 'border-foreground/10 focus-within:border-primary/40'
                 )}>
-                    <textarea
-                        value={replyText}
-                        onChange={e => { setReplyText(e.target.value); if (status !== 'idle') setStatus('idle') }}
+                    <RichTextEditor
+                        content={replyText}
+                        onChange={html => { setReplyText(html); if (status !== 'idle') setStatus('idle') }}
+                        onFocus={() => { if (status !== 'idle') setStatus('idle') }}
                         placeholder="Write your reply…"
-                        rows={4}
-                        className="w-full bg-transparent px-4 pt-3 pb-1 text-sm text-foreground/80 placeholder:text-foreground/25 resize-none focus:outline-none"
+                        disabled={isPending}
                     />
                     <div className="flex items-center justify-between px-3 pb-3">
                         <div>
@@ -529,7 +530,7 @@ function EmailDetail({ email, accounts, onReplySent, onLabelChange }: {
                         <Button
                             size="sm"
                             onClick={send}
-                            disabled={!replyText.trim() || isPending || !fromAccount}
+                            disabled={!replyText.trim() || replyText === '<p></p>' || isPending || !fromAccount}
                             className="bg-primary hover:bg-primary/90 gap-1.5 text-xs h-8"
                         >
                             {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
