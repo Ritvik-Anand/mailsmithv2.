@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Bell, LogOut, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -16,6 +17,33 @@ import { CustomerMobileSidebar } from './sidebar'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import type { UserWithRole } from '@/server/actions/roles'
+
+// =============================================================================
+// Live Notification Badge
+// =============================================================================
+function NotificationBadge() {
+    const [count, setCount] = useState(0)
+
+    useEffect(() => {
+        const fetchCount = () =>
+            window.fetch('/api/notifications/unread')
+                .then(r => r.json())
+                .then(d => setCount(d.count ?? 0))
+                .catch(() => { })
+
+        fetchCount()
+        const id = setInterval(fetchCount, 60_000)
+        return () => clearInterval(id)
+    }, [])
+
+    if (count === 0) return null
+    return (
+        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-foreground ring-2 ring-background">
+            {count > 9 ? '9+' : count}
+        </span>
+    )
+}
+
 
 interface CustomerHeaderProps {
     user: UserWithRole
@@ -69,12 +97,13 @@ export function CustomerHeader({ user }: CustomerHeaderProps) {
                         variant="ghost"
                         size="icon"
                         className="relative text-foreground/60 hover:text-foreground hover:bg-foreground/5"
+                        asChild
                     >
-                        <Bell className="h-5 w-5" />
-                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-foreground">
-                            3
-                        </span>
-                        <span className="sr-only">Notifications</span>
+                        <Link href="/portal/notifications">
+                            <Bell className="h-5 w-5" />
+                            <NotificationBadge />
+                            <span className="sr-only">Notifications</span>
+                        </Link>
                     </Button>
 
                     {/* User menu */}
