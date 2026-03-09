@@ -231,21 +231,36 @@ export class InstantlyClient {
     async addLeadsToCampaign(campaignId: string, leads: any[]): Promise<any> {
         // V2 Sequential - Reverting because V1 is 404
         // DEBUG MODE ENABLED
-        const formattedLeads = leads.map(lead => ({
-            email: lead.email,
-            first_name: lead.first_name,
-            last_name: lead.last_name,
-            companyName: lead.company_name,
-            phone: lead.phone,
-            website: lead.website,
-            personalization: lead.personalization || lead.icebreaker,
-            job_title: lead.job_title,
-            linkedin_url: lead.linkedin_url,
-            custom_variables: lead.enrichment_data ? {
-                ...lead.custom_variables,
-                ...lead.enrichment_data
-            } : lead.custom_variables
-        }))
+        const formattedLeads = leads.map(lead => {
+            const payload: any = {
+                email: lead.email,
+                first_name: lead.first_name,
+                last_name: lead.last_name,
+                companyName: lead.company_name,
+                phone: lead.phone,
+                website: lead.website,
+                job_title: lead.job_title,
+                linkedin_url: lead.linkedin_url,
+                custom_variables: lead.enrichment_data ? {
+                    ...lead.custom_variables,
+                    ...lead.enrichment_data
+                } : lead.custom_variables
+            }
+
+            const personalization = lead.personalization || lead.icebreaker
+            if (personalization) {
+                payload.personalization = personalization
+            }
+
+            // Clean up undefined/null
+            Object.keys(payload).forEach(key => {
+                if (payload[key] === undefined || payload[key] === null) {
+                    delete payload[key]
+                }
+            })
+
+            return payload
+        })
 
         // Process in small concurrent batches with a delay between each
         // to avoid Instantly's rate limit (429 Too Many Requests).
