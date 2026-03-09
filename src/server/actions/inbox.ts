@@ -90,7 +90,21 @@ function normaliseEmail(raw: InstantlyEmail, labelMap: LabelMap): InboxEmail {
     const toAddress = raw.to_address_json?.[0]?.address ?? raw.to_address_email_list ?? ''
 
     // Resolve interest label from live map (falls back to hardcoded)
-    const labelEntry = raw.ai_interest_value != null ? labelMap.get(raw.ai_interest_value) : null
+    let labelEntry = raw.ai_interest_value != null ? labelMap.get(raw.ai_interest_value) : null
+
+    // HEURISTIC: Catch Out of Office if Instantly AI missed it (returns 0 or null)
+    // We check for common OOO keywords in the body/subject
+    const lowerBody = bodyText.toLowerCase()
+    const lowerSub = (raw.subject || '').toLowerCase()
+    const isOOO = lowerBody.includes('out of office') ||
+        lowerBody.includes('automatic reply') ||
+        lowerSub.includes('out of office') ||
+        lowerSub.includes('automatic reply')
+
+    if (isOOO && (raw.ai_interest_value === 0 || raw.ai_interest_value == null)) {
+        // Force the OOO label from our map if possible, or use fallback
+        labelEntry = labelMap.get(3) || { name: 'Out of Office', color: '#f59e0b' }
+    }
 
     return {
         id: raw.id ?? '',

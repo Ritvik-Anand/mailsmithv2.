@@ -341,6 +341,8 @@ function EmailDetail({ email, accounts, onReplySent, onLabelChange }: {
     const STATUS_BUTTONS = [
         { value: 1, label: 'Interested', icon: ThumbsUp, color: '#22c55e' },
         { value: 2, label: 'Meeting Booked', icon: Calendar, color: '#3b82f6' },
+        { value: 3, label: 'Out of Office', icon: Clock, color: '#f59e0b' },
+        { value: 5, label: 'Wrong Person', icon: User, color: '#6b7280' },
         { value: 0, label: 'Not Interested', icon: ThumbsDown, color: '#ef4444' },
         { value: 4, label: 'Do Not Contact', icon: Ban, color: '#dc2626' },
     ]
