@@ -98,8 +98,8 @@ export default function AdminCustomerDetailPage() {
         }
     }
 
-    const fetchNodes = async () => {
-        setIsNodesLoading(true)
+    const fetchNodes = async (showLoading = true) => {
+        if (showLoading) setIsNodesLoading(true)
         try {
             const [orgNodesData, allNodesData] = await Promise.all([
                 getOrganizationNodes(id),
@@ -110,13 +110,13 @@ export default function AdminCustomerDetailPage() {
         } catch (error) {
             console.error('Error fetching nodes:', error)
         } finally {
-            setIsNodesLoading(false)
+            if (showLoading) setIsNodesLoading(false)
         }
     }
 
     useEffect(() => {
         fetchOrg()
-        fetchNodes()
+        fetchNodes(true)
     }, [id])
 
     const handleSaveFeatures = async () => {
@@ -157,7 +157,7 @@ export default function AdminCustomerDetailPage() {
             const result = await assignNodeToOrganization(nodeId, orgId)
             if (result.success) {
                 toast.success(orgId === id ? 'Node assigned' : 'Node unassigned')
-                fetchNodes()
+                fetchNodes(false)
             } else {
                 toast.error(result.error || 'Failed to update assignment')
             }

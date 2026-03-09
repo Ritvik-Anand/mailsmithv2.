@@ -39,8 +39,8 @@ export default function InfrastructurePage() {
     const [isSyncing, setIsSyncing] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
 
-    const fetchData = async () => {
-        setIsLoading(true)
+    const fetchData = async (showLoading = true) => {
+        if (showLoading) setIsLoading(true)
         try {
             // Fetch organizations for the dropdown
             const orgs = await getOrganizations()
@@ -52,12 +52,12 @@ export default function InfrastructurePage() {
         } catch (error) {
             toast.error('Failed to load infrastructure data')
         } finally {
-            setIsLoading(false)
+            if (showLoading) setIsLoading(false)
         }
     }
 
     useEffect(() => {
-        fetchData()
+        fetchData(true)
     }, [])
 
     const handleSync = async () => {
@@ -70,7 +70,7 @@ export default function InfrastructurePage() {
                 } else {
                     toast.success(`Successfully synced ${result.count} nodes from Instantly`)
                 }
-                fetchData()
+                fetchData(false)
             } else {
                 toast.error(result.error || 'Sync failed')
             }
@@ -83,7 +83,7 @@ export default function InfrastructurePage() {
         const result = await assignNodeToOrganization(nodeId, orgId)
         if (result.success) {
             toast.success('Node assigned successfully')
-            fetchData()
+            fetchData(false)
         } else {
             toast.error(result.error || 'Assignment failed')
         }
