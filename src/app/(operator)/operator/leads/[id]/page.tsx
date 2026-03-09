@@ -162,9 +162,8 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                             completed: all.filter(l => l.icebreaker_status === 'completed').length,
                             pending: all.filter(l => l.icebreaker_status === 'pending').length,
                             failed: all.filter(l => l.icebreaker_status === 'failed').length,
-                            // Push all leads with valid email and not yet added — icebreaker is
-                            // used as personalization if it exists, but is not a hard requirement
-                            readyToPush: all.filter(l => l.campaign_status === 'not_added' && l.email).length
+                            // Push all leads with valid email and not yet added (or currently queued for retry)
+                            readyToPush: all.filter(l => (l.campaign_status === 'not_added' || l.campaign_status === 'queued') && l.email).length
                         })
                     }
                 } else {
@@ -174,7 +173,7 @@ export default function LeadJobPage({ params }: { params: Promise<{ id: string }
                         completed: leadsRes.leads.filter(l => l.icebreaker_status === 'completed').length,
                         pending: leadsRes.leads.filter(l => l.icebreaker_status === 'pending').length,
                         failed: leadsRes.leads.filter(l => l.icebreaker_status === 'failed').length,
-                        readyToPush: leadsRes.leads.filter(l => l.campaign_status === 'not_added' && l.email).length
+                        readyToPush: leadsRes.leads.filter(l => (l.campaign_status === 'not_added' || l.campaign_status === 'queued') && l.email).length
                     })
                 }
             } else {

@@ -572,14 +572,14 @@ export async function addLeadsToInstantlyCampaign(
         }
 
         // 2. Get total count of pushable leads for this job.
-        // We push ALL leads with a valid email that haven't been added yet.
+        // We push ALL leads with a valid email that haven't been added OR are currently stuck in 'queued'.
         // The icebreaker is used as personalization if it exists, but is not
         // required — this prevents partial pushes when icebreakers are still generating.
         const { count: total } = await supabase
             .from('leads')
             .select('id', { count: 'exact', head: true })
             .eq('scrape_job_id', scrapeJobId)
-            .eq('campaign_status', 'not_added')
+            .in('campaign_status', ['not_added', 'queued'])
             .not('email', 'is', null)
             .neq('email', '')
 
@@ -596,7 +596,7 @@ export async function addLeadsToInstantlyCampaign(
                 .from('leads')
                 .select('*')
                 .eq('scrape_job_id', scrapeJobId)
-                .eq('campaign_status', 'not_added')
+                .in('campaign_status', ['not_added', 'queued'])
                 .not('email', 'is', null)
                 .neq('email', '')
                 .range(offset, offset + CHUNK_SIZE - 1)

@@ -265,8 +265,11 @@ export class InstantlyClient {
         // Process in small concurrent batches with a delay between each
         // to avoid Instantly's rate limit (429 Too Many Requests).
         // 5 concurrent + 200ms pause = ~20 req/s, well under typical API limits.
-        const batchSize = 5
-        const BATCH_DELAY_MS = 200
+        // Process in concurrent batches to stay within Vercel's 15-30s timeout limits.
+        // 30 concurrent + 100ms pause = ~150-200 items/s — handles 1000 leads in ~5-10s.
+        // Instantly V2 has a higher peak ingestion limit but individual request retry handles 429s.
+        const batchSize = 30
+        const BATCH_DELAY_MS = 100
         const results = []
 
         for (let i = 0; i < formattedLeads.length; i += batchSize) {
@@ -286,10 +289,22 @@ export class InstantlyClient {
             const batchResults = await Promise.allSettled(batchPromises)
             results.push(...batchResults)
 
+            // Optional: check for high failure rate in this batch
+            const rejections = batchResults.filter(r => r.status === 'rejected')
+            if (rejections.length > 0) {
+                console.warn(`[Instantly] ${rejections.length}/${batch.length} leads in batch i=${i} failed. Sample error:`, (rejections[0] as PromiseRejectedResult).reason)
+            }
+
             // Pause between batches to respect rate limits
             if (i + batchSize < formattedLeads.length) {
                 await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS))
             }
+        }
+
+        // Verify some leads actually made it in. If EVERY single lead across ALL batches rejected, throw.
+        const totalFulfilled = results.filter(r => r.status === 'fulfilled').length
+        if (totalFulfilled === 0 && leads.length > 0) {
+            throw new Error(`Instantly API Push Failed: Zero leads (out of ${leads.length}) were successfully added. This usually happens if the campaign ID is invalid or a global rate limit was hit.`)
         }
 
         return results
