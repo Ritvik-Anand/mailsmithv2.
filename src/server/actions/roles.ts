@@ -33,26 +33,54 @@ export async function getCurrentUserWithRole(): Promise<{
         return { success: false, error: 'Not authenticated' }
     }
 
+    // 1. Try to find in regular users table
     const { data: userData, error: userError } = await supabase
         .from('users')
         .select('id, email, role, organization_id, full_name')
         .eq('id', authUser.id)
         .single()
 
-    if (userError || !userData) {
-        return { success: false, error: 'User not found in database' }
-    }
-
-    return {
-        success: true,
-        user: {
-            id: userData.id,
-            email: userData.email,
-            role: (userData.role as UserRole) || 'customer',
-            organizationId: userData.organization_id,
-            fullName: userData.full_name,
+    if (userData) {
+        return {
+            success: true,
+            user: {
+                id: userData.id,
+                email: userData.email,
+                role: (userData.role as UserRole) || 'customer',
+                organizationId: userData.organization_id,
+                fullName: userData.full_name,
+            }
         }
     }
+
+    // 2. Try to find in system_admins table
+    const { data: adminData, error: adminError } = await supabase
+        .from('system_admins')
+        .select('id, email, role, full_name')
+        .eq('user_id', authUser.id)
+        .single()
+
+    if (adminData) {
+        // Map system roles to UserRole
+        let role: UserRole = 'operator'
+        if (adminData.role === 'master' || adminData.role === 'admin') {
+            role = 'super_admin'
+        }
+
+        return {
+            success: true,
+            user: {
+                id: authUser.id, // Use Auth ID for consistency
+                email: adminData.email,
+                role: role,
+                organizationId: null,
+                fullName: adminData.full_name,
+            }
+        }
+    }
+
+    // If we reach here, user exists in Auth but not in any database table
+    return { success: false, error: 'User not found in database' }
 }
 
 // -----------------------------------------------------------------------------
