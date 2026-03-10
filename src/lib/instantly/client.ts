@@ -380,16 +380,19 @@ export class InstantlyClient {
                 sequences: [
                     {
                         steps: steps.map(step => {
-                            // Support both flat database rows and nested UI structures
                             const variants = step.variants && step.variants.length > 0
                                 ? step.variants.map((v: any) => ({
                                     subject: v.subject || '',
-                                    body: v.body || ''
+                                    body: v.body || '',
+                                    text: v.body || '', // Redundant alias for text-only steps
+                                    html: v.body || ''  // Redundant alias for some V2 versions
                                 }))
                                 : [
                                     {
                                         subject: step.subject || '',
-                                        body: step.body || ''
+                                        body: step.body || '',
+                                        text: step.body || '',
+                                        html: step.body || ''
                                     }
                                 ];
 
