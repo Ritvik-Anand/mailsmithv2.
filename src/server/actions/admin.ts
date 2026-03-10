@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 /**
@@ -37,7 +38,6 @@ export async function getSystemHealth() {
     }
 }
 
-import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
  * Deploys a global announcement to all customers.

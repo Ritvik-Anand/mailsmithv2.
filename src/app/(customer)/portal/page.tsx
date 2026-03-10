@@ -24,14 +24,16 @@ import {
     getPortalLeadsSummary
 } from '@/server/actions/customer-portal'
 import BroadcastPopup from '@/components/dashboard/BroadcastPopup'
+import { getLatestBroadcast } from '@/server/actions/notifications'
 
 export default async function CustomerPortalPage() {
-    // Fetch real data from server actions
-    const [metricsResult, campaignsResult, activityResult, leadsSummaryResult] = await Promise.all([
+    // Fetch real data from server actions in parallel
+    const [metricsResult, campaignsResult, activityResult, leadsSummaryResult, broadcastData] = await Promise.all([
         getPortalMetrics(),
         getPortalCampaigns(),
         getPortalActivity(),
-        getPortalLeadsSummary()
+        getPortalLeadsSummary(),
+        getLatestBroadcast()
     ])
 
     const metrics = metricsResult.success ? metricsResult.metrics! : {
@@ -59,7 +61,7 @@ export default async function CustomerPortalPage() {
 
     return (
         <div className="space-y-8">
-            <BroadcastPopup />
+            <BroadcastPopup data={broadcastData} />
             {/* Welcome Header */}
             <div className="space-y-2">
                 <h1 className="text-3xl font-bold text-foreground">Welcome back</h1>

@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { Notification } from '@/types'
 
 /**
@@ -45,7 +46,6 @@ export async function markNotificationAsRead(id: string) {
 
     return { success: true }
 }
-import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
  * Fetches the latest high-priority broadcast for the popup.

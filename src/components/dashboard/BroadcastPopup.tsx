@@ -14,34 +14,27 @@ import { Megaphone, Zap, ArrowRight, X } from 'lucide-react'
 import { getLatestBroadcast } from '@/server/actions/notifications'
 import { Notification } from '@/types'
 
-export default function BroadcastPopup() {
-    const [broadcast, setBroadcast] = useState<Notification | null>(null)
+export default function BroadcastPopup({ data }: { data: Notification | null }) {
     const [open, setOpen] = useState(false)
 
     useEffect(() => {
-        const checkBroadcast = async () => {
-            const data = await getLatestBroadcast()
-            if (!data) return
+        if (!data) return
 
-            // Check if user has already seen/dismissed this specific broadcast
-            const dismissedId = localStorage.getItem('last_dismissed_broadcast')
-            if (dismissedId !== data.id) {
-                setBroadcast(data)
-                setOpen(true)
-            }
+        // Check if user has already seen/dismissed this specific broadcast
+        const dismissedId = localStorage.getItem('last_dismissed_broadcast')
+        if (dismissedId !== data.id) {
+            setOpen(true)
         }
-
-        checkBroadcast()
-    }, [])
+    }, [data])
 
     const handleDismiss = () => {
-        if (broadcast) {
-            localStorage.setItem('last_dismissed_broadcast', broadcast.id)
+        if (data) {
+            localStorage.setItem('last_dismissed_broadcast', data.id)
         }
         setOpen(false)
     }
 
-    if (!broadcast) return null
+    if (!data) return null
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -58,10 +51,10 @@ export default function BroadcastPopup() {
 
                     <DialogHeader className="space-y-4">
                         <DialogTitle className="text-3xl font-bold tracking-tight text-foreground leading-tight">
-                            {broadcast.title}
+                            {data.title}
                         </DialogTitle>
                         <DialogDescription className="text-foreground/60 text-lg leading-relaxed">
-                            {broadcast.message}
+                            {data.message}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -71,7 +64,7 @@ export default function BroadcastPopup() {
                             System Update
                         </div>
                         <div className="flex items-center gap-2 px-3 py-1 bg-foreground/5 rounded-full text-[10px] font-bold uppercase tracking-wider text-foreground/40 border border-border">
-                            {new Date(broadcast.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                            {new Date(data.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                         </div>
                     </div>
                 </div>

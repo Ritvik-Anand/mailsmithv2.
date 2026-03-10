@@ -81,7 +81,10 @@ export async function requireSuperAdmin(): Promise<UserWithRole> {
     const result = await getCurrentUserWithRole()
 
     if (!result.success || !result.user) {
-        redirect('/admin')
+        if (result.error === 'Not authenticated') {
+            redirect('/admin')
+        }
+        redirect('/unauthorized')
     }
 
     if (result.user.role !== 'super_admin') {
@@ -95,7 +98,10 @@ export async function requireOperator(): Promise<UserWithRole> {
     const result = await getCurrentUserWithRole()
 
     if (!result.success || !result.user) {
-        redirect('/admin')
+        if (result.error === 'Not authenticated') {
+            redirect('/admin')
+        }
+        redirect('/unauthorized')
     }
 
     if (result.user.role !== 'operator' && result.user.role !== 'super_admin') {
@@ -110,7 +116,14 @@ export async function requireCustomer(): Promise<UserWithRole> {
     const result = await getCurrentUserWithRole()
 
     if (!result.success || !result.user) {
-        redirect('/login')
+        // If not authenticated via Auth, go to login
+        if (result.error === 'Not authenticated') {
+            redirect('/login')
+        }
+
+        // If authenticated via Auth but missing from DB, avoid /login redirect loop
+        // Redirect to /unauthorized instead which is a public route
+        redirect('/unauthorized')
     }
 
     // Customers, operators, and super_admins can all access customer portal
