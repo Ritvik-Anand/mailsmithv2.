@@ -874,9 +874,14 @@ async function ensureInstantlyCampaignExists(campaignId: string) {
             // Group by step_number to support variants
             const groupedSteps = sequences.reduce((acc: any[], current: any) => {
                 const step = acc.find(s => s.step_number === current.step_number)
+                // Instantly API V2 requires HTML format for multi-line bodies.
+                const bodyHtml = current.body?.includes('<div') || current.body?.includes('<p')
+                    ? (current.body || '')
+                    : `<div>${(current.body || '').replace(/\n/g, '<br />')}</div>`
+
                 const variant = {
                     subject: current.subject || '',
-                    body: current.body || ''
+                    body: bodyHtml
                 }
 
                 if (step) {

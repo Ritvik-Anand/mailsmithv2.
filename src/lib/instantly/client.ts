@@ -383,16 +383,12 @@ export class InstantlyClient {
                             const variants = step.variants && step.variants.length > 0
                                 ? step.variants.map((v: any) => ({
                                     subject: v.subject || '',
-                                    body: v.body || '',
-                                    text: v.body || '', // Redundant alias for text-only steps
-                                    html: v.body || ''  // Redundant alias for some V2 versions
+                                    body: v.body || ''
                                 }))
                                 : [
                                     {
                                         subject: step.subject || '',
-                                        body: step.body || '',
-                                        text: step.body || '',
-                                        html: step.body || ''
+                                        body: step.body || ''
                                     }
                                 ];
 
