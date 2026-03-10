@@ -47,11 +47,12 @@ import {
     Clock,
     CheckCircle2,
     XCircle,
-    Send
+    Send,
+    Zap
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { getCampaignById, getCampaignLeads, getCampaignSequences, upsertSequenceStep, deleteSequenceStep, getCampaignSchedules, upsertSchedule, updateCampaign, syncCampaignStats } from '@/server/actions/campaigns'
+import { getCampaignById, getCampaignLeads, getCampaignSequences, upsertSequenceStep, deleteSequenceStep, getCampaignSchedules, upsertSchedule, updateCampaign, syncCampaignStats, pushSequencesToInstantly } from '@/server/actions/campaigns'
 import { getOrganizationNodes, getCampaignAccountsFromInstantly, updateCampaignAccountsInInstantly, getCampaignAdvancedOptionsFromInstantly, updateCampaignAdvancedOptionsInInstantly, toggleCampaignStatus, syncAllCampaignLeads, getLiveCampaignStatusFromInstantly } from '@/server/actions/instantly'
 import { cn } from '@/lib/utils'
 
@@ -1113,6 +1114,25 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
         }
     }
 
+    const [isPushingSequences, setIsPushingSequences] = useState(false)
+
+    const handlePushToInstantly = async () => {
+        setIsPushingSequences(true)
+        try {
+            const result = await pushSequencesToInstantly(campaignId)
+            if (result.success) {
+                toast.success('Sequences synced to Instantly ✓')
+            } else {
+                toast.error('Failed to sync to Instantly: ' + result.error)
+            }
+        } catch (error) {
+            console.error('Error pushing sequences:', error)
+            toast.error('Failed to push sequences to Instantly')
+        } finally {
+            setIsPushingSequences(false)
+        }
+    }
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center p-12">
@@ -1303,6 +1323,19 @@ function SequencesTab({ campaignId }: { campaignId: string }) {
                             >
                                 <span className="text-blue-400">⚡</span>
                                 Variables
+                            </Button>
+                            <Button
+                                className="gap-2 bg-primary hover:bg-primary/90 ml-4"
+                                size="sm"
+                                onClick={handlePushToInstantly}
+                                disabled={isPushingSequences}
+                            >
+                                {isPushingSequences ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Zap className="h-4 w-4" />
+                                )}
+                                Sync to Instantly
                             </Button>
                         </div>
 

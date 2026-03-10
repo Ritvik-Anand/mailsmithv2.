@@ -370,10 +370,7 @@ export class InstantlyClient {
         return this.request<any>(`/leads?campaign=${campaignId}&limit=${limit}&skip=${skip}`)
     }
 
-    /**
-     * Update campaign sequences (email steps)
-     */
-    async updateCampaignSequences(campaignId: string, sequences: any[]): Promise<any> {
+    async updateCampaignSequences(campaignId: string, steps: any[]): Promise<any> {
         // V2 structure: sequences is an array of sequence objects (usually just one main one)
         // Each sequence has 'steps' array.
         // Each step has 'variants' array.
@@ -382,17 +379,28 @@ export class InstantlyClient {
             body: JSON.stringify({
                 sequences: [
                     {
-                        steps: sequences.map(seq => ({
-                            type: 'email',
-                            start_delay: seq.step_number === 1 ? 0 : (seq.delay_days ?? 1), // V2 uses start_delay for first step? search said 'delay'
-                            delay: seq.delay_days ?? (seq.step_number === 1 ? 0 : 1),
-                            variants: [
-                                {
-                                    subject: seq.subject,
-                                    body: seq.body
-                                }
-                            ]
-                        }))
+                        steps: steps.map(step => {
+                            // Support both flat database rows and nested UI structures
+                            const variants = step.variants && step.variants.length > 0
+                                ? step.variants.map((v: any) => ({
+                                    subject: v.subject || '',
+                                    body: v.body || ''
+                                }))
+                                : [
+                                    {
+                                        subject: step.subject || '',
+                                        body: step.body || ''
+                                    }
+                                ];
+
+                            return {
+                                type: 'email',
+                                delay: step.delay_days ?? (step.step_number === 1 ? 0 : 1),
+                                delay_unit: 'days',
+                                pre_delay_unit: 'days',
+                                variants: variants
+                            }
+                        })
                     }
                 ]
             }),

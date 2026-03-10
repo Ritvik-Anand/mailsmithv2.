@@ -824,20 +824,29 @@ export async function pushSequencesToInstantly(campaignId: string) {
             return { success: false, error: 'No sequences to push' }
         }
 
-        // Filter valid sequences for Instantly (one variant per step)
-        const uniqueSteps = sequences.reduce((acc: any[], current: any) => {
-            const exists = acc.find(item => item.step_number === current.step_number)
-            if (!exists) {
-                acc.push(current)
-            } else if (current.variant_label === 'A' && exists.variant_label !== 'A') {
-                const index = acc.indexOf(exists)
-                acc[index] = current
+        // Group by step_number to support variants
+        const groupedSteps = sequences.reduce((acc: any[], current: any) => {
+            const step = acc.find(s => s.step_number === current.step_number)
+            const variant = {
+                subject: current.subject || '',
+                body: current.body || ''
+            }
+
+            if (step) {
+                if (!step.variants) step.variants = []
+                step.variants.push(variant)
+            } else {
+                acc.push({
+                    step_number: current.step_number,
+                    delay_days: current.delay_days,
+                    variants: [variant]
+                })
             }
             return acc
         }, [])
 
         // Push to Instantly
-        await instantly.updateCampaignSequences(campaign.instantly_campaign_id, uniqueSteps)
+        await instantly.updateCampaignSequences(campaign.instantly_campaign_id, groupedSteps)
 
         return { success: true }
     } catch (error: any) {
