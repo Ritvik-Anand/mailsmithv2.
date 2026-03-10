@@ -37,12 +37,14 @@ export async function getSystemHealth() {
     }
 }
 
+import { createAdminClient } from '@/lib/supabase/admin'
+
 /**
  * Deploys a global announcement to all customers.
- * Inserts a notification into Supabase with no specific user/org ID.
  */
 export async function deployBroadcast(title: string, message: string) {
-    const supabase = await createClient()
+    // Note: This action is intended to be called by authorized admins only
+    const supabase = createAdminClient()
 
     // Create the notification record
     const { data, error } = await supabase

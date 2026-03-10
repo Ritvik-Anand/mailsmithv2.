@@ -1095,3 +1095,209 @@ export async function toggleCampaignStatus(campaignId: string, status: 'active' 
         return { success: false, error: error.message }
     }
 }
+
+/**
+ * Syncs the metrics of ALL campaigns for a specific organization from Instantly.
+ */
+export async function syncOrganizationCampaignMetrics(organizationId: string) {
+    const supabase = createAdminClient()
+
+    try {
+        // 1. Get all campaigns for this organization that are linked to Instantly
+        const { data: campaigns, error: fetchError } = await supabase
+            .from('campaigns')
+            .select('id, instantly_campaign_id')
+            .eq('organization_id', organizationId)
+            .not('instantly_campaign_id', 'is', null)
+
+        if (fetchError || !campaigns || campaigns.length === 0) {
+            return { success: true, count: 0 }
+        }
+
+        let syncedCount = 0
+        for (const campaign of campaigns) {
+            const result = await syncCampaignMetrics(campaign.id)
+            if (result.success) syncedCount++
+        }
+
+        // Also track this sync in organization table
+        await supabase
+            .from('organizations')
+            .update({ last_activity_at: new Date().toISOString() })
+            .eq('id', organizationId)
+
+        return { success: true, count: syncedCount }
+    } catch (error: any) {
+        console.error('Error in syncOrganizationCampaignMetrics:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+/**
+ * Fetches all campaigns from Instantly and ensures they exist in the local database.
+ * If a matching campaign (by instantly_campaign_id) exists, it updates it.
+ * Otherwise, it creates a new one assigned to the default organization (Acquifix).
+ */
+export async function syncAllInstantlyCampaigns() {
+    const supabase = createAdminClient()
+
+    try {
+        // 1. Get default org (Acquifix)
+        const { data: acquifix } = await supabase
+            .from('organizations')
+            .select('id')
+            .eq('slug', 'acquifix')
+            .single()
+
+        const defaultOrgId = acquifix?.id || 'e9a918a5-a6f3-4f3b-874d-e09c2b9f5ae6'
+
+        // 2. Fetch all campaigns from Instantly
+        const instantlyCampaigns = await instantly.getCampaigns()
+        if (!instantlyCampaigns || instantlyCampaigns.length === 0) {
+            return { success: true, count: 0 }
+        }
+
+        // 3. Get all existing campaigns linked to Instantly
+        const { data: existingCamps } = await supabase
+            .from('campaigns')
+            .select('id, instantly_campaign_id')
+            .not('instantly_campaign_id', 'is', null)
+
+        const existingIds = new Set(existingCamps?.map(c => c.instantly_campaign_id))
+
+        let importedCount = 0
+        for (const ic of instantlyCampaigns) {
+            if (existingIds.has(ic.id)) {
+                // Update existing record with latest name and status
+                await supabase
+                    .from('campaigns')
+                    .update({
+                        name: ic.name,
+                        instantly_status: ic.status === 1 ? 'active' : 'paused',
+                        last_synced_at: new Date().toISOString()
+                    })
+                    .eq('instantly_campaign_id', ic.id)
+                continue
+            }
+
+            // Create new campaign
+            // Try to guess org by name
+            let orgId = defaultOrgId
+            if (ic.name.toLowerCase().includes('xassure')) {
+                const { data: xassure } = await supabase.from('organizations').select('id').eq('slug', 'xassure').single()
+                if (xassure) orgId = xassure.id
+            }
+
+            const { error: insertError } = await supabase
+                .from('campaigns')
+                .insert({
+                    organization_id: orgId,
+                    name: ic.name,
+                    instantly_campaign_id: ic.id,
+                    instantly_status: ic.status === 1 ? 'active' : 'paused',
+                    status: ic.status === 1 ? 'active' : 'paused',
+                    total_leads: 0, // Will be updated by metrics sync
+                })
+
+            if (!insertError) importedCount++
+        }
+
+        return { success: true, imported: importedCount }
+    } catch (error: any) {
+        console.error('Error in syncAllInstantlyCampaigns:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+/**
+ * Syncs real-time metrics for a single campaign from Instantly API.
+ * Updates sent, opened, replied, bounced, interested, and meetings counts.
+ */
+export async function syncCampaignMetrics(campaignId: string) {
+    const supabase = createAdminClient()
+
+    try {
+        // 1. Get campaign's Instantly ID
+        const { data: campaign, error: fetchError } = await supabase
+            .from('campaigns')
+            .select('instantly_campaign_id')
+            .eq('id', campaignId)
+            .single()
+
+        if (fetchError || !campaign?.instantly_campaign_id) {
+            return { success: false, error: 'Campaign not linked to Instantly' }
+        }
+
+        // 2. Fetch live analytics from Instantly
+        const analytics = await instantly.getCampaignAnalytics(campaign.instantly_campaign_id)
+
+        if (!analytics) {
+            throw new Error('No analytics data returned from Instantly')
+        }
+
+        // 3. Update local DB with real data
+        // Map Instantly V2 field names to our DB column names
+        const updates = {
+            emails_sent: analytics.emails_sent_count || analytics.contacted_count || 0,
+            emails_opened: analytics.open_count_unique || 0,
+            emails_replied: analytics.reply_count_unique || 0,
+            emails_bounced: analytics.bounced_count || 0,
+            emails_interested: analytics.total_interested || 0,
+            emails_clicked: analytics.link_click_count_unique || 0,
+            emails_unsubscribed: analytics.unsubscribed_count || 0,
+            total_leads: analytics.contacted_count || analytics.emails_sent_count || 0,
+            last_stats_sync_at: new Date().toISOString(),
+            last_synced_at: new Date().toISOString()
+        }
+
+        const { error: updateError } = await supabase
+            .from('campaigns')
+            .update(updates)
+            .eq('id', campaignId)
+
+        if (updateError) throw updateError
+
+        // 4. Sync lead statuses (Replied/Bounced) using Inbox/Emails data
+        // This is much more accurate than looking at lead lists
+        try {
+            // Fetch all inbound replies for this campaign
+            const replies = await instantly.getEmails({
+                campaign_id: campaign.instantly_campaign_id,
+                email_type: 'received',
+                limit: 100 // Should cover most recent campaigns
+            })
+
+            if (replies && Array.isArray(replies)) {
+                // Emails of people who have sent us a reply
+                const replierEmails = [...new Set(replies.map(r => r.lead).filter(Boolean))] as string[]
+
+                if (replierEmails.length > 0) {
+                    await supabase.from('leads')
+                        .update({ campaign_status: 'replied' })
+                        .eq('campaign_id', campaignId)
+                        .in('email', replierEmails)
+                }
+            }
+
+            // Also fetch some bounced info if possible (though V2 analytics summary is usually enough for the card)
+            // But marking the ACTUAL lead record as bounced is better
+            const campaignLeads = await instantly.getCampaignLeads(campaign.instantly_campaign_id, 200)
+            if (campaignLeads && Array.isArray(campaignLeads)) {
+                const bouncedEmails = campaignLeads.filter(l => l.status === -1 || l.status === 'bounced').map(l => l.email)
+                if (bouncedEmails.length > 0) {
+                    await supabase.from('leads')
+                        .update({ campaign_status: 'bounced' })
+                        .eq('campaign_id', campaignId)
+                        .in('email', bouncedEmails)
+                }
+            }
+        } catch (leadSyncErr) {
+            console.warn(`[syncCampaignMetrics] Lead status sync failed for ${campaignId}:`, leadSyncErr)
+        }
+
+        return { success: true, metrics: updates }
+    } catch (error: any) {
+        console.error(`Error syncing metrics for campaign ${campaignId}:`, error)
+        return { success: false, error: error.message }
+    }
+}

@@ -23,6 +23,7 @@ import {
     getPortalActivity,
     getPortalLeadsSummary
 } from '@/server/actions/customer-portal'
+import BroadcastPopup from '@/components/dashboard/BroadcastPopup'
 
 export default async function CustomerPortalPage() {
     // Fetch real data from server actions
@@ -58,6 +59,7 @@ export default async function CustomerPortalPage() {
 
     return (
         <div className="space-y-8">
+            <BroadcastPopup />
             {/* Welcome Header */}
             <div className="space-y-2">
                 <h1 className="text-3xl font-bold text-foreground">Welcome back</h1>

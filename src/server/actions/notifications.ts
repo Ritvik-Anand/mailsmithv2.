@@ -45,3 +45,35 @@ export async function markNotificationAsRead(id: string) {
 
     return { success: true }
 }
+import { createAdminClient } from '@/lib/supabase/admin'
+
+/**
+ * Fetches the latest high-priority broadcast for the popup.
+ */
+export async function getLatestBroadcast() {
+    const supabase = createAdminClient()
+
+    const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('type', 'admin')
+        .is('organization_id', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+    if (error) {
+        if (error.code !== 'PGRST116') { // Ignore "no rows found"
+            console.error('Fetch Latest Broadcast Error:', error)
+        }
+        return null
+    }
+
+    // Only return if it's marked as a broadcast in metadata
+    const metadata = data.metadata as any
+    if (metadata?.broadcast && metadata?.priority === 'high') {
+        return data as Notification
+    }
+
+    return null
+}
